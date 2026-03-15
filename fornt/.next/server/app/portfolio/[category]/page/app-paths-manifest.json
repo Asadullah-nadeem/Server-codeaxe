@@ -1,0 +1,3 @@
+{
+  "/portfolio/[category]/page": "app/portfolio/[category]/page.js"
+}
