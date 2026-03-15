@@ -683,6 +683,10 @@ html, body {
   aspect-ratio: 16 / 9;
 }
 
+.aspect-\[21\/9\] {
+  aspect-ratio: 21 / 9;
+}
+
 .size-4 {
   width: 1rem;
   height: 1rem;
@@ -3188,6 +3192,10 @@ html, body {
     max-width: 420px;
   }
 
+  .md\:basis-1\/2 {
+    flex-basis: 50%;
+  }
+
   .md\:grid-cols-12 {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
@@ -3292,6 +3300,14 @@ html, body {
 }
 
 @media (min-width: 1024px) {
+  .lg\:-left-16 {
+    left: -4rem;
+  }
+
+  .lg\:-right-16 {
+    right: -4rem;
+  }
+
   .lg\:grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

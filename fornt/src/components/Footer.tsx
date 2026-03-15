@@ -31,7 +31,7 @@ const Footer = () => (
         <div>
           <h4 className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-4">Contact</h4>
           <div className="flex flex-col gap-3">
-            <a href="mailto:hello@codeaxe.dev" className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">hello@codeaxe.dev</a>
+            <a href="mailto:hello@codeaxe.co.in" className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">hello@codeaxe.co.in</a>
             <a href="https://github.com/codeaxe" target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">GitHub</a>
             <a href="https://linkedin.com/company/codeaxe" target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200">LinkedIn</a>
           </div>
@@ -39,7 +39,7 @@ const Footer = () => (
       </div>
       <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
         <span className="font-display text-lg tracking-tighter">Code<span className="text-accent">Axe</span></span>
-        <span className="font-mono-label text-xs text-muted-foreground">© {new Date().getFullYear()} CodeAxe. All rights reserved.</span>
+        <span className="font-mono-label text-xs text-muted-foreground">© {new Date().getFullYear()} CodeAxe. All rights reserved - <b>Version 1.0.0</b></span>
       </div>
     </div>
   </footer>

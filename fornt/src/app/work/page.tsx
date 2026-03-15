@@ -1,6 +1,13 @@
 
 import SectionHeader from "@/components/SectionHeader";
 import ProjectCard from "@/components/ProjectCard";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const categories = [
   {
@@ -46,11 +53,24 @@ const Work = () => (
       {categories.map((cat, ci) => (
         <div key={cat.label} className="mb-20 last:mb-0">
           <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest mb-8 block">{String(ci + 1).padStart(2, "0")} // {cat.label}</span>
-          <div className="grid md:grid-cols-2 gap-6">
-            {cat.projects.map((p) => (
-              <ProjectCard key={p.title} {...p} />
-            ))}
-          </div>
+          <Carousel
+            opts={{
+              align: "start",
+            }}
+            className="w-full relative"
+          >
+            <CarouselContent>
+              {cat.projects.map((p) => (
+                <CarouselItem key={p.title} className="md:basis-1/2">
+                  <ProjectCard {...p} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="hidden md:block">
+              <CarouselPrevious className="-left-12 lg:-left-16" />
+              <CarouselNext className="-right-12 lg:-right-16" />
+            </div>
+          </Carousel>
         </div>
       ))}
     </div>

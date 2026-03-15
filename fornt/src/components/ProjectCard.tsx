@@ -12,11 +12,10 @@ const ProjectCard = ({ title, description, tags, year }: { title: string; descri
     transition={transition}
     className="border border-border group hover:border-foreground transition-colors duration-200 overflow-hidden"
   >
-    <div className="aspect-video bg-muted grid-bg relative overflow-hidden">
+    <div className="aspect-[21/9] bg-muted grid-bg relative overflow-hidden">
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest">{title}</span>
       </div>
-      {/* Scanning line effect */}
       <div className="absolute left-0 right-0 h-px bg-accent opacity-0 group-hover:opacity-100 group-hover:animate-[scan_2s_ease-in-out_infinite] top-0" />
     </div>
     <div className="p-6 flex flex-col gap-3">
