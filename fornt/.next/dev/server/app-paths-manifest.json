@@ -1,4 +1,13 @@
 {
+  "/about/page": "app/about/page.js",
+  "/contact/page": "app/contact/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/login/page": "app/login/page.js",
   "/page": "app/page.js",
+  "/privacy/page": "app/privacy/page.js",
+  "/refund-cancellation/page": "app/refund-cancellation/page.js",
+  "/refund-policy/page": "app/refund-policy/page.js",
+  "/send-request/page": "app/send-request/page.js",
+  "/terms/page": "app/terms/page.js",
   "/work/page": "app/work/page.js"
 }
