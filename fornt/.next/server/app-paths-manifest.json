@@ -1,0 +1,19 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/about/page": "app/about/page.js",
+  "/contact/page": "app/contact/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/portfolio/[category]/page": "app/portfolio/[category]/page.js",
+  "/privacy/page": "app/privacy/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/refund-cancellation/page": "app/refund-cancellation/page.js",
+  "/refund-policy/page": "app/refund-policy/page.js",
+  "/send-request/page": "app/send-request/page.js",
+  "/services/page": "app/services/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/terms/page": "app/terms/page.js",
+  "/work/page": "app/work/page.js"
+}

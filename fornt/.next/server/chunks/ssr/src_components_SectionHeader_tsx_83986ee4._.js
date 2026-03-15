@@ -1,0 +1,3 @@
+module.exports=[5927,a=>{"use strict";var b=a.i(87924),c=a.i(46271);let d={duration:.5,ease:[.16,1,.3,1]};a.s(["default",0,({index:a,label:e,title:f,description:g})=>(0,b.jsxs)(c.motion.div,{initial:{opacity:0,y:20},whileInView:{opacity:1,y:0},viewport:{once:!0},transition:d,className:"mb-16",children:[(0,b.jsxs)("span",{className:"font-mono-label text-xs text-muted-foreground",children:[a," // ",e]}),(0,b.jsx)("h2",{className:"text-4xl md:text-5xl font-display tracking-tighter mt-2",children:f}),g&&(0,b.jsx)("p",{className:"text-lg text-muted-foreground max-w-[65ch] mt-4",children:g})]})])}];
+
+//# sourceMappingURL=src_components_SectionHeader_tsx_83986ee4._.js.map
