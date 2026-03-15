@@ -1,41 +1,56 @@
-# MatDash Free Tailwind Next.js Admin Template
-#### Preview
+# [DashUI Next.js Free Admin Template](https://dashui-free-nextjs-admin-template.vercel.app/)
+ Dash UI - Next.js Free admin / dashboard  template created by [Codescandy](https://codescandy.com/) and available on Github
 
- - [Demo](https://themewagon.github.io/matdash-nextjs/)
+![dashui-free-nextjs-admin-template](https://user-images.githubusercontent.com/68774600/231716707-3da30d19-b826-4692-b03a-fed41376d250.jpg)
 
-#### Download
- - [Download from ThemeWagon](https://themewagon.com/themes/matdash-nextjs/)
+ 
+## How to use DashUI?
 
-## Getting Started
-
-1. Clone Repository
+Clone the Dash UI repo:
 ```
-git clone https://github.com/themewagon/matdash-nextjs.git
+git clone https://github.com/codescandy/dashui-free-nextjs-admin-template.git
 ```
-2. Install Dependencies
+```
+cd dashui-free-nextjs-admin-template
+```
+
+##  🚀 Getting Started 
+
+### Installation 👨🏻‍💻
+
+1. Install all packages
+
 ```
 npm i
 ```
-3. Run the development server:
 
-```bash
+2. Run Development Server
+
+```
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+
+3. Build your project
+
+```
+npm run build
 ```
 
-## Author 
-```
-Design and code is completely written by adminmart and development team. 
-```
+## Dash UI Next.js Free / Pro Version
 
-## License
+| Free Version        | Dash UI Pro
+|---------------------|-------------------------------------------- |
+| 1 Dashboard      | Coming Soon...                                |
+| Profile      | -                                           |
+| Settings | -                                     |
+| Billing |
+| Pricing |
+| 404 Error |
+| Authentication |
+| [Demo](https://dashui-free-nextjs-admin-template.vercel.app/) |
 
- - Design and Code is Copyright &copy; [Adminmart](https://adminmart.com)
- - Licensed cover under [MIT]
- - Distributed by [ThemeWagon](https://themewagon.com)
+## Technical Support or Questions
+If you have questions or need help integrating the product please [contact us](https://codescandy.com/contact-us/).
 
