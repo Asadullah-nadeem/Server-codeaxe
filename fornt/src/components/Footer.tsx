@@ -39,7 +39,7 @@ const Footer = () => (
       </div>
       <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
         <span className="font-display text-lg tracking-tighter">Code<span className="text-accent">Axe</span></span>
-        <span className="font-mono-label text-xs text-muted-foreground">© {new Date().getFullYear()} CodeAxe. All rights reserved - <b>Version 1.0.0</b></span>
+        <span className="font-mono-label text-xs text-muted-foreground">© {new Date().getFullYear()} CodeAxe Technologies.<br /> All rights reserved. <br /><b>Version 1.0.0</b></span>
       </div>
     </div>
   </footer>

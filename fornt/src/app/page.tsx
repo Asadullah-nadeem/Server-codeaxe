@@ -55,13 +55,13 @@ const Index = () => (
         <div className="grid md:grid-cols-5 gap-16 items-start">
           <div className="md:col-span-3">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...transition, delay: 0 }} className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-6">
-              Software Engineering Partner
+              Custom Software I Build for You
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.1 }} className="text-5xl md:text-7xl lg:text-8xl font-display tracking-tighter text-balance leading-[0.95]">
               We build software that scales before you do.
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.2 }} className="text-lg text-muted-foreground max-w-[55ch] mt-8 leading-relaxed">
-              CodeAxe is a technical partner for companies requiring high-availability systems, custom browser tooling, and automated infrastructure. No fluff. Just engineering.
+              At Codeaxe Technologies, I build reliable software for companies that need high-availability systems, custom browser tools, and automated infrastructure. No fluff. Just engineering.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.3 }} className="flex flex-wrap gap-4 mt-10">
               <Link href="/work" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors duration-200">

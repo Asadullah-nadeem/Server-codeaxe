@@ -847,7 +847,7 @@ const Index = ()=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5
                                             delay: 0
                                         },
                                         className: "font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-6",
-                                        children: "Software Engineering Partner"
+                                        children: "Custom Software I Build for You"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
                                         lineNumber: 57,
@@ -887,7 +887,7 @@ const Index = ()=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5
                                             delay: 0.2
                                         },
                                         className: "text-lg text-muted-foreground max-w-[55ch] mt-8 leading-relaxed",
-                                        children: "CodeAxe is a technical partner for companies requiring high-availability systems, custom browser tooling, and automated infrastructure. No fluff. Just engineering."
+                                        children: "At Codeaxe Technologies, I build reliable software for companies that need high-availability systems, custom browser tools, and automated infrastructure. No fluff. Just engineering."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
                                         lineNumber: 63,
