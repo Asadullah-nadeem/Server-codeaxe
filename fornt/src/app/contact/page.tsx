@@ -65,7 +65,7 @@ const Contact = () => {
             <div className="border border-border p-8 space-y-6">
               <h3 className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground">Direct Contact</h3>
               {[
-                { icon: Mail, label: "hello@codeaxe.dev", href: "mailto:hello@codeaxe.dev" },
+                { icon: Mail, label: "hello@codeaxe.co.in", href: "mailto:hello@codeaxe.co.in" },
                 { icon: Github, label: "github.com/codeaxe", href: "https://github.com/codeaxe" },
                 { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com/company/codeaxe" },
                 { icon: MapPin, label: "Remote — Worldwide", href: "#" },
