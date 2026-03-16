@@ -1,4 +1,7 @@
+"use client";
 
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import ProjectCard from "@/components/ProjectCard";
 import {
@@ -9,72 +12,70 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-const categories = [
-  {
-    label: "WEB PLATFORMS",
-    projects: [
-      { title: "DataVault Platform", description: "Enterprise data management system with real-time sync and RBAC for 2M+ records.", tags: ["React", "Node.js", "PostgreSQL"], year: "2025" },
-      { title: "InvenTrack Dashboard", description: "Real-time inventory management platform for multi-warehouse logistics operations.", tags: ["Next.js", "GraphQL", "Redis"], year: "2024" },
-    ],
-  },
-  {
-    label: "BACKEND SYSTEMS",
-    projects: [
-      { title: "FlowSync API", description: "High-throughput API gateway processing 50K req/min with automatic failover.", tags: ["TypeScript", "Redis", "Docker"], year: "2025" },
-      { title: "AuthCore Engine", description: "Multi-tenant authentication service with OAuth2, SAML, and MFA support.", tags: ["Go", "PostgreSQL", "JWT"], year: "2024" },
-    ],
-  },
-  {
-    label: "AUTOMATION TOOLS",
-    projects: [
-      { title: "DeployBot", description: "CI/CD automation tool reducing deployment time by 80% across 15 microservices.", tags: ["GitHub Actions", "Docker", "Bash"], year: "2025" },
-      { title: "DataPipe ETL", description: "Automated data pipeline processing 10GB daily across 8 data sources.", tags: ["Python", "Airflow", "BigQuery"], year: "2024" },
-    ],
-  },
-  {
-    label: "API INTEGRATIONS",
-    projects: [
-      { title: "PayBridge", description: "Unified payment gateway integrating Stripe, PayPal, and regional providers.", tags: ["Node.js", "Stripe API", "Webhooks"], year: "2025" },
-    ],
-  },
-  {
-    label: "SOFTWARE SOLUTIONS",
-    projects: [
-      { title: "TaskForge Extension", description: "Chrome extension automating project management across 12 platforms.", tags: ["Chrome API", "React", "WebSocket"], year: "2024" },
-      { title: "SecureVault", description: "End-to-end encrypted document management system for legal firms.", tags: ["React", "AES-256", "AWS S3"], year: "2024" },
-    ],
-  },
-];
+const Work = () => {
+  const [header, setHeader] = useState<any>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-const Work = () => (
-  <>
-    <div className="container py-24 md:py-32">
-      <SectionHeader index="00" label="ALL WORK" title="Projects & Systems" description="A selection of systems engineered for performance, reliability, and scale." />
-      {categories.map((cat, ci) => (
-        <div key={cat.label} className="mb-20 last:mb-0">
-          <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest mb-8 block">{String(ci + 1).padStart(2, "0")} // {cat.label}</span>
-          <Carousel
-            opts={{
-              align: "start",
-            }}
-            className="w-full relative"
-          >
-            <CarouselContent>
-              {cat.projects.map((p) => (
-                <CarouselItem key={p.title} className="md:basis-1/2">
-                  <ProjectCard {...p} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="hidden md:block">
-              <CarouselPrevious className="-left-12 lg:-left-16" />
-              <CarouselNext className="-right-12 lg:-right-16" />
-            </div>
-          </Carousel>
-        </div>
-      ))}
-    </div>
-  </>
-);
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/work`, {
+      headers: {
+        "X-API-KEY": process.env.NEXT_PUBLIC_APP_KEY || "",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          if (res.data.header) setHeader(res.data.header);
+          if (res.data.categories?.length > 0) setCategories(res.data.categories);
+        }
+      })
+      .catch((err) => console.error("Failed fetching work data", err))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="fullscreen-loader">
+        <Loader2 className="animate-spin text-primary" size={56} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="container py-24 md:py-32">
+        {header && (
+          <SectionHeader
+            index={header.section_index}
+            label={header.label}
+            title={header.title}
+            description={header.description}
+          />
+        )}
+        {categories.map((cat, ci) => (
+          <div key={cat.id} className="mb-20 last:mb-0">
+            <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest mb-8 block">
+              {String(ci + 1).padStart(2, "0")} // {cat.label}
+            </span>
+            <Carousel opts={{ align: "start" }} className="w-full relative">
+              <CarouselContent>
+                {cat.projects?.map((p: any) => (
+                  <CarouselItem key={p.id} className="md:basis-1/2">
+                    <ProjectCard {...p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="hidden md:block">
+                <CarouselPrevious className="-left-12 lg:-left-16" />
+                <CarouselNext className="-right-12 lg:-right-16" />
+              </div>
+            </Carousel>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
 
 export default Work;

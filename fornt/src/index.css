@@ -62,4 +62,7 @@
     background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
     background-size: 32px 32px;
   }
+  .fullscreen-loader {
+    @apply fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md;
+  }
 }

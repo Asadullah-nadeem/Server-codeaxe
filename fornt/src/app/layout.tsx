@@ -11,7 +11,7 @@ export const metadata = { title: "CodeAxe", description: "CodeAxe Web Agency" };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning>
           <TooltipProvider>
             <Layout>
               {children}

@@ -5,12 +5,14 @@ type AppRoutes = "/" | "/about" | "/contact" | "/dashboard" | "/login" | "/portf
 type PageRoutes = never
 type LayoutRoutes = "/"
 type RedirectRoutes = never
-type RewriteRoutes = never
+type RewriteRoutes = "/_api/v1/[[...path]]" | "/_next/v1/[[...path]]"
 type Routes = AppRoutes | PageRoutes | LayoutRoutes | RedirectRoutes | RewriteRoutes
 
 
 interface ParamMap {
   "/": {}
+  "/_api/v1/[[...path]]": { "path"?: string[]; }
+  "/_next/v1/[[...path]]": { "path"?: string[]; }
   "/about": {}
   "/contact": {}
   "/dashboard": {}

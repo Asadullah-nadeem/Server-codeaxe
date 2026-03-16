@@ -1,7 +1,8 @@
 "use client";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Globe, Code2, Server, Chrome, Smartphone, Workflow, ArrowRight, Shield, Zap, Lock, CheckCircle } from "lucide-react";
+import { Globe, Code2, Server, Chrome, Smartphone, Workflow, ArrowRight, Shield, Zap, Lock, CheckCircle, Loader2 } from "lucide-react";
 
 import SectionHeader from "@/components/SectionHeader";
 import ServiceCard from "@/components/ServiceCard";
@@ -25,29 +26,74 @@ import firebaseLogo from "@/assets/tech/firebase.png";
 
 const transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const };
 
-const services = [
-  { index: "01", title: "Web Development", description: "Custom websites, platforms, dashboards, and business tools built with modern frameworks.", icon: Globe },
-  { index: "02", title: "Custom Software", description: "Internal tools and software systems engineered for your specific business requirements.", icon: Code2 },
-  { index: "03", title: "API Development", description: "Secure, scalable backend APIs with type-safe contracts and comprehensive documentation.", icon: Server },
-  { index: "04", title: "Chrome Extensions", description: "Browser extensions that automate tasks and improve team productivity at scale.", icon: Chrome },
-  { index: "05", title: "Mobile Applications", description: "Android and iOS applications designed for real-world use and performance.", icon: Smartphone },
-  { index: "06", title: "System Automation", description: "Connecting APIs, services, and databases to create fully automated workflows.", icon: Workflow },
-];
+const iconMap: any = { Globe, Code2, Server, Chrome, Smartphone, Workflow, Zap, Shield, Lock, CheckCircle };
+const techImageMap: any = { 
+  reactLogo, nodejsLogo, typescriptLogo, pythonLogo, 
+  dockerLogo, postgresqlLogo, awsLogo, firebaseLogo 
+};
+const partnerImageMap: any = {
+  googleLogo, facebookLogo, amazonLogo, microsoftLogo, appleLogo, slackLogo, spotifyLogo, netflixLogo
+};
 
-const projects = [
-  { title: "DataVault Platform", description: "Enterprise data management system handling 2M+ records with real-time sync and role-based access control.", tags: ["React", "Node.js", "PostgreSQL"], year: "2025" },
-  { title: "FlowSync API", description: "High-throughput API gateway processing 50K requests/minute with automatic failover and load balancing.", tags: ["TypeScript", "Redis", "Docker"], year: "2025" },
-  { title: "TaskForge Extension", description: "Chrome extension automating project management workflows across 12 integrated platforms.", tags: ["Chrome API", "React", "WebSocket"], year: "2024" },
-];
+const Index = () => {
+  const [services, setServices] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [principles, setPrinciples] = useState<any[]>([]);
+  const [technologies, setTechnologies] = useState<any[]>([]);
+  const [systemStatus, setSystemStatus] = useState<any[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [hero, setHero] = useState<any>({});
+  const [cta, setCta] = useState<any>({});
+  const [sectionHeaders, setSectionHeaders] = useState<any>({
+    system_status: {}, partners: {}, capabilities: {}, featured_work: {}, why_codeaxe: {}, technologies: {}
+  });
+  const [settings, setSettings] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-const stats = [
-  { value: "99.9%", label: "Uptime Architecture" },
-  { value: "0.4s", label: "Avg. Load Time" },
-  { value: "124+", label: "Delivered Systems" },
-  { value: "48h", label: "Response Time" },
-];
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/home`, {
+      headers: {
+        'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ""
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          if (res.data.services?.length > 0) {
+            setServices(res.data.services.map((s: any) => ({ ...s, icon: iconMap[s.icon] || Globe })));
+          }
+          if (res.data.projects?.length > 0) setProjects(res.data.projects);
+          if (res.data.stats?.length > 0) setStats(res.data.stats);
+          if (res.data.principles?.length > 0) {
+            setPrinciples(res.data.principles.map((p: any) => ({ ...p, icon: p.icon })));
+          }
+          if (res.data.technologies?.length > 0) {
+            setTechnologies(res.data.technologies.map((t: any) => ({ ...t, src: techImageMap[t.src] || reactLogo })));
+          }
+          if (res.data.system_status?.length > 0) setSystemStatus(res.data.system_status);
+          if (res.data.partners?.length > 0) {
+            setPartners(res.data.partners.map((p: any) => ({ ...p, src: partnerImageMap[p.src] || googleLogo })));
+          }
+          if (res.data.hero) setHero(res.data.hero);
+          if (res.data.cta) setCta(res.data.cta);
+          if (res.data.section_headers) setSectionHeaders((prev: any) => ({ ...prev, ...res.data.section_headers }));
+          if (res.data.settings) setSettings((prev: any) => ({ ...prev, ...res.data.settings }));
+        }
+      })
+      .catch(err => console.error("Failed fetching home data", err))
+      .finally(() => setIsLoading(false));
+  }, []);
 
-const Index = () => (
+  if (isLoading) {
+    return (
+      <div className="fullscreen-loader">
+        <Loader2 className="animate-spin text-primary" size={56} />
+      </div>
+    );
+  }
+
+  return (
   <>
     {/* Hero */}
     <section className="border-b border-border">
@@ -55,33 +101,27 @@ const Index = () => (
         <div className="grid md:grid-cols-5 gap-16 items-start">
           <div className="md:col-span-3">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...transition, delay: 0 }} className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-6">
-              Custom Software I Build for You
+              {hero.badge}
             </motion.p>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.1 }} className="text-5xl md:text-7xl lg:text-8xl font-display tracking-tighter text-balance leading-[0.95]">
-              We build software that scales before you do.
+              {hero.title}
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.2 }} className="text-lg text-muted-foreground max-w-[55ch] mt-8 leading-relaxed">
-              At Codeaxe Technologies, I build reliable software for companies that need high-availability systems, custom browser tools, and automated infrastructure. No fluff. Just engineering.
+              {hero.description}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...transition, delay: 0.3 }} className="flex flex-wrap gap-4 mt-10">
-              <Link href="/work" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors duration-200">
-                View Work <ArrowRight size={14} strokeWidth={1.5} />
+              <Link href={settings?.home_hero_btn1_link || "#"} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors duration-200">
+                {settings?.home_hero_btn1_label} <ArrowRight size={14} strokeWidth={1.5} />
               </Link>
-              <Link href="/contact" className="inline-flex items-center gap-2 border border-border px-8 py-4 font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:border-foreground hover:text-foreground transition-colors duration-200">
-                Start Project
+              <Link href={settings?.home_hero_btn2_link || "#"} className="inline-flex items-center gap-2 border border-border px-8 py-4 font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:border-foreground hover:text-foreground transition-colors duration-200">
+                {settings?.home_hero_btn2_label}
               </Link>
             </motion.div>
           </div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...transition, delay: 0.4 }} className="md:col-span-2 border border-border p-6 hidden md:block">
-            <div className="font-mono-label text-xs text-muted-foreground mb-4 uppercase tracking-widest">System Status</div>
+            <div className="font-mono-label text-xs text-muted-foreground mb-4 uppercase tracking-widest">{sectionHeaders.system_status.label}</div>
             <div className="space-y-3">
-              {[
-                { label: "API Gateway", status: "Operational", ping: "12ms" },
-                { label: "Database Cluster", status: "Operational", ping: "4ms" },
-                { label: "CDN Edge Nodes", status: "Operational", ping: "8ms" },
-                { label: "Auth Service", status: "Operational", ping: "6ms" },
-                { label: "Build Pipeline", status: "Operational", ping: "22ms" },
-              ].map((item) => (
+              {systemStatus.map((item) => (
                 <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm">{item.label}</span>
                   <div className="flex items-center gap-3">
@@ -114,18 +154,9 @@ const Index = () => (
     <section className="border-b border-border">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={transition}>
-          <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest block text-center mb-12">Partners</span>
+          <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest block text-center mb-12">{sectionHeaders.partners.label}</span>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-8 md:gap-12 items-center justify-items-center">
-            {[
-              { src: googleLogo, name: "Google" },
-              { src: facebookLogo, name: "Facebook" },
-              { src: amazonLogo, name: "Amazon" },
-              { src: microsoftLogo, name: "Microsoft" },
-              { src: appleLogo, name: "Apple" },
-              { src: slackLogo, name: "Slack" },
-              { src: spotifyLogo, name: "Spotify" },
-              { src: netflixLogo, name: "Netflix" },
-            ].map((partner, i) => (
+            {partners.map((partner, i) => (
               <motion.div key={partner.name} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.05 }} className="flex flex-col items-center gap-3 group">
                 <img src={partner.src.src} alt={partner.name} className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
                 <span className="font-mono-label text-[10px] text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors duration-200">{partner.name}</span>
@@ -138,10 +169,12 @@ const Index = () => (
 
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
-        <SectionHeader index="01" label="CAPABILITIES" title="Engineering Services" description="Full-stack development services built on modern, scalable architecture." />
+        {sectionHeaders?.capabilities && (
+          <SectionHeader index={sectionHeaders.capabilities.section_index} label={sectionHeaders.capabilities.label} title={sectionHeaders.capabilities.title} description={sectionHeaders.capabilities.description} />
+        )}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border overflow-hidden">
-          {services.map((s) => (
-            <ServiceCard key={s.index} {...s} />
+          {services.map((s, idx) => (
+            <ServiceCard key={s.id || s.index || idx} {...s} />
           ))}
         </div>
       </div>
@@ -150,15 +183,17 @@ const Index = () => (
     {/* Featured Work */}
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
-        <SectionHeader index="02" label="FEATURED WORK" title="Selected Projects" description="Systems built for performance, reliability, and scale." />
+        {sectionHeaders?.featured_work && (
+          <SectionHeader index={sectionHeaders.featured_work.section_index} label={sectionHeaders.featured_work.label} title={sectionHeaders.featured_work.title} description={sectionHeaders.featured_work.description} />
+        )}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((p) => (
-            <ProjectCard key={p.title} {...p} />
+          {projects.map((p, idx) => (
+            <ProjectCard key={p.id || p.title || idx} {...p} />
           ))}
         </div>
         <div className="mt-12 text-center">
-          <Link href="/work" className="inline-flex items-center gap-2 font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">
-            View All Projects <ArrowRight size={14} strokeWidth={1.5} />
+          <Link href={settings?.home_featured_btn_link || "#"} className="inline-flex items-center gap-2 font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">
+            {settings?.home_featured_btn_label} <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </div>
       </div>
@@ -167,20 +202,20 @@ const Index = () => (
     {/* Why CodeAxe */}
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
-        <SectionHeader index="03" label="WHY CODEAXE" title="Engineering Principles" />
+        {sectionHeaders?.why_codeaxe && (
+          <SectionHeader index={sectionHeaders.why_codeaxe.section_index} label={sectionHeaders.why_codeaxe.label} title={sectionHeaders.why_codeaxe.title} description={sectionHeaders.why_codeaxe.description} />
+        )}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border overflow-hidden">
-          {[
-            { icon: Zap, title: "Clean Architecture", desc: "Modular, maintainable codebases that scale with your team." },
-            { icon: Shield, title: "Secure Backend", desc: "Defense-in-depth security with encrypted data at rest and in transit." },
-            { icon: Lock, title: "Reliable Systems", desc: "99.9% uptime architecture with automated failover and monitoring." },
-            { icon: CheckCircle, title: "Professional Delivery", desc: "On-time delivery with clear communication and documentation." },
-          ].map((item, i) => (
-            <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.1 }} className="p-8 bg-background">
-              <item.icon size={20} strokeWidth={1.5} className="text-muted-foreground mb-4" />
-              <h3 className="font-display text-lg mb-2">{item.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-            </motion.div>
-          ))}
+          {principles.map((item, i) => {
+            const IconComp = iconMap[item.icon] || Zap;
+            return (
+              <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.1 }} className="p-8 bg-background">
+                <IconComp size={20} strokeWidth={1.5} className="text-muted-foreground mb-4" />
+                <h3 className="font-display text-lg mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -189,18 +224,9 @@ const Index = () => (
     <section className="border-b border-border">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={transition}>
-          <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest block text-center mb-12">Best Technologies We Use</span>
+          <span className="font-mono-label text-xs text-muted-foreground uppercase tracking-widest block text-center mb-12">{sectionHeaders?.technologies?.label}</span>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-8 md:gap-12 items-center justify-items-center">
-            {[
-              { src: reactLogo, name: "React" },
-              { src: nodejsLogo, name: "Node.js" },
-              { src: typescriptLogo, name: "TypeScript" },
-              { src: pythonLogo, name: "Python" },
-              { src: dockerLogo, name: "Docker" },
-              { src: postgresqlLogo, name: "PostgreSQL" },
-              { src: awsLogo, name: "AWS" },
-              { src: firebaseLogo, name: "Firebase" },
-            ].map((tech, i) => (
+            {technologies.map((tech, i) => (
               <motion.div key={tech.name} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.05 }} className="flex flex-col items-center gap-3 group">
                 <img src={tech.src.src} alt={tech.name} className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
                 <span className="font-mono-label text-[10px] text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors duration-200">{tech.name}</span>
@@ -214,16 +240,17 @@ const Index = () => (
     <section className="border-b border-border grid-bg">
       <div className="container py-24 md:py-32 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={transition}>
-          <span className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground">Ready to build?</span>
-          <h2 className="text-4xl md:text-5xl font-display tracking-tighter mt-4">Let's engineer your next system.</h2>
-          <p className="text-lg text-muted-foreground mt-4 max-w-[50ch] mx-auto">From architecture to deployment — we handle the full stack.</p>
-          <Link href="/contact" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors duration-200 mt-10">
-            Start Your Project <ArrowRight size={14} strokeWidth={1.5} />
+          <span className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground">{cta.badge}</span>
+          <h2 className="text-4xl md:text-5xl font-display tracking-tighter mt-4">{cta.title}</h2>
+          <p className="text-lg text-muted-foreground mt-4 max-w-[50ch] mx-auto">{cta.description}</p>
+          <Link href={cta?.button_link || "#"} className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors duration-200 mt-10">
+            {cta?.button_label} <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </motion.div>
       </div>
     </section>
   </>
-);
+  );
+};
 
 export default Index;

@@ -4,35 +4,49 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-// No supabase
-
-const portfolioItems = [
-  { label: "Chrome Extensions", path: "/portfolio/chrome-extensions" },
-  { label: "Web Tools", path: "/portfolio/web-tools" },
-  { label: "App Store", path: "/portfolio/app-store" },
-  { label: "Play Store", path: "/portfolio/play-store" },
-  { label: "Client Projects", path: "/portfolio/client-projects" },
-];
-
-const infoItems = [
-  { label: "About Us", path: "/about" },
-  { label: "Contact", path: "/contact" },
-  { label: "Privacy Policy", path: "/privacy" },
-  { label: "Terms of Service", path: "/terms" },
-  { label: "Refund & Cancellation", path: "/refund-cancellation" },
-  { label: "Refund Policy", path: "/refund-policy" },
-];
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mainItems, setMainItems] = useState<any[]>([]);
+  const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
+  const [infoItems, setInfoItems] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>({});
   const pathname = usePathname();
 
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("mock_session"));
     const handleStorage = () => setIsLoggedIn(!!localStorage.getItem("mock_session"));
     window.addEventListener("storage", handleStorage);
+    
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/nav`, {
+      headers: {
+        'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ""
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          // deduplicate by path to prevent React StrictMode double-fetch duplicates
+          const dedup = (arr: any[]) => {
+            const seen = new Set();
+            return arr.filter((item) => {
+              if (seen.has(item.path)) return false;
+              seen.add(item.path);
+              return true;
+            });
+          };
+          if (res.data.mainItems?.length > 0) setMainItems(dedup(res.data.mainItems));
+          if (res.data.portfolioItems?.length > 0) setPortfolioItems(dedup(res.data.portfolioItems));
+          if (res.data.infoItems?.length > 0) setInfoItems(dedup(res.data.infoItems));
+          if (res.data.settings) {
+            setSettings((prev: any) => ({ ...prev, ...res.data.settings }));
+          }
+        }
+      })
+      .catch(err => console.error("Failed fetching nav", err));
+
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
@@ -41,26 +55,37 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="font-display text-xl tracking-tighter">
-          Code<span className="text-accent">Axe</span>
+        <Link href="/" className="flex items-center">
+          {settings.site_logo_url ? (
+            <img
+              src={settings.site_logo_url}
+              alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
+              className="h-8 w-auto object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <span className="font-display text-xl tracking-tighter">
+              {settings.site_name_prefix}<span className="text-accent">{settings.site_name_accent}</span>
+            </span>
+          )}
         </Link>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/" className={`font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive("/") ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Home</Link>
-          <Link href="/work" className={`font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive("/work") ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Work</Link>
-          <Link href="/services" className={`font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive("/services") ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Services</Link>
+          {mainItems.map((item) => (
+            <Link key={`main-${item.id || item.path}`} href={item.path || '#'} className={`font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive(item.path) ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{item.label}</Link>
+          ))}
 
           {/* Portfolio Dropdown */}
           <div className="relative" onMouseEnter={() => setOpenDropdown("portfolio")} onMouseLeave={() => setOpenDropdown(null)}>
             <button className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
-              Portfolio <ChevronDown size={12} strokeWidth={1.5} />
+              {settings.nav_portfolio_label} <ChevronDown size={12} strokeWidth={1.5} />
             </button>
             <AnimatePresence>
               {openDropdown === "portfolio" && (
                 <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 mt-2 w-48 border border-border bg-background p-2">
                   {portfolioItems.map((item) => (
-                    <Link key={item.path} href={item.path} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
+                    <Link key={`portfolio-${item.id || item.path}`} href={item.path || '#'} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
                   ))}
                 </motion.div>
               )}
@@ -70,13 +95,13 @@ const Navbar = () => {
           {/* Info Dropdown */}
           <div className="relative" onMouseEnter={() => setOpenDropdown("info")} onMouseLeave={() => setOpenDropdown(null)}>
             <button className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
-              Info <ChevronDown size={12} strokeWidth={1.5} />
+              {settings.nav_info_label} <ChevronDown size={12} strokeWidth={1.5} />
             </button>
             <AnimatePresence>
               {openDropdown === "info" && (
                 <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }} className="absolute top-full right-0 mt-2 w-48 border border-border bg-background p-2">
                   {infoItems.map((item) => (
-                    <Link key={item.path} href={item.path} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
+                    <Link key={`info-${item.id || item.path}`} href={item.path || '#'} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
                   ))}
                 </motion.div>
               )}
@@ -86,12 +111,12 @@ const Navbar = () => {
           {isLoggedIn ? (
             <div className="flex items-center gap-3">
               <Link href="/send-request" className="bg-accent text-accent-foreground px-4 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-accent/90 transition-colors duration-200 flex items-center gap-2">
-                <Send size={12} /> Send Request
+                <Send size={12} /> {settings.nav_btn_send_request}
               </Link>
-              <Link href="/dashboard" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors duration-200">Dashboard</Link>
+              <Link href="/dashboard" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors duration-200">{settings.nav_btn_dashboard}</Link>
             </div>
           ) : (
-            <Link href="/login" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-accent transition-colors duration-200">Login</Link>
+            <Link href="/login" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-accent transition-colors duration-200">{settings.nav_btn_login}</Link>
           )}
         </div>
 
@@ -107,16 +132,14 @@ const Navbar = () => {
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="md:hidden overflow-hidden border-t border-border">
             <div className="container py-6 flex flex-col gap-4">
               {[
-                { label: "Home", path: "/" },
-                { label: "Work", path: "/work" },
-                { label: "Services", path: "/services" },
+                ...mainItems,
                 ...portfolioItems,
                 ...infoItems,
                 ...(isLoggedIn
-                  ? [{ label: "Dashboard", path: "/dashboard" }, { label: "Send Request", path: "/send-request" }, { label: "Profile", path: "/profile" }]
-                  : [{ label: "Login", path: "/login" }, { label: "Sign Up", path: "/signup" }]),
-              ].map((item) => (
-                <Link key={item.path} href={item.path} onClick={() => setMobileOpen(false)} className="font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">{item.label}</Link>
+                  ? [{ label: settings.nav_btn_dashboard, path: "/dashboard" }, { label: settings.nav_btn_send_request, path: "/send-request" }, { label: settings.nav_btn_profile, path: "/profile" }]
+                  : [{ label: settings.nav_btn_login, path: "/login" }, { label: settings.nav_btn_signup, path: "/signup" }]),
+              ].map((item, i) => (
+                <Link key={i + '-' + item.path} href={item.path} onClick={() => setMobileOpen(false)} className="font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">{item.label}</Link>
               ))}
             </div>
           </motion.div>
