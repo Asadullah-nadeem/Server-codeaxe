@@ -37,6 +37,8 @@ Route::get('/auth/page/{type}', [AuthController::class, 'pageConfig']);
 Route::post('/auth/signup', [AuthController::class, 'signup']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/auth/verify', [AuthController::class, 'verify']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 // Dashboard (Protected by User Token)
 Route::middleware([AuthUserMiddleware::class])->group(function () {

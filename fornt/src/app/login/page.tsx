@@ -155,7 +155,12 @@ export default function Login() {
             )}
           </button>
 
-          <div className="text-center pt-4 border-t border-border mt-6">
+          <div className="text-center pt-4 border-t border-border mt-6 space-y-2">
+            <p className="text-xs text-muted-foreground font-mono-label">
+              <Link href="/forgot-password" className="text-foreground hover:text-accent transition-colors">
+                Forgot your password?
+              </Link>
+            </p>
             <p className="text-xs text-muted-foreground font-mono-label">
               Don't have an account?{" "}
               <Link href="/signup" className="text-foreground hover:text-accent transition-colors">
