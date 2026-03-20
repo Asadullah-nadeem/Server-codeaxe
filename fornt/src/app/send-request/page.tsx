@@ -1,126 +1,207 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { Loader2, ArrowLeft, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-
-const portfolioOptions = [
-  { value: "chrome-extensions", label: "Chrome Extensions" },
-  { value: "web-tools", label: "Web Tools" },
-  { value: "app-store", label: "App Store" },
-  { value: "play-store", label: "Play Store" },
-  { value: "client-projects", label: "Client Projects" },
-];
-
-const SendRequest = () => {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [requirement, setRequirement] = useState("");
-  const [portfolioCategory, setPortfolioCategory] = useState("");
-  const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function SendRequest() {
   const router = useRouter();
-  const { toast } = useToast();
+  const [ui, setUi] = useState<any>(null);
+  const [loadingUi, setLoadingUi] = useState(true);
+
+  const [form, setForm] = useState({ title: "", service_type: "", budget: "", description: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      
-    const sessionStr = typeof window !== 'undefined' ? localStorage.getItem("mock_session") : null;
-    const session = sessionStr ? JSON.parse(sessionStr) : null;
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
     
-      if (!session) {
-        router.push("/login");
-        return;
-      }
-      setEmail(session.user.email || "");
-      setName(session.user.user_metadata?.full_name || "");
-    };
-    checkAuth();
+    fetch(`${API}/dashboard/request/ui`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success) setUi(res.data);
+      })
+      .finally(() => setLoadingUi(false));
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    
-    const sessionStr = typeof window !== 'undefined' ? localStorage.getItem("mock_session") : null;
-    const session = sessionStr ? JSON.parse(sessionStr) : null;
-    
-    if (!session) {
-      router.push("/login");
-      return;
-    }
+    setIsSubmitting(true);
+    setError(null);
 
-    
-    const newReq = { id: Date.now().toString(), name, phone, email, requirement, portfolio_category: portfolioCategory || null, comment: comment || null, status: "pending", created_at: new Date().toISOString() };
-    const existingStr = localStorage.getItem("mock_requests");
-    const existing = existingStr ? JSON.parse(existingStr) : [];
-    localStorage.setItem("mock_requests", JSON.stringify([newReq, ...existing]));
-    const error: any = null;
-    
+    const token = localStorage.getItem("api_token");
 
-    setLoading(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Request sent!", description: "Your request has been submitted successfully." });
-      router.push("/dashboard");
+    try {
+      const res = await fetch(`${API}/dashboard/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess(true);
+      } else {
+        setError(data.message || "Failed to submit request.");
+        if (data.message.includes("Unauthorized")) {
+          localStorage.removeItem("api_token");
+          router.push("/login");
+        }
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <>
-      <div className="container max-w-lg py-12">
-        <h1 className="font-display text-3xl tracking-tighter mb-2">Send Request</h1>
-        <p className="text-muted-foreground font-mono-label text-xs uppercase tracking-widest mb-8">Tell us what you need</p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1" />
-          </div>
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Phone Number</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} required className="mt-1" />
-          </div>
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
-          </div>
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Requirement</Label>
-            <Textarea value={requirement} onChange={(e) => setRequirement(e.target.value)} required className="mt-1" placeholder="Describe what you need..." />
-          </div>
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Portfolio Category (Optional)</Label>
-            <Select value={portfolioCategory} onValueChange={setPortfolioCategory}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {portfolioOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="font-mono-label text-xs uppercase tracking-widest">Comment</Label>
-            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} className="mt-1" placeholder="Any additional notes..." />
-          </div>
-          <Button type="submit" disabled={loading} className="w-full font-mono-label text-xs uppercase tracking-widest">
-            {loading ? "Submitting..." : "Submit Request"}
-          </Button>
-        </form>
+  if (loadingUi) {
+    return (
+      <div className="fullscreen-loader">
+        <Loader2 className="animate-spin text-primary" size={56} />
       </div>
-    </>
-  );
-};
+    );
+  }
 
-export default SendRequest;
+  return (
+    <div className="container py-24 md:py-32 min-h-[80vh]">
+      <div className="max-w-2xl mx-auto border border-border p-8 md:p-12">
+        <div className="mb-10">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground mb-8 transition-colors"
+          >
+            <ArrowLeft size={12} /> Back to Dashboard
+          </Link>
+          <h1 className="text-3xl font-display mb-2">{ui?.title || "New Request"}</h1>
+          <p className="text-muted-foreground text-sm">{ui?.subtitle || "Submit details to start a new project."}</p>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {success ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-12"
+            >
+              <CheckCircle size={48} className="text-accent mx-auto mb-4" strokeWidth={1} />
+              <h2 className="text-xl font-display mb-2">Request Submitted</h2>
+              <p className="text-muted-foreground mb-8">
+                Your project request has been securely delivered to our team. We'll review it and get back to you shortly.
+              </p>
+              <Link
+                href="/dashboard"
+                className="bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors"
+              >
+                Return to Dashboard
+              </Link>
+            </motion.div>
+          ) : (
+            <motion.form
+              key="form"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              <div>
+                <label className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+                  Project Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                  placeholder="e.g. E-Commerce Redesign"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+                    Service Type *
+                  </label>
+                  <select
+                    required
+                    value={form.service_type}
+                    onChange={(e) => setForm({ ...form, service_type: e.target.value })}
+                    className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors appearance-none"
+                  >
+                    <option value="" disabled>Select a service</option>
+                    <option value="Web Development">Web Development</option>
+                    <option value="Mobile App">Mobile App</option>
+                    <option value="UI/UX Design">UI/UX Design</option>
+                    <option value="Cloud Architecture">Cloud Architecture</option>
+                    <option value="Other">Other / Strategy</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+                    Budget (Optional)
+                  </label>
+                  <select
+                    value={form.budget}
+                    onChange={(e) => setForm({ ...form, budget: e.target.value })}
+                    className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors appearance-none"
+                  >
+                    <option value="" disabled>Select range</option>
+                    <option value="< $5k">&lt; $5,000</option>
+                    <option value="$5k - $10k">$5k - $10k</option>
+                    <option value="$10k - $25k">$10k - $25k</option>
+                    <option value="$25k+">$25k+</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mb-2 block">
+                  Detailed Description *
+                </label>
+                <textarea
+                  required
+                  rows={6}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors resize-none"
+                  placeholder="Tell us everything we need to know..."
+                />
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-sm text-destructive border border-destructive/20 bg-destructive/5 px-4 py-3">
+                  <AlertCircle size={14} /> {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full inline-flex justify-center items-center gap-2 bg-primary text-primary-foreground px-8 py-4 font-mono-label text-sm uppercase tracking-widest hover:bg-accent transition-colors disabled:opacity-60 disabled:pointer-events-none"
+              >
+                {isSubmitting ? (
+                  <><Loader2 size={14} className="animate-spin" /> Submitting…</>
+                ) : (
+                  <>Submit Request <Send size={14} strokeWidth={1.5} /></>
+                )}
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

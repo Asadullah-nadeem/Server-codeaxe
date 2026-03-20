@@ -19,7 +19,13 @@ try {
         __DIR__ . '/sql/schema_headers.sql',
         __DIR__ . '/sql/schema_settings.sql',
         __DIR__ . '/sql/schema_work.sql',
-        __DIR__ . '/sql/schema_rewrites.sql'
+        __DIR__ . '/sql/schema_rewrites.sql',
+        __DIR__ . '/sql/schema_services.sql',
+        __DIR__ . '/sql/schema_portfolio.sql',
+        __DIR__ . '/sql/schema_pages.sql',
+        __DIR__ . '/sql/schema_contact.sql',
+        __DIR__ . '/sql/schema_auth.sql',
+        __DIR__ . '/sql/schema_dashboard.sql'
     ];
 
     foreach ($files as $file) {

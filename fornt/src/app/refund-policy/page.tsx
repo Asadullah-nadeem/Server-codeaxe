@@ -1,4 +1,5 @@
-import LegalPage from "../../components/LegalPage";
+"use client";
+import LegalPage from "@/components/LegalPage";
 
 export default function Page() {
   return <LegalPage type="refund-policy" />;

@@ -1,126 +1,111 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import ProjectCard from "@/components/ProjectCard";
 
 const transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const };
-const ITEMS_PER_PAGE = 6;
-
-const categories = [
-  { slug: "chrome-extensions", label: "Chrome Extensions" },
-  { slug: "web-tools", label: "Web Tools" },
-  { slug: "app-store", label: "App Store" },
-  { slug: "play-store", label: "Play Store" },
-  { slug: "client-projects", label: "Client Projects" },
-];
-
-const portfolioData: Record<string, { title: string; description: string; projects: { title: string; description: string; tags: string[]; year: string }[] }> = {
-  "chrome-extensions": {
-    title: "Chrome Extensions",
-    description: "Browser tools engineered for productivity and automation.",
-    projects: [
-      { title: "TaskForge", description: "Project management automation across 12 platforms with real-time sync.", tags: ["Chrome API", "React", "WebSocket"], year: "2024" },
-      { title: "DataSnap", description: "Automated data extraction tool with configurable selectors and export formats.", tags: ["Chrome API", "TypeScript"], year: "2024" },
-      { title: "TabManager Pro", description: "Intelligent tab grouping and session management for power users.", tags: ["Chrome API", "IndexedDB"], year: "2023" },
-      { title: "FormFiller", description: "Auto-fill browser extension with encrypted credential storage and team sharing.", tags: ["Chrome API", "AES-256"], year: "2023" },
-      { title: "PageMonitor", description: "Website change detection and alert system for competitive analysis.", tags: ["Chrome API", "Diff Engine"], year: "2023" },
-      { title: "LinkVault", description: "Bookmark manager with tagging, search, and cross-device sync.", tags: ["Chrome API", "Firebase"], year: "2022" },
-      { title: "ScreenCapture+", description: "Full-page screenshot and annotation tool with cloud storage.", tags: ["Chrome API", "Canvas API"], year: "2022" },
-      { title: "AdBlock Custom", description: "Customizable content filter with whitelist rules for enterprise use.", tags: ["Chrome API", "RegExp"], year: "2022" },
-    ],
-  },
-  "web-tools": {
-    title: "Web Tools",
-    description: "Online utilities and tools built for developers and businesses.",
-    projects: [
-      { title: "APITester", description: "Browser-based API testing tool with request history and team sharing.", tags: ["React", "IndexedDB", "WebWorkers"], year: "2025" },
-      { title: "JSONForge", description: "Advanced JSON editor with schema validation and diff comparison.", tags: ["TypeScript", "Monaco Editor"], year: "2024" },
-      { title: "CSSGrid Builder", description: "Visual CSS grid layout builder with export to production code.", tags: ["React", "CSS Grid"], year: "2024" },
-      { title: "ColorPalette Pro", description: "AI-powered color palette generator with accessibility contrast checker.", tags: ["React", "Color Theory"], year: "2024" },
-      { title: "MarkdownLive", description: "Real-time collaborative markdown editor with export to PDF and HTML.", tags: ["React", "WebSocket", "PDF.js"], year: "2023" },
-      { title: "RegexPlayground", description: "Interactive regex builder with visual matching and test suite generation.", tags: ["TypeScript", "RegExp"], year: "2023" },
-      { title: "SVG Optimizer", description: "Batch SVG optimization tool reducing file sizes by up to 60%.", tags: ["Node.js", "SVGO"], year: "2023" },
-    ],
-  },
-  "app-store": {
-    title: "App Store",
-    description: "iOS applications designed for real-world performance.",
-    projects: [
-      { title: "FocusTimer", description: "Pomodoro-based productivity app with analytics and widget support.", tags: ["Swift", "SwiftUI", "CoreData"], year: "2024" },
-      { title: "ExpenseLog", description: "Personal finance tracker with bank sync and receipt scanning.", tags: ["Swift", "Vision API", "CloudKit"], year: "2024" },
-      { title: "MealPlanner", description: "Nutrition tracking app with barcode scanning and weekly meal plans.", tags: ["Swift", "HealthKit"], year: "2024" },
-      { title: "HabitLoop", description: "Habit tracking app with streak analytics and motivational nudges.", tags: ["SwiftUI", "CoreData"], year: "2023" },
-      { title: "VoiceMemo Pro", description: "Audio recording app with transcription and cloud backup.", tags: ["Swift", "Speech API", "iCloud"], year: "2023" },
-      { title: "PhotoVault", description: "Private photo storage with Face ID lock and encrypted albums.", tags: ["Swift", "CryptoKit"], year: "2023" },
-      { title: "WeatherNow", description: "Hyper-local weather app with radar maps and severe weather alerts.", tags: ["SwiftUI", "WeatherKit"], year: "2022" },
-    ],
-  },
-  "play-store": {
-    title: "Play Store",
-    description: "Android applications built for reliability.",
-    projects: [
-      { title: "RouteOptimizer", description: "Delivery route optimization app reducing travel time by 35%.", tags: ["Kotlin", "Google Maps API"], year: "2025" },
-      { title: "FieldReport", description: "Offline-first field reporting app for construction teams.", tags: ["Kotlin", "Room DB", "WorkManager"], year: "2024" },
-      { title: "InventorySync", description: "Warehouse inventory management with barcode scanning and real-time sync.", tags: ["Kotlin", "ML Kit"], year: "2024" },
-      { title: "FleetTracker", description: "Real-time vehicle tracking and driver management system.", tags: ["Kotlin", "Firebase", "Maps SDK"], year: "2024" },
-      { title: "TaskRunner", description: "Field service management app with job assignment and GPS tracking.", tags: ["Kotlin", "Jetpack Compose"], year: "2023" },
-      { title: "SafeCheck", description: "Workplace safety inspection app with photo documentation and compliance reports.", tags: ["Kotlin", "CameraX"], year: "2023" },
-      { title: "TimeSheet Pro", description: "Employee time tracking with geofencing and payroll integration.", tags: ["Kotlin", "Geofencing API"], year: "2023" },
-    ],
-  },
-  "client-projects": {
-    title: "Client Projects",
-    description: "Delivered systems for businesses across industries.",
-    projects: [
-      { title: "DataVault Platform", description: "Enterprise data management handling 2M+ records with RBAC.", tags: ["React", "Node.js", "PostgreSQL"], year: "2025" },
-      { title: "SecureVault", description: "E2E encrypted document management for legal firms.", tags: ["React", "AES-256", "AWS S3"], year: "2024" },
-      { title: "PayBridge", description: "Unified payment gateway integrating Stripe, PayPal, and regional providers.", tags: ["Node.js", "Stripe API"], year: "2025" },
-      { title: "LogiFlow ERP", description: "Custom ERP system for logistics company managing 500+ daily shipments.", tags: ["React", "PostgreSQL", "Docker"], year: "2024" },
-      { title: "MediTrack", description: "Patient management platform for healthcare clinics with HIPAA compliance.", tags: ["React", "Node.js", "MongoDB"], year: "2024" },
-      { title: "EduPortal", description: "Online learning platform with live classes and automated grading.", tags: ["React", "WebRTC", "Redis"], year: "2023" },
-      { title: "PropManage", description: "Property management system with tenant portal and maintenance tracking.", tags: ["React", "Express", "PostgreSQL"], year: "2023" },
-      { title: "RetailPOS", description: "Cloud-based point-of-sale system with multi-location inventory sync.", tags: ["React", "Node.js", "Stripe"], year: "2023" },
-    ],
-  },
-};
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const KEY = process.env.NEXT_PUBLIC_APP_KEY || "";
 
 const Portfolio = () => {
-  const { category } = useParams<{ category: string }>();
-  const [currentPage, setCurrentPage] = useState(1);
-  const data = portfolioData[category || ""] || { title: "Portfolio", description: "Our work.", projects: [] };
+  const { category: slug } = useParams<{ category: string }>();
+  const router = useRouter();
 
-  const totalPages = Math.ceil(data.projects.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedProjects = data.projects.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(false);
+
+  // Load all active categories for the tab bar (no API key needed - public)
+  useEffect(() => {
+    fetch(`${API}/portfolio`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data?.length > 0) {
+          setAllCategories(res.data);
+          // If no slug, redirect to first active category
+          if (!slug && res.data[0]) {
+            router.replace(`/portfolio/${res.data[0].slug}`);
+          }
+        }
+      })
+      .catch((err) => console.error("Failed fetching portfolio categories", err));
+  }, []);
+
+  // Load items for current category + page
+  const loadItems = useCallback(
+    (page: number) => {
+      if (!slug) return;
+      page === 1 ? setIsLoading(true) : setIsPageLoading(true);
+
+      fetch(`${API}/portfolio/${slug}?page=${page}&per_page=6`)
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success && res.data) {
+            setCategoryData(res.data.category);
+            setItems(res.data.items);
+            setCurrentPage(res.data.current_page);
+            setTotalPages(res.data.total_pages);
+            setTotal(res.data.total);
+          }
+        })
+        .catch((err) => console.error("Failed fetching portfolio items", err))
+        .finally(() => {
+          setIsLoading(false);
+          setIsPageLoading(false);
+        });
+    },
+    [slug]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+    loadItems(1);
+  }, [slug]);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    loadItems(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Reset page when category changes
-  const currentCategory = category;
-  useState(() => { setCurrentPage(1); });
+  if (isLoading) {
+    return (
+      <div className="fullscreen-loader">
+        <Loader2 className="animate-spin text-primary" size={56} />
+      </div>
+    );
+  }
+
+  const startIndex = (currentPage - 1) * 6;
 
   return (
     <>
       <div className="container py-24 md:py-32">
-        <SectionHeader index="00" label="PORTFOLIO" title={data.title} description={data.description} />
+        {/* Page Header */}
+        <SectionHeader
+          index="00"
+          label="PORTFOLIO"
+          title={categoryData?.label || "Portfolio"}
+          description={categoryData?.description || "Our work."}
+        />
 
-        {/* Category Tabs */}
+        {/* Category Tabs — driven by DB */}
         <div className="flex flex-wrap gap-2 mb-12 border-b border-border pb-6">
-          {categories.map((cat) => (
+          {allCategories.map((cat) => (
             <Link
               key={cat.slug}
               href={`/portfolio/${cat.slug}`}
               onClick={() => setCurrentPage(1)}
               className={`px-4 py-2 font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 border ${
-                currentCategory === cat.slug
+                slug === cat.slug
                   ? "border-foreground text-foreground bg-foreground text-primary-foreground"
                   : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
               }`}
@@ -131,17 +116,31 @@ const Portfolio = () => {
         </div>
 
         {/* Projects Grid */}
-        <motion.div
-          key={`${category}-${currentPage}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transition}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {paginatedProjects.map((p) => (
-            <ProjectCard key={p.title} {...p} />
-          ))}
-        </motion.div>
+        {isPageLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="animate-spin text-muted-foreground" size={32} />
+          </div>
+        ) : (
+          <motion.div
+            key={`${slug}-${currentPage}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={transition}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {items.map((p) => (
+              <ProjectCard
+                key={p.id}
+                title={p.title}
+                description={p.description}
+                tags={Array.isArray(p.tags) ? p.tags : []}
+                year={p.project_year || ""}
+                image_url={p.image_url}
+                project_url={p.project_url}
+              />
+            ))}
+          </motion.div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -177,7 +176,7 @@ const Portfolio = () => {
             </button>
 
             <span className="ml-4 font-mono-label text-xs text-muted-foreground">
-              {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, data.projects.length)} of {data.projects.length}
+              {startIndex + 1}–{Math.min(startIndex + 6, total)} of {total}
             </span>
           </div>
         )}
