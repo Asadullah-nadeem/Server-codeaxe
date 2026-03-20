@@ -25,7 +25,8 @@ try {
         __DIR__ . '/sql/schema_pages.sql',
         __DIR__ . '/sql/schema_contact.sql',
         __DIR__ . '/sql/schema_auth.sql',
-        __DIR__ . '/sql/schema_dashboard.sql'
+        __DIR__ . '/sql/schema_dashboard.sql',
+        __DIR__ . '/sql/schema_dms.sql'
     ];
 
     foreach ($files as $file) {

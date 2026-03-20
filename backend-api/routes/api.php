@@ -13,8 +13,10 @@ use App\Http\Controllers\Api\PagesController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DmsController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
+use App\Http\Middleware\DmsApiKeyMiddleware;
 
 // Public routes — called client-side without API key
 Route::get('/rewrites', [RewriteController::class, 'index']);
@@ -48,6 +50,35 @@ Route::middleware([AuthUserMiddleware::class])->group(function () {
 
 // Send Request UI (Public or semi-public to get text)
 Route::get('/dashboard/request/ui', [DashboardController::class, 'requestUi']);
+
+// ─── DMS: Document / Media Management System ────────────────────────────────
+// Public proxy — serves media without exposing provider URLs
+Route::get('/dms/media/{slug}/{id}', [DmsController::class, 'showImage']);
+
+// Upload scope — requires valid DMS API key with at least 'upload' scope
+Route::middleware([DmsApiKeyMiddleware::class . ':upload'])->group(function () {
+    Route::post('/dms/media', [DmsController::class, 'store']);
+});
+
+// Admin scope — requires DMS API key with 'admin' scope
+Route::middleware([DmsApiKeyMiddleware::class . ':admin'])->group(function () {
+    Route::get('/dms/media',                       [DmsController::class, 'index']);
+    Route::get('/dms/media/all',                   [DmsController::class, 'all']);
+    Route::put('/dms/media/{id}',                  [DmsController::class, 'update']);
+    Route::delete('/dms/media/{id}',               [DmsController::class, 'destroy']);
+    Route::post('/dms/media/{id}/restore',         [DmsController::class, 'restore']);
+    Route::get('/dms/media/{id}/logs',             [DmsController::class, 'logs']);
+
+    // API Key management
+    Route::get('/dms/keys',                        [DmsController::class, 'listKeys']);
+    Route::post('/dms/keys',                       [DmsController::class, 'createKey']);
+    Route::delete('/dms/keys/{id}',                [DmsController::class, 'revokeKey']);
+
+    // Provider credential management (ImageKit / S3 keys)
+    Route::get('/dms/providers',                   [DmsController::class, 'listProviders']);
+    Route::post('/dms/providers',                  [DmsController::class, 'upsertProvider']);
+    Route::delete('/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
+});
 
 /*
 |--------------------------------------------------------------------------
