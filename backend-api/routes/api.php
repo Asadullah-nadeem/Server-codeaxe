@@ -14,9 +14,13 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DmsController;
+use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
+use App\Http\Middleware\AdminAuthMiddleware;
+use App\Http\Middleware\AdminRoleMiddleware;
+use App\Http\Middleware\DemoModeMiddleware;
 
 // Public routes — called client-side without API key
 Route::get('/rewrites', [RewriteController::class, 'index']);
@@ -78,6 +82,33 @@ Route::middleware([DmsApiKeyMiddleware::class . ':admin'])->group(function () {
     Route::get('/dms/providers',                   [DmsController::class, 'listProviders']);
     Route::post('/dms/providers',                  [DmsController::class, 'upsertProvider']);
     Route::delete('/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
+});
+
+// ─── Admin Panel API ────────────────────────────────────────────────────────
+// Public Admin Login
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+// General Admin Protected Routes (Basic Admin session)
+Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
+    Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
+    Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
+
+    // Standard admins can manage requests or view dashboard
+    Route::get('/admin/dashboard', [DashboardController::class, 'index']); // Example
+});
+
+// Super Admin ONLY Routes (Hierarchy check)
+Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminRoleMiddleware::class . ':superadmin'])->group(function () {
+    // Management of other admin accounts
+    Route::get('/admin/list',       [AdminAuthController::class, 'listAdmins']);
+    Route::post('/admin/create',    [AdminAuthController::class, 'createAdmin']);
+    Route::put('/admin/update/{id}', [AdminAuthController::class, 'updateAdmin']);
+    Route::delete('/admin/delete/{id}', [AdminAuthController::class, 'deleteAdmin']);
+    
+    // Sensitive DB settings or other system configs
+    Route::get('/admin/system/status', function() {
+        return response()->json(['success' => true, 'status' => 'System Online']);
+    });
 });
 
 /*
