@@ -12,9 +12,14 @@ CREATE TABLE IF NOT EXISTS admins (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Seed Initial Superadmin (default password: adminpassword)
--- In a real scenario, you should hash this immediately.
--- INSERT INTO admins (name, username, email, password, role) VALUES
--- ('Super Admin', 'superadmin', 'superadmin@codeaxe.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin');
+-- Seed Initial Superadmin
+-- Default username: superadmin
+-- Default password: adminpassword (hashed using bcrypt)
+INSERT INTO admins (name, username, email, password, role) VALUES
+('Super Admin', 'superadmin', 'superadmin@codeaxe.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin');
 
--- NOTE: Password hashing via bcrypt is required.
+-- Seed Demo Admin
+-- Default username: demoadmin
+-- Default password: demopassword (hashed using bcrypt)
+INSERT INTO admins (name, username, email, password, role) VALUES
+('Demo View Only', 'demoadmin', 'demo@codeaxe.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'demo');

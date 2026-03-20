@@ -19,6 +19,7 @@ class NavController extends Controller
 
         $settingsRaw = DB::table('site_settings')
             ->where('setting_key', 'LIKE', 'nav_%')
+            ->orWhere('setting_key', 'LIKE', 'seo_%')
             ->orWhere('setting_key', 'LIKE', 'site_name_%')
             ->orWhere('setting_key', 'LIKE', 'site_logo_%')
             ->get();
@@ -53,6 +54,7 @@ class NavController extends Controller
             'type' => $request->type,
             'label' => $request->label,
             'path' => $request->path,
+            'icon' => $request->icon,
         ]);
 
         return response()->json(['success' => true, 'id' => $id], 201);
@@ -87,6 +89,7 @@ class NavController extends Controller
             'type' => $request->type,
             'label' => $request->label,
             'path' => $request->path,
+            'icon' => $request->icon,
         ]);
 
         if (!$updated) {
@@ -108,5 +111,35 @@ class NavController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Deleted successfully'], 200);
+    }
+
+    /**
+     * Update global nav and SEO settings
+     */
+    public function updateSettings(Request $request)
+    {
+        $settings = $request->only([
+            'nav_portfolio_label',
+            'nav_info_label',
+            'nav_btn_send_request',
+            'nav_btn_dashboard',
+            'nav_btn_login',
+            'nav_btn_signup',
+            'nav_btn_profile',
+            'seo_title',
+            'seo_description',
+            'site_name_prefix',
+            'site_name_accent',
+            'site_logo_url'
+        ]);
+
+        foreach ($settings as $key => $value) {
+            DB::table('site_settings')->updateOrInsert(
+                ['setting_key' => $key],
+                ['setting_value' => $value ?? '']
+            );
+        }
+
+        return response()->json(['success' => true]);
     }
 }

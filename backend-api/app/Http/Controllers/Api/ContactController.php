@@ -122,7 +122,6 @@ class ContactController extends Controller
     }
 
     // ─── GET /contact/template/preview ─────────────────────────────────
-    // Returns rendered HTML preview for the admin
     public function previewTemplate()
     {
         $template = DB::table('email_templates')
@@ -148,5 +147,39 @@ class ContactController extends Controller
         ])->render();
 
         return response($html)->header('Content-Type', 'text/html');
+    }
+
+    // ─── ADMIN: UPDATE CONTACT HEADER ─────────────────────────────────
+    public function updateHeader(Request $request) {
+        DB::table('contact_page')->where('id', 1)->update($request->only('label', 'title', 'description', 'is_active', 'section_index'));
+        return response()->json(['success' => true]);
+    }
+
+    // ─── ADMIN: DIRECT INFO CRUD ─────────────────────────────────────
+    public function storeDirectInfo(Request $request) {
+        $id = DB::table('contact_direct_info')->insertGetId($request->only('label', 'href', 'icon', 'sort_order', 'is_active'));
+        return response()->json(['success' => true, 'id' => $id]);
+    }
+    public function updateDirectInfo(Request $request, $id) {
+        DB::table('contact_direct_info')->where('id', $id)->update($request->only('label', 'href', 'icon', 'sort_order', 'is_active'));
+        return response()->json(['success' => true]);
+    }
+    public function destroyDirectInfo($id) {
+        DB::table('contact_direct_info')->where('id', $id)->delete();
+        return response()->json(['success' => true]);
+    }
+
+    // ─── ADMIN: RESPONSE TIMES CRUD ──────────────────────────────────
+    public function storeResponseTime(Request $request) {
+        $id = DB::table('contact_response_times')->insertGetId($request->only('label', 'value', 'sort_order', 'is_active'));
+        return response()->json(['success' => true, 'id' => $id]);
+    }
+    public function updateResponseTime(Request $request, $id) {
+        DB::table('contact_response_times')->where('id', $id)->update($request->only('label', 'value', 'sort_order', 'is_active'));
+        return response()->json(['success' => true]);
+    }
+    public function destroyResponseTime($id) {
+        DB::table('contact_response_times')->where('id', $id)->delete();
+        return response()->json(['success' => true]);
     }
 }

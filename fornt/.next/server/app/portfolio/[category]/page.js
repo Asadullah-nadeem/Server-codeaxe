@@ -6,10 +6,10 @@ R.c("server/chunks/ssr/[root-of-the-server]__3ba03da5._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__655f8d11._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__8ecbddb6._.js")
 R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_global-error_ece394eb.js")
-R.c("server/chunks/ssr/_455ccf98._.js")
+R.c("server/chunks/ssr/_95d281bd._.js")
 R.c("server/chunks/ssr/src_app_not-found_tsx_0f6131ce._.js")
 R.c("server/chunks/ssr/node_modules_next_dist_client_components_2fffaa3a._.js")
 R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_unauthorized_15817684.js")
 R.c("server/chunks/ssr/_next-internal_server_app_portfolio_[category]_page_actions_8477bd20.js")
-R.m(5650)
-module.exports=R.m(5650).exports
+R.m(9110)
+module.exports=R.m(9110).exports

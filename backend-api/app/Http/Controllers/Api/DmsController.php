@@ -63,6 +63,10 @@ class DmsController extends Controller
             ->orderByDesc('uploaded_at')
             ->get();
 
+        foreach ($images as $img) {
+            $img->path = url("/api/dms/media/{$img->slug}/{$img->id}");
+        }
+
         return response()->json(['success' => true, 'data' => $images]);
     }
 
@@ -70,6 +74,11 @@ class DmsController extends Controller
     public function all()
     {
         $images = Media::orderByDesc('uploaded_at')->get();
+        
+        foreach ($images as $img) {
+            $img->path = url("/api/dms/media/{$img->slug}/{$img->id}");
+        }
+
         return response()->json(['success' => true, 'data' => $images]);
     }
 
@@ -82,7 +91,7 @@ class DmsController extends Controller
             'username'         => 'required|string|max:50',
         ]);
 
-        $provider   = $request->input('storage_provider');
+        $provider   = $request->input('storage_provider') ?? $request->attributes->get('dms_key_provider') ?? 's3';
         $file       = $request->file('photo');
         $username   = Str::slug($request->input('username'));
         $origName   = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -93,13 +102,13 @@ class DmsController extends Controller
 
         try {
             if ($provider === 'imagekit') {
-                // Load ImageKit credentials from DB
-                $pubKey      = $this->getProviderKey('imagekit', 'public_key');
-                $privKey     = $this->getProviderKey('imagekit', 'private_key');
-                $urlEndpoint = $this->getProviderKey('imagekit', 'url_endpoint');
+                // Load ImageKit credentials (DB first, then .env fallback)
+                $pubKey      = $this->getProviderKey('imagekit', 'public_key')   ?? env('IMAGEKIT_PUBLIC_KEY');
+                $privKey     = $this->getProviderKey('imagekit', 'private_key')  ?? env('IMAGEKIT_PRIVATE_KEY');
+                $urlEndpoint = $this->getProviderKey('imagekit', 'url_endpoint') ?? env('IMAGEKIT_URL_ENDPOINT');
 
                 if (!$pubKey || !$privKey || !$urlEndpoint) {
-                    return response()->json(['success' => false, 'message' => 'ImageKit credentials not configured in dms_provider_keys table.'], 500);
+                    return response()->json(['success' => false, 'message' => 'ImageKit credentials not configured in DB or .env.'], 500);
                 }
 
                 $imageKit = new \ImageKit\ImageKit($pubKey, $privKey, $urlEndpoint);
@@ -232,11 +241,10 @@ class DmsController extends Controller
     public function listKeys()
     {
         $keys = DB::table('dms_api_keys')
-            ->select('id', 'label', 'api_scope', 'is_active', 'created_at')
+            ->select('id', 'label', 'api_key', 'api_scope', 'provider', 'is_active', 'created_at')
             ->orderByDesc('created_at')
             ->get();
 
-        // NOTE: api_key value is intentionally excluded from listing for security
         return response()->json(['success' => true, 'data' => $keys]);
     }
 
@@ -246,6 +254,7 @@ class DmsController extends Controller
         $request->validate([
             'label'     => 'required|string|max:100',
             'api_scope' => 'required|in:upload,admin',
+            'provider'  => 'sometimes|in:s3,imagekit',
         ]);
 
         $newKey = 'dms_' . Str::random(48);
@@ -254,6 +263,7 @@ class DmsController extends Controller
             'label'      => $request->label,
             'api_key'    => $newKey,
             'api_scope'  => $request->api_scope,
+            'provider'   => $request->provider ?? 's3',
             'is_active'  => 1,
             'created_at' => now(),
         ]);
@@ -264,6 +274,7 @@ class DmsController extends Controller
             'id'        => $id,
             'api_key'   => $newKey, // Shown ONCE at creation only
             'api_scope' => $request->api_scope,
+            'provider'  => $request->provider ?? 's3',
         ], 201);
     }
 
@@ -278,10 +289,9 @@ class DmsController extends Controller
     public function listProviders()
     {
         $providers = DB::table('dms_provider_keys')
-            ->select('id', 'provider', 'key_name', 'created_at')
+            ->select('id', 'provider', 'key_name', 'key_value', 'created_at')
             ->get();
 
-        // Values are masked for security
         return response()->json(['success' => true, 'data' => $providers]);
     }
 
@@ -307,5 +317,22 @@ class DmsController extends Controller
     {
         DB::table('dms_provider_keys')->where('id', $id)->delete();
         return response()->json(['success' => true, 'message' => 'Provider credential removed.']);
+    }
+
+    // ─── GET /api/admin/dms/env-keys – list environment configuration
+    public function listEnvKeys()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'AWS_ACCESS_KEY_ID'     => env('AWS_ACCESS_KEY_ID'),
+                'AWS_SECRET_ACCESS_KEY' => env('AWS_SECRET_ACCESS_KEY'),
+                'AWS_DEFAULT_REGION'    => env('AWS_DEFAULT_REGION'),
+                'AWS_BUCKET'            => env('AWS_BUCKET'),
+                'IMAGEKIT_PUBLIC_KEY'   => env('IMAGEKIT_PUBLIC_KEY'),
+                'IMAGEKIT_PRIVATE_KEY'  => env('IMAGEKIT_PRIVATE_KEY'),
+                'IMAGEKIT_URL_ENDPOINT' => env('IMAGEKIT_URL_ENDPOINT'),
+            ]
+        ]);
     }
 }

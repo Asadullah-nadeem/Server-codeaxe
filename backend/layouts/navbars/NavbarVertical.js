@@ -1,17 +1,17 @@
 // import node module libraries
-import { Fragment, useContext } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useMediaQuery } from "react-responsive";
+import { Fragment, useContext } from "react";
 import {
-  ListGroup,
   Accordion,
+  AccordionContext,
+  Badge,
   Card,
   Image,
-  Badge,
+  ListGroup,
   useAccordionButton,
-  AccordionContext,
 } from "react-bootstrap";
+import { useMediaQuery } from "react-responsive";
 
 // import simple bar scrolling used for notification item scrolling
 import SimpleBar from "simplebar-react";
@@ -71,14 +71,13 @@ const NavbarVertical = (props) => {
     return (
       <Link
         href={item.link}
-        className={`nav-link ${
-          location.pathname === item.link ? "active" : ""
-        }`}
+        className={`nav-link ${location.pathname === item.link ? "active" : ""
+          }`}
         onClick={(e) =>
           isMobile ? props.onClick(!props.showMenu) : props.showMenu
         }
       >
-        {item.name}
+        {item.title}
         {""}
         {item.badge ? (
           <Badge
@@ -306,9 +305,8 @@ const NavbarVertical = (props) => {
                     {/* menu item without any childern items like Documentation and Changelog items*/}
                     <Link
                       href={menu.link}
-                      className={`nav-link ${
-                        location.pathname === menu.link ? "active" : ""
-                      }`}
+                      className={`nav-link ${location.pathname === menu.link ? "active" : ""
+                        }`}
                     >
                       {typeof menu.icon === "string" ? (
                         <i className={`nav-icon fe fe-${menu.icon} me-2`}></i>

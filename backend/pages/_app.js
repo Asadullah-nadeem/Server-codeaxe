@@ -11,12 +11,26 @@ import 'styles/theme.scss';
 // import default layouts
 import DefaultDashboardLayout from 'layouts/DefaultDashboardLayout';
 
+import { useEffect } from 'react';
+
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const pageURL = process.env.baseURL + router.pathname;
-  const title = "Dash UI - Next.Js Admin Dashboard Template";
-  const description = "Dash is a fully responsive and yet modern premium Nextjs template & snippets. Geek is feature-rich Nextjs components and beautifully designed pages that help you create the best possible website and web application projects. Nextjs Snippet "
-  const keywords = "Dash UI, Nextjs, Next.js, Course, Sass, landing, Marketing, admin themes, Nextjs admin, Nextjs dashboard, ui kit, web app, multipurpose"
+  const title = "Code Axe Admin Panel";
+  const description = "Code Axe Admin Panel."
+  const keywords = "Admin"
+
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('admin_token');
+      const isAuthPage = router.pathname.startsWith('/authentication/');
+      
+      if (!token && !isAuthPage) {
+        router.push('/authentication/sign-in');
+      }
+    }
+  }, [router.pathname]);
 
   // Identify the layout, which will be applied conditionally
   const Layout = Component.Layout || (router.pathname.includes('dashboard') ? 

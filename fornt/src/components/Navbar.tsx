@@ -5,6 +5,16 @@ import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import * as Icons from "lucide-react";
+
+// Helper component for dynamic Lucide Icons
+const DynamicIcon = ({ name, className }: { name: string, className?: string }) => {
+  if (!name) return null;
+  const IconComponent = Icons[name as keyof typeof Icons] as React.ElementType;
+  if (!IconComponent) return null;
+  return <IconComponent className={className} />;
+};
+
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -52,29 +62,36 @@ const Navbar = () => {
 
   const isActive = (path: string) => pathname === path;
 
+  const [logoError, setLogoError] = useState(false);
+  
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center">
-          {settings.site_logo_url ? (
+          {settings.site_logo_url && !logoError ? (
             <img
               src={settings.site_logo_url}
               alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
               className="h-8 w-auto object-contain"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              onError={() => setLogoError(true)}
             />
           ) : (
             <span className="font-display text-xl tracking-tighter">
-              {settings.site_name_prefix}<span className="text-accent">{settings.site_name_accent}</span>
+              {settings.site_name_prefix || 'Code'} <span className="text-accent">{settings.site_name_accent || 'Axe'}</span>
             </span>
           )}
         </Link>
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-8">
-          {mainItems.map((item) => (
-            <Link key={`main-${item.id || item.path}`} href={item.path || '#'} className={`font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive(item.path) ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{item.label}</Link>
-          ))}
+          <div className="flex items-center gap-6">
+            {mainItems.map((item) => (
+              <Link key={`main-${item.id || item.path}`} href={item.path || '#'} className={`flex items-center gap-1.5 font-mono-label text-xs uppercase tracking-widest transition-colors duration-200 ${isActive(item.path) ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                {item.icon && <DynamicIcon name={item.icon} className="w-3.5 h-3.5" />}
+                {item.label}
+              </Link>
+            ))}
+          </div>
 
           {/* Portfolio Dropdown */}
           <div className="relative" onMouseEnter={() => setOpenDropdown("portfolio")} onMouseLeave={() => setOpenDropdown(null)}>
@@ -85,7 +102,10 @@ const Navbar = () => {
               {openDropdown === "portfolio" && (
                 <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 mt-2 w-48 border border-border bg-background p-2">
                   {portfolioItems.map((item) => (
-                    <Link key={`portfolio-${item.id || item.path}`} href={item.path || '#'} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
+                    <Link key={`portfolio-${item.id || item.path}`} href={item.path || '#'} className="flex items-center gap-2 px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">
+                      {item.icon && <DynamicIcon name={item.icon} className="w-3.5 h-3.5" />}
+                      {item.label}
+                    </Link>
                   ))}
                 </motion.div>
               )}
@@ -101,7 +121,10 @@ const Navbar = () => {
               {openDropdown === "info" && (
                 <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.15 }} className="absolute top-full right-0 mt-2 w-48 border border-border bg-background p-2">
                   {infoItems.map((item) => (
-                    <Link key={`info-${item.id || item.path}`} href={item.path || '#'} className="block px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">{item.label}</Link>
+                    <Link key={`info-${item.id || item.path}`} href={item.path || '#'} className="flex items-center gap-2 px-3 py-2 font-mono-label text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors duration-200">
+                      {item.icon && <DynamicIcon name={item.icon} className="w-3.5 h-3.5" />}
+                      {item.label}
+                    </Link>
                   ))}
                 </motion.div>
               )}
@@ -139,7 +162,10 @@ const Navbar = () => {
                   ? [{ label: settings.nav_btn_dashboard, path: "/dashboard" }, { label: settings.nav_btn_send_request, path: "/send-request" }, { label: settings.nav_btn_profile, path: "/profile" }]
                   : [{ label: settings.nav_btn_login, path: "/login" }, { label: settings.nav_btn_signup, path: "/signup" }]),
               ].map((item, i) => (
-                <Link key={i + '-' + item.path} href={item.path} onClick={() => setMobileOpen(false)} className="font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">{item.label}</Link>
+                <Link key={i + '-' + item.path} href={item.path} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 font-mono-label text-sm uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">
+                  {item.icon && <DynamicIcon name={item.icon} className="w-4 h-4" />}
+                  {item.label}
+                </Link>
               ))}
             </div>
           </motion.div>

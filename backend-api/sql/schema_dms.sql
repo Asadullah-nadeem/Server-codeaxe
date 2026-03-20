@@ -37,11 +37,12 @@ CREATE TABLE IF NOT EXISTS dms_api_keys (
 -- DMS provider credentials (ImageKit / S3 keys stored per environment)
 CREATE TABLE IF NOT EXISTS dms_provider_keys (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    provider VARCHAR(50) NOT NULL UNIQUE, -- 'imagekit' or 's3'
+    provider VARCHAR(50) NOT NULL, -- 'imagekit' or 's3'
     key_name VARCHAR(100) NOT NULL,
     key_value TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY (provider, key_name)
 );
 
 -- Seed a default admin DMS API key

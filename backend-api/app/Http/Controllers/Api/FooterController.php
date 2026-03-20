@@ -62,6 +62,7 @@ class FooterController extends Controller
             'label' => $request->label,
             'url' => $request->url,
             'is_external' => $request->is_external ?? false,
+            'icon' => $request->icon
         ]);
 
         return response()->json(['success' => true, 'id' => $id], 201);
@@ -72,7 +73,7 @@ class FooterController extends Controller
      */
     public function updateLink(Request $request, $id)
     {
-        $updated = DB::table('footer_links')->where('id', $id)->update($request->only('label', 'url', 'is_external', 'section_id'));
+        $updated = DB::table('footer_links')->where('id', $id)->update($request->only('label', 'url', 'is_external', 'section_id', 'icon'));
         return response()->json(['success' => (bool)$updated]);
     }
 
@@ -83,5 +84,32 @@ class FooterController extends Controller
     {
         $deleted = DB::table('footer_links')->where('id', $id)->delete();
         return response()->json(['success' => (bool)$deleted]);
+    }
+
+    /**
+     * Update global footer settings.
+     */
+    public function updateSettings(Request $request)
+    {
+        $settings = $request->only([
+            'footer_title', 
+            'footer_subtitle', 
+            'footer_contact_email', 
+            'footer_contact_phone', 
+            'footer_copyright',
+            'site_logo_url',
+            'site_name_prefix',
+            'site_name_accent'
+        ]);
+
+        foreach ($settings as $key => $value) {
+            DB::table('site_settings')
+                ->updateOrInsert(
+                    ['setting_key' => $key],
+                    ['setting_value' => $value ?? '']
+                );
+        }
+
+        return response()->json(['success' => true]);
     }
 }

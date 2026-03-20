@@ -64,37 +64,131 @@ Route::middleware([DmsApiKeyMiddleware::class . ':upload'])->group(function () {
     Route::post('/dms/media', [DmsController::class, 'store']);
 });
 
-// Admin scope — requires DMS API key with 'admin' scope
-Route::middleware([DmsApiKeyMiddleware::class . ':admin'])->group(function () {
-    Route::get('/dms/media',                       [DmsController::class, 'index']);
-    Route::get('/dms/media/all',                   [DmsController::class, 'all']);
-    Route::put('/dms/media/{id}',                  [DmsController::class, 'update']);
-    Route::delete('/dms/media/{id}',               [DmsController::class, 'destroy']);
-    Route::post('/dms/media/{id}/restore',         [DmsController::class, 'restore']);
-    Route::get('/dms/media/{id}/logs',             [DmsController::class, 'logs']);
+    // ─── DMS: Media & Infrastructure ────────────────────────────────
 
-    // API Key management
-    Route::get('/dms/keys',                        [DmsController::class, 'listKeys']);
-    Route::post('/dms/keys',                       [DmsController::class, 'createKey']);
-    Route::delete('/dms/keys/{id}',                [DmsController::class, 'revokeKey']);
-
-    // Provider credential management (ImageKit / S3 keys)
-    Route::get('/dms/providers',                   [DmsController::class, 'listProviders']);
-    Route::post('/dms/providers',                  [DmsController::class, 'upsertProvider']);
-    Route::delete('/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
-});
 
 // ─── Admin Panel API ────────────────────────────────────────────────────────
 // Public Admin Login
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+// Public Media Proxy (No middleware required for image display)
+Route::get('/dms/media/{slug}/{id}', [DmsController::class, 'showImage']);
 
 // General Admin Protected Routes (Basic Admin session)
 Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
     Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 
-    // Standard admins can manage requests or view dashboard
-    Route::get('/admin/dashboard', [DashboardController::class, 'index']); // Example
+    // ─── CMS Management (Content CRUD) ───
+
+    // Navigation Routes
+    Route::get('/admin/nav', [NavController::class, 'index']);
+    Route::post('/admin/nav', [NavController::class, 'store']);
+    Route::put('/admin/nav/settings', [NavController::class, 'updateSettings']);
+    Route::get('/admin/nav/{id}', [NavController::class, 'show']);
+    Route::put('/admin/nav/{id}', [NavController::class, 'update']);
+    Route::delete('/admin/nav/{id}', [NavController::class, 'destroy']);
+
+    // Footer Management
+    Route::get('/admin/footer', [FooterController::class, 'index']); // Admin can view footer
+    Route::put('/admin/footer/settings', [FooterController::class, 'updateSettings']);
+    Route::post('/admin/footer/links', [FooterController::class, 'storeLink']);
+    Route::put('/admin/footer/links/{id}', [FooterController::class, 'updateLink']);
+    Route::delete('/admin/footer/links/{id}', [FooterController::class, 'destroyLink']);
+
+    // Home Management (Sections)
+    Route::get('/admin/home', [HomeController::class, 'index']); // Admin can view home content
+    Route::post('/admin/home/services', [HomeController::class, 'storeService']);
+    Route::put('/admin/home/services/{id}', [HomeController::class, 'updateService']);
+    Route::delete('/admin/home/services/{id}', [HomeController::class, 'destroyService']);
+    Route::post('/admin/home/projects', [HomeController::class, 'storeProject']);
+    Route::put('/admin/home/projects/{id}', [HomeController::class, 'updateProject']);
+    Route::delete('/admin/home/projects/{id}', [HomeController::class, 'destroyProject']);
+    Route::post('/admin/home/stats', [HomeController::class, 'storeStat']);
+    Route::put('/admin/home/stats/{id}', [HomeController::class, 'updateStat']);
+    Route::delete('/admin/home/stats/{id}', [HomeController::class, 'destroyStat']);
+    Route::post('/admin/home/hero', [HomeController::class, 'updateHero']);
+    Route::put('/admin/home/headers/{key}', [HomeController::class, 'updateSectionHeader']);
+    Route::post('/admin/home/cta', [HomeController::class, 'updateCta']);
+    Route::post('/admin/home/principles', [HomeController::class, 'storePrinciple']);
+    Route::put('/admin/home/principles/{id}', [HomeController::class, 'updatePrinciple']);
+    Route::delete('/admin/home/principles/{id}', [HomeController::class, 'destroyPrinciple']);
+    Route::post('/admin/home/technologies', [HomeController::class, 'storeTechnology']);
+    Route::put('/admin/home/technologies/{id}', [HomeController::class, 'updateTechnology']);
+    Route::delete('/admin/home/technologies/{id}', [HomeController::class, 'destroyTechnology']);
+    Route::post('/admin/home/system_status', [HomeController::class, 'storeSystemStatus']);
+    Route::put('/admin/home/system_status/{id}', [HomeController::class, 'updateSystemStatus']);
+    Route::delete('/admin/home/system_status/{id}', [HomeController::class, 'destroySystemStatus']);
+    Route::post('/admin/home/partners', [HomeController::class, 'storePartner']);
+    Route::put('/admin/home/partners/{id}', [HomeController::class, 'updatePartner']);
+    Route::delete('/admin/home/partners/{id}', [HomeController::class, 'destroyPartner']);
+
+    // Rewrite Rule Management
+    Route::get('/admin/rewrites', [RewriteController::class, 'index']); // Admin can view rewrites
+    Route::post('/admin/rewrites', [RewriteController::class, 'store']);
+    Route::put('/admin/rewrites/{id}', [RewriteController::class, 'update']);
+    Route::delete('/admin/rewrites/{id}', [RewriteController::class, 'destroy']);
+
+    // Services Page Management
+    Route::get('/admin/services', [ServicesController::class, 'index']); // Admin can view services
+    Route::post('/admin/services', [ServicesController::class, 'store']);
+    Route::put('/admin/services/{id}', [ServicesController::class, 'update']);
+    Route::delete('/admin/services/{id}', [ServicesController::class, 'destroy']);
+
+    // Portfolio Management
+    Route::get('/admin/portfolio/categories', [PortfolioController::class, 'categories']); // Admin can view categories
+    Route::post('/admin/portfolio/categories', [PortfolioController::class, 'storeCategory']);
+    Route::put('/admin/portfolio/categories/{id}', [PortfolioController::class, 'updateCategory']);
+    Route::delete('/admin/portfolio/categories/{id}', [PortfolioController::class, 'destroyCategory']);
+    Route::get('/admin/portfolio/items', [PortfolioController::class, 'index']); // Admin can view items
+    Route::post('/admin/portfolio/items', [PortfolioController::class, 'storeItem']);
+    Route::put('/admin/portfolio/items/{id}', [PortfolioController::class, 'updateItem']);
+    Route::delete('/admin/portfolio/items/{id}', [PortfolioController::class, 'destroyItem']);
+
+    // Pages Management — About
+    Route::get('/admin/pages/about', [PagesController::class, 'about']); // Admin can view about page
+    Route::put('/admin/pages/about/header', [PagesController::class, 'updateAboutHeader']);
+    Route::post('/admin/pages/about/sections', [PagesController::class, 'storeAboutSection']);
+    Route::put('/admin/pages/about/sections/{id}', [PagesController::class, 'updateAboutSection']);
+    Route::delete('/admin/pages/about/sections/{id}', [PagesController::class, 'destroyAboutSection']);
+    
+    // Pages Management — Legal
+    Route::get('/admin/pages/legal', [PagesController::class, 'legalIndex']); // Admin can view legal pages
+    Route::get('/admin/pages/legal/{type}', [PagesController::class, 'legal']); // Admin can view specific legal page
+    Route::put('/admin/pages/legal/{id}', [PagesController::class, 'updateLegalPage']);
+    Route::post('/admin/pages/legal/sections', [PagesController::class, 'storeLegalSection']);
+    Route::put('/admin/pages/legal/sections/{id}', [PagesController::class, 'updateLegalSection']);
+    Route::delete('/admin/pages/legal/sections/{id}', [PagesController::class, 'destroyLegalSection']);
+
+    // ─── DMS & Media Infrastructure ───
+    Route::get('/admin/dms/media',                       [DmsController::class, 'index']);
+    Route::get('/admin/dms/media/all',                   [DmsController::class, 'all']);
+    Route::get('/admin/dms/env-keys',                    [DmsController::class, 'listEnvKeys']);
+    Route::post('/admin/dms/media',                      [DmsController::class, 'store']);
+    Route::put('/admin/dms/media/{id}',                  [DmsController::class, 'update']);
+    Route::delete('/admin/dms/media/{id}',               [DmsController::class, 'destroy']);
+    Route::post('/admin/dms/media/{id}/restore',         [DmsController::class, 'restore']);
+    Route::get('/admin/dms/media/{id}/logs',             [DmsController::class, 'logs']);
+    Route::get('/admin/dms/keys',                        [DmsController::class, 'listKeys']);
+    Route::post('/admin/dms/keys',                       [DmsController::class, 'createKey']);
+    Route::delete('/admin/dms/keys/{id}',                [DmsController::class, 'revokeKey']);
+    Route::get('/admin/dms/providers',                   [DmsController::class, 'listProviders']);
+    Route::post('/admin/dms/providers',                  [DmsController::class, 'upsertProvider']);
+    Route::delete('/admin/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
+
+// ─── External Uploads (Requires dms_ key)
+Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Http\Middleware\VerifyDmsKeyMiddleware::class);
+    Route::get('/admin/contact/submissions', [ContactController::class, 'submissions']);
+    Route::get('/admin/contact/template', [ContactController::class, 'getTemplate']);
+    Route::put('/admin/contact/submissions/{id}/status', [ContactController::class, 'updateStatus']);
+    Route::put('/admin/contact/template/{id}', [ContactController::class, 'updateTemplate']);
+    Route::put('/admin/contact/header', [ContactController::class, 'updateHeader']);
+    Route::post('/admin/contact/info', [ContactController::class, 'storeDirectInfo']);
+    Route::put('/admin/contact/info/{id}', [ContactController::class, 'updateDirectInfo']);
+    Route::delete('/admin/contact/info/{id}', [ContactController::class, 'destroyDirectInfo']);
+    Route::post('/admin/contact/times', [ContactController::class, 'storeResponseTime']);
+    Route::put('/admin/contact/times/{id}', [ContactController::class, 'updateResponseTime']);
+    Route::delete('/admin/contact/times/{id}', [ContactController::class, 'destroyResponseTime']);
 });
 
 // Super Admin ONLY Routes (Hierarchy check)
@@ -113,65 +207,26 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| Public App Routes (Public Fetching)
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
+| These routes are for public-facing content that requires an API key
+| for fetching, but not necessarily user authentication.
 */
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-
 Route::middleware([VerifyAppKeyMiddleware::class])->group(function () {
-    // Nav API Routes
+    // Nav API Routes (Read-only for public)
     Route::get('/nav', [NavController::class, 'index']);
-    Route::post('/nav', [NavController::class, 'store']);
-    Route::get('/nav/{id}', [NavController::class, 'show']);
-    Route::put('/nav/{id}', [NavController::class, 'update']);
-    Route::delete('/nav/{id}', [NavController::class, 'destroy']);
 
-    // Footer API Routes
+    // Footer API Routes (Read-only for public)
     Route::get('/footer', [FooterController::class, 'index']);
-    Route::post('/footer/links', [FooterController::class, 'storeLink']);
-    Route::put('/footer/links/{id}', [FooterController::class, 'updateLink']);
-    Route::delete('/footer/links/{id}', [FooterController::class, 'destroyLink']);
 
-    // Home API Routes
+    // Home API Routes (Read-only for public)
     Route::get('/home', [HomeController::class, 'index']);
-    Route::post('/home/services', [HomeController::class, 'storeService']);
-    Route::put('/home/services/{id}', [HomeController::class, 'updateService']);
-    Route::delete('/home/services/{id}', [HomeController::class, 'destroyService']);
 
-    // Work API Routes
+    // Work API Routes (Read-only for public)
     Route::get('/work', [WorkController::class, 'index']);
 
-    // Rewrites CRUD (manage rewrite rules from admin)
-    Route::post('/rewrites', [RewriteController::class, 'store']);
-    Route::put('/rewrites/{id}', [RewriteController::class, 'update']);
-    Route::delete('/rewrites/{id}', [RewriteController::class, 'destroy']);
-
-    // Services API Routes
+    // Services API Routes (Read-only for public)
     Route::get('/services', [ServicesController::class, 'index']);
-    Route::post('/services', [ServicesController::class, 'store']);
-    Route::put('/services/{id}', [ServicesController::class, 'update']);
-    Route::delete('/services/{id}', [ServicesController::class, 'destroy']);
-
-    // Portfolio CRUD (admin)
-    Route::post('/portfolio/categories', [PortfolioController::class, 'storeCategory']);
-    Route::put('/portfolio/categories/{id}', [PortfolioController::class, 'updateCategory']);
-    Route::delete('/portfolio/categories/{id}', [PortfolioController::class, 'destroyCategory']);
-    Route::post('/portfolio/items', [PortfolioController::class, 'storeItem']);
-    Route::put('/portfolio/items/{id}', [PortfolioController::class, 'updateItem']);
-    Route::delete('/portfolio/items/{id}', [PortfolioController::class, 'destroyItem']);
-
-    // Pages CRUD — About
-    Route::put('/pages/about/header', [PagesController::class, 'updateAboutHeader']);
-    Route::post('/pages/about/sections', [PagesController::class, 'storeAboutSection']);
     Route::put('/pages/about/sections/{id}', [PagesController::class, 'updateAboutSection']);
     Route::delete('/pages/about/sections/{id}', [PagesController::class, 'destroyAboutSection']);
 
@@ -181,8 +236,4 @@ Route::middleware([VerifyAppKeyMiddleware::class])->group(function () {
     Route::put('/pages/legal/sections/{id}', [PagesController::class, 'updateLegalSection']);
     Route::delete('/pages/legal/sections/{id}', [PagesController::class, 'destroyLegalSection']);
 
-    // Contact — admin routes
-    Route::get('/contact/submissions', [ContactController::class, 'submissions']);
-    Route::put('/contact/submissions/{id}/status', [ContactController::class, 'updateStatus']);
-    Route::put('/contact/template/{id}', [ContactController::class, 'updateTemplate']);
 });
