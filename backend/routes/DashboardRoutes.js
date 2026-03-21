@@ -26,6 +26,12 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
+		title: 'SMTP Settings',
+		icon: 'settings',
+		link: '/cms/smtp'
+	},
+	{
+		id: uuid(),
 		title: 'Home Settings',
 		icon: 'layout',
 		link: '/cms/home'
