@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Button, Form, Modal, Container, Badge, ProgressBar, InputGroup, OverlayTrigger, Tooltip, Alert } from 'react-bootstrap';
+import { Row, Col, Card, Button, Form, Modal, Container, Badge, ProgressBar, InputGroup, OverlayTrigger, Tooltip, Alert, Dropdown, Table } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
-import { UploadCloud, Trash2, Copy, RefreshCcw, Eye, Search, CheckCircle } from 'react-feather';
+import { CloudUpload, Trash, ArrowClockwise, Eye, Search, CheckCircle, ThreeDotsVertical, Database, Filter, ClockHistory, Files } from 'react-bootstrap-icons';
 
 const MediaCMS = () => {
     const [media, setMedia] = useState([]);
-    const [keys, setKeys] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [auditMedia, setAuditMedia] = useState(null);
 
     const [uploadConfig, setUploadConfig] = useState({ provider: 'imagekit', folder: 'general' });
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -21,18 +21,22 @@ const MediaCMS = () => {
             setLoading(true);
             const res = await fetchApi('/admin/dms/media/all');
             if (res?.success) setMedia(res.data);
-            
-            const resKeys = await fetchApi('/admin/dms/keys');
-            if (resKeys?.success) setKeys(resKeys.data);
         } catch (error) { console.error(error); }
         finally { setLoading(false); }
+    };
+
+    const fetchLogs = async (item) => {
+        try {
+            const res = await fetchApi(`/admin/dms/media/${item.id}/logs`);
+            if (res?.success) setAuditMedia({ ...item, logs: res.data });
+        } catch (error) { alert("Failed to fetch audit history."); }
     };
 
     useEffect(() => { fetchMedia(); }, []);
 
     const filteredMedia = media.filter(item => {
-        const matchesSearch = item.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             item.slug.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (item.file_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                             (item.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterStatus === 'all' ? true : 
                              (filterStatus === 'trash' ? item.status === 0 : item.status === 1);
         return matchesSearch && matchesFilter;
@@ -55,25 +59,21 @@ const MediaCMS = () => {
             const formData = new FormData();
             formData.append('photo', selectedFile);
             formData.append('storage_provider', uploadConfig.provider);
-            formData.append('username', 'admin'); // Use default admin folder
+            formData.append('username', 'admin');
 
-            const data = await fetchApi('/admin/dms/media', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (data.success) {
+            const data = await fetchApi('/admin/dms/media', { method: 'POST', body: formData });
+            if (data?.success) {
                 setShowUploadModal(false);
                 fetchMedia();
                 setPreviewUrl(null);
                 setSelectedFile(null);
-            } else { alert(data.message || 'Upload failed.'); }
-        } catch (error) { alert('Upload error occurred.'); }
+            } else { alert(data?.message || 'Upload failed.'); }
+        } catch (error) { alert('Upload error occurred. Check your cloud credentials.'); }
         finally { setUploading(false); }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Move this item to trash?')) return;
+        if (!confirm('Move this asset to trash?')) return;
         try {
             await fetchApi(`/admin/dms/media/${id}`, { method: 'DELETE' });
             fetchMedia();
@@ -82,168 +82,165 @@ const MediaCMS = () => {
 
     const handleRestore = async (id) => {
         try {
-            await fetchApi(`/admin/dms/media/${id}`, { method: 'PUT', body: JSON.stringify({ status: 1 }) });
+            await fetchApi(`/admin/dms/media/${id}/restore`, { method: 'POST' });
             fetchMedia();
         } catch (error) { alert("Restore failed."); }
     };
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        alert("URL copied to clipboard!");
+        alert("Proxied URL copied!");
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Accessing cloud assets...</p></Container>;
+    if (loading) return <Container fluid className="p-4"><p className="text-muted"><ArrowClockwise size={14} className="animate-spin me-2"/> Loading Media Library...</p></Container>;
 
     return (
         <Container fluid className="px-6 py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 className="mb-1">Media Library (A-Z)</h2>
-                    <p className="text-muted small mb-0">Manage cloud assets across all providers from one centralized library.</p>
-                </div>
-                <div className="d-flex gap-2">
-                    <Button variant="outline-dark" size="sm" onClick={() => fetchMedia()}>
-                        <RefreshCcw size={14} className="me-2" /> Refresh
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={() => setShowUploadModal(true)}>
-                        <UploadCloud size={14} className="me-2" /> Sync to Cloud
-                    </Button>
-                </div>
-            </div>
+            <h2 className="mb-1">Media Manager</h2>
+            <p className="text-muted small mb-4">Manage cloud assets and track audit history in your centralized library.</p>
 
-            <Card className="border-0 shadow-sm mb-4">
-                <Card.Body className="p-3">
-                    <Row className="g-3">
-                        <Col lg={7}>
-                            <InputGroup size="sm">
-                                <InputGroup.Text className="bg-white border-end-0"><Search size={14} /></InputGroup.Text>
+            <Card className="mb-4">
+                <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                    <h5 className="mb-0">All Assets</h5>
+                    <div className="d-flex gap-2">
+                        <Button variant="light" size="sm" onClick={() => fetchMedia()}>Refresh Library</Button>
+                        <Button variant="dark" size="sm" onClick={() => setShowUploadModal(true)}>Upload to Cloud</Button>
+                    </div>
+                </Card.Header>
+                <Card.Body>
+                    <Row className="mb-4">
+                        <Col md={8}>
+                            <InputGroup>
+                                <InputGroup.Text className="bg-white"><Search size={14}/></InputGroup.Text>
                                 <Form.Control 
-                                    className="border-start-0" 
-                                    placeholder="Search filename or slug..." 
+                                    placeholder="Search assets by name or slug..." 
                                     value={searchTerm} 
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
                             </InputGroup>
                         </Col>
-                        <Col lg={5}>
-                            <div className="d-flex gap-2 justify-content-lg-end">
-                                <Button size="sm" variant={filterStatus === 'all' ? 'dark' : 'outline-dark'} onClick={() => setFilterStatus('all')}>All Assets</Button>
-                                <Button size="sm" variant={filterStatus === 'active' ? 'dark' : 'outline-dark'} onClick={() => setFilterStatus('active')}>Active</Button>
-                                <Button size="sm" variant={filterStatus === 'trash' ? 'dark' : 'outline-dark'} onClick={() => setFilterStatus('trash')}>Trash</Button>
+                        <Col md={4}>
+                            <div className="d-flex align-items-center">
+                                <Filter size={14} className="me-2 text-muted"/>
+                                <Form.Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                                    <option value="all">Display All Assets</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="trash">Trash Only</option>
+                                </Form.Select>
                             </div>
                         </Col>
+                    </Row>
+
+                    <Row className="g-4">
+                        {filteredMedia.length === 0 ? (
+                            <Col xs={12} className="text-center py-5 text-muted">No media items found matching your filters.</Col>
+                        ) : filteredMedia.map(item => (
+                            <Col key={item.id} xs={12} sm={6} md={4} lg={3} xl={2}>
+                                <Card className={`h-100 border ${item.status === 0 ? 'bg-light opacity-75' : ''}`}>
+                                    <div className="p-1">
+                                        <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border">
+                                            <img src={item.path} alt={item.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                        </div>
+                                    </div>
+                                    <Card.Body className="p-3 pt-2">
+                                        <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <div className="text-truncate small fw-bold" style={{maxWidth: '120px'}} title={item.file_name}>
+                                                {item.status === 0 && <Badge bg="danger" className="me-1 x-small py-0 px-1">TRASHED</Badge>}
+                                                {item.file_name}
+                                            </div>
+                                            <Dropdown align="end">
+                                                <Dropdown.Toggle variant="link" className="p-0 border-0 shadow-none text-muted hide-caret">
+                                                     <ThreeDotsVertical size={14}/>
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu className="shadow-lg border">
+                                                    <Dropdown.Item onClick={() => window.open(item.path, '_blank')}><Eye size={14} className="me-2 text-info"/> View Large</Dropdown.Item>
+                                                    <Dropdown.Item onClick={() => copyToClipboard(item.path)}><Files size={14} className="me-2 text-success"/> Copy Link</Dropdown.Item>
+                                                    <Dropdown.Item onClick={() => fetchLogs(item)}><ClockHistory size={14} className="me-2 text-primary"/> History</Dropdown.Item>
+                                                    <Dropdown.Divider />
+                                                    {item.status === 1 ? (
+                                                        <Dropdown.Item className="text-danger" onClick={() => handleDelete(item.id)}><Trash size={14} className="me-2"/> Move to Trash</Dropdown.Item>
+                                                    ) : (
+                                                        <Dropdown.Item className="text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={14} className="me-2"/> Restore Asset</Dropdown.Item>
+                                                    )}
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                        </div>
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <div className="d-flex gap-1">
+                                                <Badge bg={item.provider === 'imagekit' ? 'info' : 'warning'} className="x-small px-2 py-1 text-uppercase">{item.provider}</Badge>
+                                                <Badge bg="secondary" className="x-small px-2 py-1 text-uppercase">{item.file_name?.split('.').pop() || 'IMG'}</Badge>
+                                            </div>
+                                            <span className="text-muted x-small fw-bold">{(item.size ? (item.size / 1024).toFixed(1) : '0.0')} KB</span>
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))}
                     </Row>
                 </Card.Body>
             </Card>
 
-            <Row className="g-4">
-                {filteredMedia.length === 0 ? (
-                    <Col xs={12}>
-                        <div className="text-center py-5 bg-white rounded shadow-sm">
-                            <Eye size={40} className="text-muted mb-3 opacity-25" />
-                            <h5 className="text-muted">No media found</h5>
-                        </div>
-                    </Col>
-                ) : (
-                    filteredMedia.map(item => (
-                        <Col key={item.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-                            <Card className="h-100 border-0 shadow-sm position-relative overflow-hidden group">
-                                <div className="p-2">
-                                    <div className="bg-light rounded overflow-hidden d-flex align-items-center justify-content-center" style={{ height: '160px' }}>
-                                        <img src={item.path} alt={item.file_name} className={`w-100 h-100 object-fit-cover ${item.status === 0 ? 'opacity-50 grayscale' : ''}`} />
-                                    </div>
-                                </div>
-                                <Card.Body className="pt-0 px-3 pb-3">
-                                    <h6 className="text-truncate mb-1 small fw-bold">{item.file_name}</h6>
-                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <Badge bg="light" className="text-dark border uppercase x-small px-2 py-1" style={{fontSize: '9px'}}>{item.provider}</Badge>
-                                        <span className="text-muted x-small" style={{fontSize: '9px'}}>{(item.size / 1024).toFixed(1)} KB</span>
-                                    </div>
-                                    <div className="d-flex gap-1 justify-content-end border-top pt-2 mt-2">
-                                        <OverlayTrigger overlay={<Tooltip>Open URL</Tooltip>}>
-                                            <Button size="sm" variant="link" className="p-1" onClick={() => window.open(item.path, '_blank')}><Eye size={12} /></Button>
-                                        </OverlayTrigger>
-                                        <OverlayTrigger overlay={<Tooltip>Copy Proxy URL</Tooltip>}>
-                                            <Button size="sm" variant="link" className="p-1" onClick={() => copyToClipboard(item.path)}><Copy size={12} /></Button>
-                                        </OverlayTrigger>
-                                        {item.status === 1 ? (
-                                            <Button size="sm" variant="link" className="p-1 text-danger" onClick={() => handleDelete(item.id)}><Trash2 size={12} /></Button>
-                                        ) : (
-                                            <Button size="sm" variant="link" className="p-1 text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={12}/></Button>
-                                        )}
-                                    </div>
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    ))
-                )}
-            </Row>
-
-            {/* Upload Modal */}
             <Modal show={showUploadModal} onHide={() => setShowUploadModal(false)} centered>
-                <Modal.Header closeButton><Modal.Title>Sync New Asset to Cloud</Modal.Title></Modal.Header>
+                <Modal.Header closeButton><Modal.Title className="fw-bold">Cloud Asset Upload</Modal.Title></Modal.Header>
                 <Form onSubmit={handleUpload}>
                     <Modal.Body className="p-4">
-                        <div className="border border-dashed rounded-3 p-4 text-center mb-4 bg-light cursor-pointer" onClick={() => document.getElementById('fileInput').click()}>
+                        <div className="border border-dashed p-5 text-center mb-3 bg-light cursor-pointer rounded-3" onClick={() => !uploading && document.getElementById('fileInput').click()}>
                             {previewUrl ? (
-                                <img src={previewUrl} className="max-h-200 w-100 object-fit-contain rounded shadow-sm mb-2" alt="Preview" />
+                                <img src={previewUrl} className="rounded shadow-sm mw-100 mb-2" style={{maxHeight: '200px'}} alt="Preview" />
                             ) : (
-                                <>
-                                    <UploadCloud size={30} className="text-primary mb-2 opacity-50" />
-                                    <h6 className="mb-1">Click to browse or drop files here</h6>
-                                    <p className="text-muted x-small mb-0">JPG, PNG, WEBP (Max 5MB)</p>
-                                </>
+                                <div>
+                                    <CloudUpload size={40} className="text-primary mb-2 opacity-50" />
+                                    <p className="mb-0 small fw-bold text-muted">Click to browse your device</p>
+                                </div>
                             )}
                             <input type="file" id="fileInput" hidden onChange={handleFileChange} accept="image/*" />
                         </div>
 
-                        <Row className="g-3">
-                            <Col md={6}>
-                                <Form.Label className="x-small fw-bold uppercase">Target Cloud</Form.Label>
-                                <Form.Select size="sm" value={uploadConfig.provider} onChange={e => setUploadConfig({...uploadConfig, provider: e.target.value})}>
-                                    <option value="imagekit">ImageKit.io</option>
-                                    <option value="s3">AWS S3 (Default)</option>
-                                </Form.Select>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Label className="x-small fw-bold uppercase">Folder Path</Form.Label>
-                                <Form.Control size="sm" placeholder="e.g. avatars" value={uploadConfig.folder} onChange={e => setUploadConfig({...uploadConfig, folder: e.target.value})} />
-                            </Col>
-                        </Row>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-bold"><Database size={12} className="me-2"/> Select Storage Node</Form.Label>
+                            <Form.Select value={uploadConfig.provider} onChange={e => setUploadConfig({...uploadConfig, provider: e.target.value})}>
+                                <option value="imagekit">ImageKit.io (Optimized)</option>
+                                <option value="s3">AWS S3 (Standard Storage)</option>
+                            </Form.Select>
+                        </Form.Group>
 
-                        <div className="mt-4 p-3 bg-light rounded-3">
-                            <p className="x-small fw-bold mb-2">Active API Keys:</p>
-                            <div className="d-flex flex-column gap-1">
-                                {keys.slice(0, 2).map(k => (
-                                    <div key={k.id} className="d-flex justify-content-between align-items-center bg-white p-2 rounded-2 border">
-                                        <span className="x-small fw-bold">{k.label}</span>
-                                        <code className="x-small text-muted">{k.api_key}</code>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {uploading && (
-                            <div className="mt-3">
-                                <p className="x-small mb-1 fw-bold text-primary">Encrypting & Streaming...</p>
-                                <ProgressBar animated now={100} style={{height: '4px'}} />
-                            </div>
-                        )}
+                        {uploading && <ProgressBar animated now={100} label="Streaming..." style={{height: '10px'}} className="rounded-pill mt-3" />}
                     </Modal.Body>
                     <Modal.Footer className="bg-light border-0">
-                        <Button variant="secondary" size="sm" onClick={() => setShowUploadModal(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary" size="sm" disabled={!selectedFile || uploading}>
-                            {uploading ? 'Uploading...' : 'Deploy to Cloud'}
-                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => setShowUploadModal(false)}>Close</Button>
+                        <Button type="submit" variant="primary" size="sm" className="px-4" disabled={!selectedFile || uploading}>Sync to Cloud</Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
 
+            <Modal show={!!auditMedia} onHide={() => setAuditMedia(null)} size="lg" centered>
+                <Modal.Header closeButton><Modal.Title className="fw-bold">Audit History: {auditMedia?.file_name}</Modal.Title></Modal.Header>
+                <Modal.Body className="p-0">
+                    <Table hover responsive className="mb-0 x-small border-0">
+                        <thead className="table-light"><tr><th>Timestamp</th><th>Action</th><th>Field</th><th>Transformation</th></tr></thead>
+                        <tbody>
+                            {auditMedia?.logs?.map((log, idx) => (
+                                <tr key={idx}>
+                                    <td>{new Date(log.changed_at).toLocaleString()}</td>
+                                    <td><Badge bg={log.action_type === 'DELETE' ? 'danger' : (log.action_type === 'EDIT' ? 'info' : 'success')}>{log.action_type}</Badge></td>
+                                    <td className="fw-bold text-secondary text-uppercase">{log.field_changed}</td>
+                                    <td className="font-monospace">
+                                        <span className="text-muted">{log.old_value}</span>
+                                        <span className="mx-2 text-primary">&rarr;</span>
+                                        <span className="fw-bold text-dark">{log.new_value}</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </Modal.Body>
+            </Modal>
+
             <style jsx>{`
-                .max-h-200 { max-height: 200px; }
-                .cursor-pointer { cursor: pointer; }
-                .grayscale { filter: grayscale(1); }
-                .x-small { font-size: 10px; }
+                .animate-spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .x-small { font-size: 11px; }
+                :global(.hide-caret::after) { display: none !important; }
             `}</style>
         </Container>
     );

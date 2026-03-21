@@ -31,8 +31,8 @@ class ThankYouMail extends Mailable
             ]);
     }
 
-    /** Replace {{placeholders}} in body_html with actual submission values */
-    private function renderBody(): string
+    /** Replace {{placeholders}} in body_html & sections with actual submission values */
+    public function renderBody(): string
     {
         $map = [
             '{{name}}'    => e($this->submission['name']),
@@ -40,6 +40,22 @@ class ThankYouMail extends Mailable
             '{{company}}' => e($this->submission['company'] ?: 'N/A'),
             '{{message}}' => nl2br(e($this->submission['message'])),
         ];
-        return str_replace(array_keys($map), array_values($map), $this->template->body_html);
+
+        // 1. Render Base Body
+        $fullBody = str_replace(array_keys($map), array_values($map), $this->template->body_html);
+
+        // 2. Load and Append Sections
+        $sections = \Illuminate\Support\Facades\DB::table('email_template_sections')
+            ->where('template_id', $this->template->id)
+            ->where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get();
+
+        foreach ($sections as $section) {
+            $sectionContent = str_replace(array_keys($map), array_values($map), $section->content);
+            $fullBody .= "\n\n" . $sectionContent;
+        }
+
+        return $fullBody;
     }
 }

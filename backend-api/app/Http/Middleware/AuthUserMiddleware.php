@@ -27,7 +27,7 @@ class AuthUserMiddleware
         }
 
         // Attach user object to the request so controllers can use $request->user
-        $request->merge(['user' => $user]);
+        $request->user = $user;
 
         return $next($request);
     }

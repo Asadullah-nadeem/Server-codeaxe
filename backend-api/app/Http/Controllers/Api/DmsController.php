@@ -111,15 +111,24 @@ class DmsController extends Controller
                     return response()->json(['success' => false, 'message' => 'ImageKit credentials not configured in DB or .env.'], 500);
                 }
 
-                $imageKit = new \ImageKit\ImageKit($pubKey, $privKey, $urlEndpoint);
-                $upload = $imageKit->uploadFiles([
-                    'file'     => base64_encode(file_get_contents($file->path())),
-                    'fileName' => $randomName,
-                    'folder'   => $folder,
-                ]);
-                $finalUrl = $upload->result->url;
+                // Native Upload using HTTP instead of the missing SDK library
+                $response = Http::withBasicAuth($privKey, '')
+                    ->attach('file', file_get_contents($file->getRealPath()), $randomName)
+                    ->post('https://upload.imagekit.io/api/v1/files/upload', [
+                        'fileName'           => $randomName,
+                        'folder'             => $folder,
+                        'useUniqueFileName'  => 'false',
+                    ]);
+
+                if ($response->failed()) {
+                    return response()->json(['success' => false, 'message' => 'ImageKit Upload failed: ' . $response->body()], 500);
+                }
+
+                $finalUrl = $response->json()['url'];
 
             } else { // s3
+                // For S3, we really need the flysystem-aws-s3-v3 package installed via composer.
+                // If it's missing, this will fail.
                 Storage::disk('s3')->putFileAs($folder, $file, $randomName, 'private');
                 $finalUrl = $folder . '/' . $randomName;
             }
@@ -128,6 +137,7 @@ class DmsController extends Controller
                 'slug'        => $slug,
                 'file_name'   => $randomName,
                 'provider'    => $provider,
+                'size'        => $file->getSize(),
                 'url'         => $finalUrl,
                 'status'      => 1,
                 'uploaded_at' => now(),
@@ -299,7 +309,7 @@ class DmsController extends Controller
     public function upsertProvider(Request $request)
     {
         $request->validate([
-            'provider'  => 'required|in:imagekit,s3',
+            'provider'  => 'required|in:imagekit,s3,proxy',
             'key_name'  => 'required|string|max:100',
             'key_value' => 'required|string',
         ]);

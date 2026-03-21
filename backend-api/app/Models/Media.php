@@ -15,6 +15,7 @@ class Media extends Model
         'slug',
         'file_name',
         'provider',
+        'size',
         'url',
         'path',
         'status',
@@ -24,5 +25,6 @@ class Media extends Model
     protected $casts = [
         'uploaded_at' => 'datetime',
         'status'      => 'integer',
+        'size'        => 'integer',
     ];
 }

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('dms_api_keys', function (Blueprint $table) {
-            //
+            $table->string('provider', 20)->default('s3')->after('api_scope');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('dms_api_keys', function (Blueprint $table) {
-            //
+            $table->dropColumn('provider');
         });
     }
 };

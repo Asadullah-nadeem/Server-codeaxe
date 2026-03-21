@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DmsController;
 use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -50,6 +52,10 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 Route::middleware([AuthUserMiddleware::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::post('/dashboard/request', [DashboardController::class, 'storeRequest']);
+
+    // Chat
+    Route::get('/chat/messages/{request_id}', [ChatController::class, 'getUserMessages']);
+    Route::post('/chat/send/{request_id}',    [ChatController::class, 'userSendMessage']);
 });
 
 // Send Request UI (Public or semi-public to get text)
@@ -189,6 +195,24 @@ Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Ht
     Route::post('/admin/contact/times', [ContactController::class, 'storeResponseTime']);
     Route::put('/admin/contact/times/{id}', [ContactController::class, 'updateResponseTime']);
     Route::delete('/admin/contact/times/{id}', [ContactController::class, 'destroyResponseTime']);
+
+    // Admin Chat Control
+    Route::get('/admin/chat/overview',              [ChatController::class, 'getChatOverview']);
+    Route::get('/admin/chat/messages/{request_id}', [ChatController::class, 'getAdminMessages']);
+    Route::post('/admin/chat/send/{request_id}',    [ChatController::class, 'adminSendMessage']);
+    Route::delete('/admin/chat/clear/{request_id}', [ChatController::class, 'clearChat']);
+    Route::post('/admin/chat/status/{request_id}', [ChatController::class, 'updateRequestStatus']);
+
+    // ─── Email Templates & Sections ───
+    Route::get('/admin/email/templates',           [EmailTemplateController::class, 'index']);
+    Route::get('/admin/email/templates/{id}',      [EmailTemplateController::class, 'show']);
+    Route::post('/admin/email/templates',          [EmailTemplateController::class, 'store']);
+    Route::put('/admin/email/templates/{id}',       [EmailTemplateController::class, 'update']);
+    Route::delete('/admin/email/templates/{id}',    [EmailTemplateController::class, 'destroy']);
+    Route::post('/admin/email/sections',           [EmailTemplateController::class, 'storeSection']);
+    Route::put('/admin/email/sections/{id}',       [EmailTemplateController::class, 'updateSection']);
+    Route::delete('/admin/email/sections/{id}',    [EmailTemplateController::class, 'destroySection']);
+    Route::get('/admin/email/templates/preview/{id}', [EmailTemplateController::class, 'preview']);
 });
 
 // Super Admin ONLY Routes (Hierarchy check)
@@ -199,6 +223,10 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     Route::put('/admin/update/{id}', [AdminAuthController::class, 'updateAdmin']);
     Route::delete('/admin/delete/{id}', [AdminAuthController::class, 'deleteAdmin']);
     
+    // Management of registered frontend users
+    Route::get('/admin/users/registered', [AdminAuthController::class, 'registeredUsers']);
+    Route::post('/admin/users/verify/{id}', [AdminAuthController::class, 'verifyUser']);
+
     // Sensitive DB settings or other system configs
     Route::get('/admin/system/status', function() {
         return response()->json(['success' => true, 'status' => 'System Online']);

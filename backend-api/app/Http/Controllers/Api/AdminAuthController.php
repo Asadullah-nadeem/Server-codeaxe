@@ -137,4 +137,49 @@ class AdminAuthController extends Controller
         DB::table('admins')->where('id', $id)->delete();
         return response()->json(['success' => true, 'message' => 'Account removed.']);
     }
+
+    public function registeredUsers()
+    {
+        $users = DB::table('users')
+                    ->select('id', 'username', 'email', 'email_verified_at', 'created_at', 'updated_at')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+        foreach($users as $user) {
+            $user->messages = DB::table('contact_submissions')
+                                ->where('email', $user->email)
+                                ->orderBy('submitted_at', 'desc')
+                                ->get();
+            $user->requests = DB::table('client_requests')
+                                ->where('user_id', $user->id)
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+            $user->verification_tokens = DB::table('verification_tokens')
+                                ->where('email', $user->email)
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+            $user->password_resets = DB::table('password_reset_tokens')
+                                ->where('email', $user->email)
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+        }
+        return response()->json(['success' => true, 'data' => $users]);
+    }
+
+    public function verifyUser($id)
+    {
+        $user = DB::table('users')->where('id', $id)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        DB::table('users')->where('id', $id)->update([
+            'email_verified_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        // Clean up pending verification tokens
+        DB::table('verification_tokens')->where('email', $user->email)->delete();
+
+        return response()->json(['success' => true, 'message' => 'User address verified successfully.']);
+    }
 }

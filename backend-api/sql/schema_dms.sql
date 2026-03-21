@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS media (
     slug VARCHAR(10) UNIQUE DEFAULT NULL,
     file_name VARCHAR(255) NOT NULL,
     provider VARCHAR(50) NOT NULL, -- 'imagekit' or 's3'
+    size INT DEFAULT 0,
     url TEXT NOT NULL,
     path TEXT DEFAULT NULL,
     status TINYINT(1) DEFAULT 1,

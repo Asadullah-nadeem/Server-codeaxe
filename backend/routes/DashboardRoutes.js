@@ -20,6 +20,12 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
+		title: 'Email Templates',
+		icon: 'mail',
+		link: '/cms/emails'
+	},
+	{
+		id: uuid(),
 		title: 'Home Settings',
 		icon: 'layout',
 		link: '/cms/home'
@@ -95,13 +101,30 @@ export const DashboardMenu = [
 	{
 		id: uuid(),
 		title: 'Admin Accounts',
-		icon: 'users',
+		icon: 'shield',
 		link: '/admin/users'
 	},
 	{
 		id: uuid(),
+		title: 'CLIENT INTERACTION',
+		grouptitle: true
+	},
+	{
+		id: uuid(),
+		title: 'Client Messaging',
+		icon: 'message-square',
+		link: '/admin/active-chats'
+	},
+	{
+		id: uuid(),
+		title: 'Registered End-Users',
+		icon: 'users',
+		link: '/admin/registered-users'
+	},
+	{
+		id: uuid(),
 		title: 'DMS Settings',
-		icon: 'shield',
+		icon: 'database',
 		link: '/admin/dms-settings'
 	}
 ];

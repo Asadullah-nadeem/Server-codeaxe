@@ -36,7 +36,7 @@ class AdminAuthMiddleware
         }
 
         // Attach admin object to request for downstream access
-        $request->attributes->add(['admin' => $admin]);
+        $request->admin = $admin;
 
         return $next($request);
     }

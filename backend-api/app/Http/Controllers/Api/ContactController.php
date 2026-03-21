@@ -143,7 +143,7 @@ class ContactController extends Controller
         $html = view('emails.thank_you', [
             'submission' => $dummy,
             'template'   => $template,
-            'body'       => $mail->build()->getData()['body'] ?? $template->body_html,
+            'body'       => $mail->renderBody(),
         ])->render();
 
         return response($html)->header('Content-Type', 'text/html');

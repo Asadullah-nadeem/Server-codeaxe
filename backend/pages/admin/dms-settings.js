@@ -1,30 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Alert, InputGroup, Nav, Tab } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Alert, Nav, Tab } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
-import { Key, Server, Plus, Trash, Globe, Eye, EyeOff, Shield, Info } from 'react-feather';
+import { Server, Globe, Eye, EyeOff, Shield, Info, Database } from 'react-feather';
 
 const DMSSettings = () => {
-    const [keys, setKeys] = useState([]);
     const [providers, setProviders] = useState([]);
     const [envKeys, setEnvKeys] = useState({});
     const [loading, setLoading] = useState(true);
     
-    const [keyForm, setKeyForm] = useState({ label: '', api_scope: 'upload', provider: 's3' });
-    const [resKey, setResKey] = useState(null);
-    const [showKeyModal, setShowKeyModal] = useState(false);
-
     const [provForm, setProvForm] = useState({ provider: 'imagekit', key_name: '', key_value: '' });
     const [showProvModal, setShowProvModal] = useState(false);
     const [showSecrets, setShowSecrets] = useState({});
+    const [customProxyUrl, setCustomProxyUrl] = useState('');
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const rKeys = await fetchApi('/admin/dms/keys');
-            if (rKeys?.success) setKeys(rKeys.data);
-            
             const rProvs = await fetchApi('/admin/dms/providers');
-            if (rProvs?.success) setProviders(rProvs.data);
+            if (rProvs?.success) {
+                setProviders(rProvs.data);
+                const proxyOpt = rProvs.data.find(p => p.provider === 'proxy' && p.key_name === 'custom_url');
+                if (proxyOpt) setCustomProxyUrl(proxyOpt.key_value);
+            }
 
             const rEnv = await fetchApi('/admin/dms/env-keys');
             if (rEnv?.success) setEnvKeys(rEnv.data);
@@ -36,17 +33,6 @@ const DMSSettings = () => {
 
     const toggleSecret = (id) => setShowSecrets(prev => ({ ...prev, [id]: !prev[id] }));
 
-    const handleKeyCreate = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await fetchApi('/admin/dms/keys', { method: 'POST', body: JSON.stringify(keyForm) });
-            if (res.success) {
-                setResKey(res.api_key);
-                fetchData();
-            }
-        } catch (error) { alert("Failed to create API key."); }
-    };
-
     const handleProvUpsert = async (e) => {
         e.preventDefault();
         try {
@@ -56,12 +42,13 @@ const DMSSettings = () => {
         } catch (error) { alert("Failed to save provider config."); }
     };
 
-    const handleRevokeKey = async (id) => {
-        if (!confirm('Revoke this API Key? Devices using it will lose access.')) return;
+    const handleProxyUrlSave = async (e) => {
+        e.preventDefault();
         try {
-            await fetchApi(`/admin/dms/keys/${id}`, { method: 'DELETE' });
+            await fetchApi('/admin/dms/providers', { method: 'POST', body: JSON.stringify({ provider: 'proxy', key_name: 'custom_url', key_value: customProxyUrl }) });
+            alert("Custom proxy URL saved successfully!");
             fetchData();
-        } catch (error) { alert("Revoke failed."); }
+        } catch (error) { alert("Failed to save proxy URL."); }
     };
 
     const handleDeleteProv = async (id) => {
@@ -72,109 +59,48 @@ const DMSSettings = () => {
         } catch (error) { alert("Delete failed."); }
     };
 
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text);
-        alert("Copied to clipboard!");
-    };
-
     if (loading) return <Container fluid className="p-4"><p>Loading infrastructure settings...</p></Container>;
 
     return (
         <Container fluid className="px-6 py-4">
-            <h2 className="mb-1">DMS Infrastructure Settings</h2>
-            <p className="text-muted mb-4 small">Manage API Master Keys, Cloud Providers (S3/ImageKit), and System Environment configuration.</p>
+            <h2 className="mb-1">DMS Cloud Infrastructure</h2>
+            <p className="text-muted mb-4 small">Configure S3/ImageKit secrets and manage your secure URL proxying distribution.</p>
 
-            <Tab.Container id="dms-tabs" defaultActiveKey="api-keys">
-                <Nav variant="tabs" className="mb-4">
-                    <Nav.Item><Nav.Link eventKey="api-keys"><Key size={14} className="me-2"/> DMS API Keys</Nav.Link></Nav.Item>
-                    <Nav.Item><Nav.Link eventKey="storage"><Server size={14} className="me-2"/> Cloud Providers</Nav.Link></Nav.Item>
-                    <Nav.Item><Nav.Link eventKey="proxy"><Globe size={14} className="me-2"/> URL Proxying</Nav.Link></Nav.Item>
+            <Tab.Container id="dms-tabs" defaultActiveKey="storage">
+                <Nav variant="pills" className="bg-light p-1 rounded-3 mb-4 d-inline-flex border">
+                    <Nav.Item>
+                        <Nav.Link eventKey="storage" className="rounded-3 px-4 d-flex align-items-center">
+                            <Server size={14} className="me-2"/> Cloud Providers
+                        </Nav.Link>
+                    </Nav.Item>
+                    <Nav.Item>
+                        <Nav.Link eventKey="proxy" className="rounded-3 px-4 d-flex align-items-center">
+                            <Globe size={14} className="me-2"/> URL Proxying
+                        </Nav.Link>
+                    </Nav.Item>
                 </Nav>
 
                 <Tab.Content>
-                    <Tab.Pane eventKey="api-keys">
-                        <Card className="border-0 shadow-sm mb-4">
-                            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0">DMS API Keys (External Uploads)</h5>
-                                <Button variant="light" size="sm" onClick={() => { setResKey(null); setShowKeyModal(true); }}>
-                                    <Plus size={14} className="me-1"/> Generate New Key
-                                </Button>
-                            </Card.Header>
-                            <Card.Body className="p-0">
-                                <Table hover responsive className="text-nowrap mb-0">
-                                    <thead className="table-light">
-                                        <tr><th>Label</th><th>Scope</th><th>Provider</th><th>Status</th><th>API Key</th><th>Created</th><th>Actions</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {keys.map(k => (
-                                            <tr key={k.id}>
-                                                <td><strong>{k.label}</strong></td>
-                                                <td><Badge bg="info">{k.api_scope.toUpperCase()}</Badge></td>
-                                                <td><Badge bg={k.provider === 'imagekit' ? 'info' : 'warning'}>{k.provider?.toUpperCase() || 'S3'}</Badge></td>
-                                                <td><Badge bg={k.is_active ? 'success' : 'secondary'}>{k.is_active ? 'Active' : 'Revoked'}</Badge></td>
-                                                <td><code>{k.api_key}</code></td>
-                                                <td>{new Date(k.created_at).toLocaleDateString()}</td>
-                                                <td>
-                                                    {k.is_active === 1 && (
-                                                        <Button size="sm" variant="danger" onClick={() => handleRevokeKey(k.id)}>Revoke</Button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </Table>
-                            </Card.Body>
-                        </Card>
-
-                        <Card className="border-0 shadow-sm mt-4">
-                            <Card.Header className="bg-light py-3 border-0">
-                                <h6 className="mb-0 fw-bold uppercase tracking-widest small"><Shield size={14} className="me-2 text-primary"/> PRO KNOWLEDGE: How to use DMS Keys</h6>
-                            </Card.Header>
-                            <Card.Body className="p-4">
-                                <Row className="g-4">
-                                    <Col md={6}>
-                                        <h6 className="fw-bold small text-dark mb-2">1. When to use these keys?</h6>
-                                        <p className="text-muted small">You only need these keys for <strong>External Applications</strong> (like a Mobile App or a separate PHP script) that need to upload images to your cloud.</p>
-                                        <p className="text-muted small mb-0">The <strong>Admin Panel</strong> (this dashboard) does NOT need an API key because it uses your secure Administrator session automatically.</p>
-                                    </Col>
-                                    <Col md={6}>
-                                        <h6 className="fw-bold small text-dark mb-2">2. How to authenticate?</h6>
-                                        <p className="text-muted small mb-2">Send the API key in the <code>X-DMS-Key</code> header when calling the DMS API endpoints:</p>
-                                        <div className="bg-dark text-white p-3 rounded-3 x-small font-monospace mb-0 overflow-auto">
-                                            <code>
-                                                Header: X-DMS-Key<br/>
-                                                Value: dms_vzix6Tr8dt68Wj...
-                                            </code>
-                                        </div>
-                                    </Col>
-                                </Row>
-                                <hr />
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className="bg-warning bg-opacity-10 text-warning p-2 rounded-circle"><Info size={20}/></div>
-                                    <p className="x-small text-muted mb-0"><strong>Security Tip:</strong> Never share these keys on public frontend code (like React/HTML). They should only be used in Backends or Mobile Apps.</p>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
-
                     <Tab.Pane eventKey="storage">
-                        <Row>
+                        <Row className="g-4">
                             <Col lg={7}>
-                                <Card className="border-0 shadow-sm mb-4">
-                                    <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
-                                        <h5 className="mb-0">Database Overrides</h5>
-                                        <Button variant="outline-light" size="sm" onClick={() => setShowProvModal(true)}>Add Override Key</Button>
+                                <Card className="border-0 shadow-sm border-top border-5 border-info h-100">
+                                    <Card.Header className="bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                                        <h5 className="mb-0 fw-bold"><Database size={18} className="me-2 text-info"/> Database Secrets Override</h5>
+                                        <Button variant="info" size="sm" className="text-white" onClick={() => setShowProvModal(true)}>Add Key</Button>
                                     </Card.Header>
                                     <Card.Body className="p-0">
                                         <Table hover responsive className="mb-0">
                                             <thead className="table-light">
-                                                <tr><th>Provider</th><th>Key Name</th><th>Stored Value</th><th>Actions</th></tr>
+                                                <tr><th>Provider</th><th>Config Name</th><th>Value</th><th>Actions</th></tr>
                                             </thead>
                                             <tbody>
-                                                {providers.map(p => (
+                                                {providers.length === 0 ? (
+                                                    <tr><td colSpan="4" className="text-center py-5 text-muted small">No overrides active. Using .env defaults.</td></tr>
+                                                ) : providers.map(p => (
                                                     <tr key={p.id}>
-                                                        <td><Badge bg={p.provider === 'imagekit' ? 'info' : 'warning'}>{p.provider}</Badge></td>
-                                                        <td><code>{p.key_name}</code></td>
+                                                        <td><Badge bg={p.provider === 'imagekit' ? 'info' : 'warning'} className="text-white px-3 py-1">{p.provider?.toUpperCase()}</Badge></td>
+                                                        <td><code className="fw-bold">{p.key_name}</code></td>
                                                         <td>
                                                             <div className="d-flex align-items-center">
                                                                 <code className="text-muted me-2">
@@ -186,7 +112,7 @@ const DMSSettings = () => {
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <Button size="sm" variant="outline-danger" className="border-0" onClick={() => handleDeleteProv(p.id)}><Trash size={14} /></Button>
+                                                            <Button size="sm" variant="outline-danger" className="border-0" onClick={() => handleDeleteProv(p.id)}><Eye size={14} /></Button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -196,13 +122,13 @@ const DMSSettings = () => {
                                 </Card>
                             </Col>
                             <Col lg={5}>
-                                <Card className="border-0 shadow-sm mb-4">
-                                    <Card.Header className="bg-secondary text-white">
-                                        <h5 className="mb-0">Master Environment (.env)</h5>
+                                <Card className="border-0 shadow-sm border-top border-5 border-secondary h-100">
+                                    <Card.Header className="bg-white py-3 border-0">
+                                        <h5 className="mb-0 fw-bold"><Shield size={18} className="me-2 text-secondary"/> Live .env Config</h5>
                                     </Card.Header>
                                     <Card.Body className="p-0">
-                                        <Table hover responsive className="mb-0">
-                                            <thead className="table-light"><tr><th>Variable</th><th>Live Value</th></tr></thead>
+                                        <Table hover responsive className="mb-0 overflow-hidden">
+                                            <thead className="table-light"><tr><th>Environment Key</th><th>Active Value</th></tr></thead>
                                             <tbody>
                                                 {Object.entries(envKeys || {}).map(([k, v]) => (
                                                     <tr key={k}>
@@ -216,25 +142,80 @@ const DMSSettings = () => {
                                 </Card>
                             </Col>
                         </Row>
+                        
+                        <Alert variant="info" className="mt-4 border-0 shadow-sm d-flex align-items-center p-4">
+                            <div className="bg-white p-2 rounded-circle me-4 shadow-sm"><Info size={24} className="text-info"/></div>
+                            <div>
+                                <h6 className="mb-1 fw-bold">Cloud Priority Sync</h6>
+                                <p className="mb-0 small text-muted">The system checks the <strong>Database Master Override</strong> first. If no key is found there, it falls back to the <strong>Live .env Config</strong>. This allows you to hot-swap cloud keys without reloading the server.</p>
+                            </div>
+                        </Alert>
                     </Tab.Pane>
 
                     <Tab.Pane eventKey="proxy">
-                         <Card className="border-0 shadow-sm p-4">
-                            <h4 className="mb-3">URL Proxying Infrastructure</h4>
-                            <p className="text-muted">All images are served via the Backend API to protect cloud secrets and provide auditing.</p>
-                            <hr />
-                            <Row>
+                         <Card className="border-0 shadow-sm p-5 border-top border-5 border-primary">
+                            <div className="text-center mb-5">
+                                <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-circle d-inline-flex mb-4">
+                                    <Globe size={40}/>
+                                </div>
+                                <h3>Secure URL Proxy Distribution</h3>
+                                <p className="text-muted mx-auto" style={{maxWidth: '600px'}}>Your images are served through a localized proxy layer. This masks your S3 bucket names and provides a centralized audit trail for every asset access.</p>
+                            </div>
+                            
+                            <hr className="my-5" />
+
+                            <div className="bg-light border rounded p-4 mb-5">
+                                <h5 className="fw-bold mb-3"><Globe size={18} className="me-2 text-primary"/> Custom Proxy URL</h5>
+                                <p className="text-muted small mb-3">Add your own custom URL to override the default proxy endpoint.</p>
+                                <Form className="d-flex gap-2" onSubmit={handleProxyUrlSave}>
+                                    <Form.Control 
+                                        type="url" 
+                                        placeholder="e.g. https://media.yourdomain.com" 
+                                        value={customProxyUrl}
+                                        onChange={(e) => setCustomProxyUrl(e.target.value)}
+                                        required 
+                                    />
+                                    <Button type="submit" variant="primary" className="px-5">Save URL</Button>
+                                </Form>
+                                {providers.find(p => p.provider === 'proxy' && p.key_name === 'custom_url') && (
+                                    <div className="mt-3 small text-success fw-bold">
+                                        Current Active Proxy URL: {providers.find(p => p.provider === 'proxy' && p.key_name === 'custom_url').key_value}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <Row className="g-5">
                                 <Col md={6}>
-                                    <h6>API Proxy Endpoint:</h6>
-                                    <Alert variant="info" className="py-2">
-                                        <code>{process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/dms/media/{"{slug}"}/{"{id}"}</code>
-                                    </Alert>
+                                    <div className="d-flex gap-3 mb-4">
+                                        <div className="bg-primary text-white p-2 rounded h-auto" style={{alignSelf: 'start'}}>1</div>
+                                        <div>
+                                            <h6 className="fw-bold">Dynamic Proxy Endpoint</h6>
+                                            <p className="text-muted small">This is the base URL generated for every asset stored in S3 or ImageKit.</p>
+                                            <div className="bg-light p-3 rounded font-monospace x-small border">
+                                                <code>{process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/dms/media/{"{slug}"}/{"{id}"}</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="d-flex gap-3">
+                                        <div className="bg-primary text-white p-2 rounded h-auto" style={{alignSelf: 'start'}}>2</div>
+                                        <div>
+                                            <h6 className="fw-bold">Image Optimization Proxy</h6>
+                                            <p className="text-muted small">ImageKit URLs are proxied through our API to resolve "broken links" automatically if your keys change.</p>
+                                        </div>
+                                    </div>
                                 </Col>
                                 <Col md={6}>
-                                    <h6>Example URL:</h6>
-                                    <Alert variant="secondary" className="py-2">
-                                        <code>http://localhost:8000/api/dms/media/asset_v1/105</code>
-                                    </Alert>
+                                    <Card className="bg-dark text-white border-0 p-4 shadow-lg">
+                                        <h6 className="text-secondary fw-bold uppercase x-small mb-3">Live Example Request</h6>
+                                        <div className="font-monospace small opacity-75 mb-3">
+                                            $ curl -I {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/dms/media/asset_99/105
+                                        </div>
+                                        <div className="text-success small">
+                                            {'>'} HTTP/1.1 200 OK<br/>
+                                            {'>'} Content-Type: image/jpeg<br/>
+                                            {'>'} X-DMS-Source: s3-proxied
+                                        </div>
+                                    </Card>
                                 </Col>
                             </Row>
                          </Card>
@@ -242,70 +223,41 @@ const DMSSettings = () => {
                 </Tab.Content>
             </Tab.Container>
 
-            {/* API Key Modal */}
-            <Modal show={showKeyModal} onHide={() => setShowKeyModal(false)} centered>
-                <Modal.Header closeButton><Modal.Title>Generate API Access Key</Modal.Title></Modal.Header>
-                <Modal.Body>
-                    {!resKey ? (
-                        <Form onSubmit={handleKeyCreate}>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Client Label (e.g. Android App)</Form.Label>
-                                <Form.Control required placeholder="Enter label..." value={keyForm.label} onChange={e => setKeyForm({...keyForm, label: e.target.value})} />
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Access Scope</Form.Label>
-                                <Form.Select value={keyForm.api_scope} onChange={e => setKeyForm({...keyForm, api_scope: e.target.value})}>
-                                    <option value="upload">Upload Only</option>
-                                    <option value="admin">Full Admin Access</option>
-                                </Form.Select>
-                            </Form.Group>
-                            <Form.Group className="mb-4">
-                                <Form.Label>Default Cloud Provider</Form.Label>
-                                <Form.Select value={keyForm.provider} onChange={e => setKeyForm({...keyForm, provider: e.target.value})}>
-                                    <option value="s3">AWS S3 (Standard)</option>
-                                    <option value="imagekit">ImageKit.io (Optimized)</option>
-                                </Form.Select>
-                            </Form.Group>
-                            <Button type="submit" variant="primary" className="w-100">Create Secure Key</Button>
-                        </Form>
-                    ) : (
-                        <div className="text-center">
-                            <h5 className="text-success mb-3">Key Generated Successfully!</h5>
-                            <InputGroup className="mb-4">
-                                <Form.Control readOnly value={resKey} className="bg-light font-monospace" />
-                                <Button variant="outline-dark" onClick={() => copyToClipboard(resKey)}>Copy</Button>
-                            </InputGroup>
-                            <Alert variant="warning" className="small">Please save this key now. It will not be shown again.</Alert>
-                            <Button variant="secondary" className="w-100" onClick={() => setShowKeyModal(false)}>Close</Button>
-                        </div>
-                    )}
-                </Modal.Body>
-            </Modal>
-
             {/* Provider Modal */}
             <Modal show={showProvModal} onHide={() => setShowProvModal(false)} centered>
-                <Modal.Header closeButton><Modal.Title>Add Cloud Credential Override</Modal.Title></Modal.Header>
+                <Modal.Header closeButton><Modal.Title className="fw-bold">Add Cloud Credential Override</Modal.Title></Modal.Header>
                 <Form onSubmit={handleProvUpsert}>
-                    <Modal.Body>
+                    <Modal.Body className="p-4">
                         <Form.Group className="mb-3">
-                            <Form.Label>Service Provider</Form.Label>
+                            <Form.Label className="small fw-bold">Service Provider</Form.Label>
                             <Form.Select value={provForm.provider} onChange={e => setProvForm({...provForm, provider: e.target.value})}>
-                                <option value="imagekit">ImageKit</option>
+                                <option value="imagekit">ImageKit.io</option>
                                 <option value="s3">AWS S3</option>
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>Configuration Key (e.g. public_key)</Form.Label>
-                            <Form.Control required placeholder="Key name..." value={provForm.key_name} onChange={e => setProvForm({...provForm, key_name: e.target.value})} />
+                            <Form.Label className="small fw-bold">Configuration Key </Form.Label>
+                            <Form.Control required placeholder="e.g. public_key or access_id" value={provForm.key_name} onChange={e => setProvForm({...provForm, key_name: e.target.value})} />
                         </Form.Group>
-                        <Form.Group className="mb-4">
-                            <Form.Label>Secret Value</Form.Label>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-bold">Secret Value</Form.Label>
                             <Form.Control required as="textarea" rows={3} placeholder="Paste secret here..." value={provForm.key_value} onChange={e => setProvForm({...provForm, key_value: e.target.value})} />
                         </Form.Group>
-                        <Button type="submit" variant="primary" className="w-100">Save Credential</Button>
+                        <Alert variant="warning" className="x-small py-2 border-0 bg-warning bg-opacity-10 text-dark">
+                             This will override the .env value immediately without a server restart.
+                        </Alert>
                     </Modal.Body>
+                    <Modal.Footer className="border-0 bg-light p-3">
+                        <Button variant="outline-dark" size="sm" onClick={() => setShowProvModal(false)}>Cancel</Button>
+                        <Button type="submit" variant="info" size="sm" className="text-white px-4">Save Credential</Button>
+                    </Modal.Footer>
                 </Form>
             </Modal>
+            
+            <style jsx>{`
+                .x-small { font-size: 11px; }
+                .tracking-widest { letter-spacing: 0.1em; }
+            `}</style>
         </Container>
     );
 };

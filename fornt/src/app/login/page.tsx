@@ -66,9 +66,10 @@ export default function Login() {
         // Store API Token local
         localStorage.setItem("api_token", data.data.token);
         localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("mock_session", "true"); // Ensures UI elements like Navbar see auth state
         setVerificationMessage("Successfully logged in! Redirecting...");
         setTimeout(() => {
-            window.location.href = "/work"; // Direct user home or dash
+            window.location.href = "/dashboard"; // Direct user to dashboard
         }, 1500);
       } else {
         setError(data.message || "Failed to login.");

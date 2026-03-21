@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Loader2, Plus, LogOut, ArrowRight, FolderKanban, Clock, CheckCircle } from "lucide-react";
+import { Loader2, Plus, LogOut, ArrowRight, FolderKanban, Clock, CheckCircle, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
+import ChatWindow from "@/components/ChatWindow";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -12,13 +13,17 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [activeChat, setActiveChat] = useState<any>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("api_token");
-    if (!token) {
+    const storedUser = localStorage.getItem("user");
+    if (!token || !storedUser) {
       router.push("/login"); // Not authenticated
       return;
     }
+    setUser(JSON.parse(storedUser));
 
     fetch(`${API}/dashboard`, {
       headers: {
@@ -46,6 +51,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("api_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("mock_session");
     router.push("/login");
   };
 
@@ -94,8 +100,10 @@ export default function Dashboard() {
     <div className="container py-24 md:py-32 min-h-screen">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 border-b border-border pb-8">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-4xl font-display mb-2">{ui?.title || "Dashboard"}</h1>
-          <p className="text-muted-foreground">{ui?.subtitle || "Manage your requests."}</p>
+          <h1 className="text-4xl font-display mb-2">
+            Hey, <span className="text-accent">{user?.username || "there"}</span>
+          </h1>
+          <p className="text-muted-foreground">{ui?.subtitle || "Manage your requests and track progress."}</p>
         </motion.div>
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-4">
           <Link
@@ -137,6 +145,14 @@ export default function Dashboard() {
                     <span>DATE: <span className="text-foreground">{new Date(req.created_at).toLocaleDateString()}</span></span>
                   </div>
                 </div>
+                <div className="flex shrink-0">
+                  <button 
+                    onClick={() => setActiveChat({ id: req.id, title: req.title })}
+                    className="inline-flex items-center gap-2 border border-border bg-background px-4 py-3 font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent hover:border-accent transition-all duration-200"
+                  >
+                    <MessageSquare size={14} /> Messages
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -153,6 +169,14 @@ export default function Dashboard() {
           </div>
         )}
       </motion.div>
+
+      {activeChat && (
+        <ChatWindow 
+            requestId={activeChat.id} 
+            title={activeChat.title} 
+            onClose={() => setActiveChat(null)} 
+        />
+      )}
     </div>
   );
 }

@@ -139,7 +139,10 @@ const Navbar = () => {
               <Link href="/dashboard" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors duration-200">{settings.nav_btn_dashboard}</Link>
             </div>
           ) : (
-            <Link href="/login" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-accent transition-colors duration-200">{settings.nav_btn_login}</Link>
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200">{settings.nav_btn_login || "Login"}</Link>
+              <Link href="/signup" className="bg-primary text-primary-foreground px-6 py-2.5 font-mono-label text-xs uppercase tracking-widest hover:bg-accent transition-colors duration-200">{settings.nav_btn_signup || "Sign Up"}</Link>
+            </div>
           )}
         </div>
 
