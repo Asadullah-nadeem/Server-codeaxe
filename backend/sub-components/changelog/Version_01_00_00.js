@@ -18,9 +18,9 @@ const Version_01_00_00 = () => {
 							<Col lg={9} md={8} sm={12}>
 								<div>
 									<h4 className="mb-1 fw-semi-bold">
-										Initial Release of Dash UI NextJS
+										Initial Release of Codeaxe Technology NextJS
 									</h4>
-									<p className="mb-0">Dash UI theme is a fully responsive and yet modern premium bootstrap dashboard Admin template developed in nextjs framework.</p>
+                  <p className="mb-0">Codeaxe Technology theme is a fully responsive and yet modern premium bootstrap dashboard Admin template developed in nextjs framework.</p>
 								</div>
 							</Col>
 						</Row>

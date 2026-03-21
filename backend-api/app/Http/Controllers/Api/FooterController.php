@@ -99,7 +99,8 @@ class FooterController extends Controller
             'footer_copyright',
             'site_logo_url',
             'site_name_prefix',
-            'site_name_accent'
+            'site_name_accent',
+            'footer_is_visible'
         ]);
 
         foreach ($settings as $key => $value) {

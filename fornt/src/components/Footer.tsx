@@ -39,6 +39,10 @@ const Footer = () => {
       .catch(err => console.error("Failed fetching footer", err));
   }, []);
 
+  if (settings.footer_is_visible === "0" || settings.footer_is_visible === 0) {
+    return null;
+  }
+
   return (
     <footer className="border-t border-border">
       <div className="container py-16 md:py-24">

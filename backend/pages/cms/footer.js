@@ -28,7 +28,8 @@ const FooterCMS = () => {
         footer_copyright: '',
         site_logo_url: '',
         site_name_prefix: '',
-        site_name_accent: ''
+        site_name_accent: '',
+        footer_is_visible: 1
     });
 
     const fetchData = async () => {
@@ -99,7 +100,8 @@ const FooterCMS = () => {
             footer_copyright: settings.footer_copyright || '',
             site_logo_url: settings.site_logo_url || '',
             site_name_prefix: settings.site_name_prefix || '',
-            site_name_accent: settings.site_name_accent || ''
+            site_name_accent: settings.site_name_accent || '',
+            footer_is_visible: settings.footer_is_visible !== undefined ? settings.footer_is_visible : 1
         });
         setShowSettingsModal(true);
     };
@@ -296,6 +298,21 @@ const FooterCMS = () => {
                         </Row>
 
                         <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Footer General Details</h6>
+                        <Row>
+                            <Col md={12}>
+                                <Form.Group className="mb-4">
+                                    <Form.Check 
+                                        type="switch" 
+                                        id="footer-visibility-switch" 
+                                        label="Show Footer on Public Website" 
+                                        checked={settingsForm.footer_is_visible == 1} 
+                                        onChange={e => setSettingsForm({...settingsForm, footer_is_visible: e.target.checked ? 1 : 0})} 
+                                        className="fw-bold text-primary"
+                                    />
+                                    <Form.Text className="text-muted small">Disable this to hide the footer and branding section completely from the frontend.</Form.Text>
+                                </Form.Group>
+                            </Col>
+                        </Row>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
