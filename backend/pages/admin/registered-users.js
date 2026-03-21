@@ -79,6 +79,7 @@ const RegisteredUsers = () => {
                                 <tr>
                                     <th className="border-bottom-0">Name</th>
                                     <th className="border-bottom-0">Email</th>
+                                    <th className="border-bottom-0">Login Type</th>
                                     <th className="border-bottom-0">Registration Date</th>
                                     <th className="border-bottom-0">Verified</th>
                                     <th className="border-bottom-0">Verification</th>
@@ -100,6 +101,11 @@ const RegisteredUsers = () => {
                                             </div>
                                         </td>
                                         <td className="py-3 text-muted">{u.email}</td>
+                                        <td className="py-3">
+                                            <Badge bg={u.login_type === 'sso' ? 'info' : 'secondary'} className="text-uppercase x-small">
+                                                {u.login_type || 'password'}
+                                            </Badge>
+                                        </td>
                                         <td className="py-3">
                                             {new Date(u.created_at).toLocaleDateString()}
                                             <Badge bg="secondary" className="ms-2 x-small opacity-75">

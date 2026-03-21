@@ -129,7 +129,7 @@ const EmailTemplatesCMS = () => {
                                     <h5 className="mb-0">Configuration: {selectedTemplate.template_key}</h5>
                                     <div>
                                         <Button variant="light" size="sm" className="me-2" onClick={() => { setTemplateForm(selectedTemplate); setShowTemplateModal(true); }}>Edit Settings</Button>
-                                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
+                                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}?admin_token=${typeof window !== 'undefined' ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
                                     </div>
                                 </Card.Header>
                                 <Card.Body>

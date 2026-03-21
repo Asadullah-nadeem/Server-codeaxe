@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\DmsController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EmailTemplateController;
+use App\Http\Controllers\Api\SmtpController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -83,6 +84,7 @@ Route::get('/dms/media/{slug}/{id}', [DmsController::class, 'showImage']);
 // General Admin Protected Routes (Basic Admin session)
 Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
     Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
+    Route::get('/admin/auth/check', [AdminAuthController::class, 'checkAuth']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 
     // ─── CMS Management (Content CRUD) ───
@@ -213,6 +215,11 @@ Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Ht
     Route::put('/admin/email/sections/{id}',       [EmailTemplateController::class, 'updateSection']);
     Route::delete('/admin/email/sections/{id}',    [EmailTemplateController::class, 'destroySection']);
     Route::get('/admin/email/templates/preview/{id}', [EmailTemplateController::class, 'preview']);
+    
+    // SMTP SETTINGS
+    Route::get('/admin/smtp/settings', [SmtpController::class, 'getSettings']);
+    Route::put('/admin/smtp/settings', [SmtpController::class, 'updateSettings']);
+    Route::post('/admin/smtp/test',    [SmtpController::class, 'testSmtp']);
 });
 
 // Super Admin ONLY Routes (Hierarchy check)

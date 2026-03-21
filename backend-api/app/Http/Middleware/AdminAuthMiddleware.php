@@ -14,7 +14,7 @@ class AdminAuthMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $token = $request->bearerToken() ?: $request->header('X-Admin-Token');
+        $token = $request->bearerToken() ?: $request->header('X-Admin-Token') ?: $request->query('admin_token');
 
         if (!$token) {
             return response()->json([

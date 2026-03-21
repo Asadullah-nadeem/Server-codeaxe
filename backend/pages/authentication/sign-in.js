@@ -1,5 +1,5 @@
 // import node module libraries
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Row, Col, Card, Form, Button, Image, Alert } from "react-bootstrap";
 import Link from "next/link";
@@ -13,6 +13,32 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ssoProcessing, setSsoProcessing] = useState(false);
+
+  useEffect(() => {
+    const { token } = router.query;
+    if (token) {
+        handleSsoLogin(token);
+    }
+  }, [router.query]);
+
+  const handleSsoLogin = async (token) => {
+    setSsoProcessing(true);
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api'}/admin/auth/check?admin_token=${token}`, {
+            headers: { 'Accept': 'application/json', 'X-App-Key': process.env.NEXT_PUBLIC_APP_KEY || '' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            localStorage.setItem("admin_token", data.data.token);
+            localStorage.setItem("admin_role", data.data.role);
+            localStorage.setItem("admin_name", data.data.name);
+            localStorage.setItem("admin_login_type", data.data.login_type || 'password');
+            router.push("/");
+        }
+    } catch (err) { console.error("SSO Failed", err); }
+    finally { setSsoProcessing(false); }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,6 +63,7 @@ const SignIn = () => {
         localStorage.setItem("admin_token", data.data.token);
         localStorage.setItem("admin_role", data.data.role);
         localStorage.setItem("admin_name", data.data.name);
+        localStorage.setItem("admin_login_type", data.data.login_type || 'password');
 
         // Redirect to dashboard
         router.push("/");
@@ -57,7 +84,8 @@ const SignIn = () => {
         <Card className="smooth-shadow-md">
           {/* Card body */}
           <Card.Body className="p-6">
-            <div className="mb-4">
+            {ssoProcessing && <div className="text-center py-5"><p className="mb-0 fw-bold">Detecting Secure Session...</p></div>}
+            <div className={ssoProcessing ? "d-none" : "mb-4"}>
               <Link href="/">
                 <Image
                   src="/images/brand/logo/logo-primary.svg"

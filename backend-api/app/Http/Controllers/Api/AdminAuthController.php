@@ -49,6 +49,7 @@ class AdminAuthController extends Controller
                 'name'     => $admin->name,
                 'username' => $admin->username,
                 'role'     => $admin->role,
+                'login_type' => $admin->login_type ?? 'password',
                 'token'    => $token,
             ]
         ]);
@@ -62,6 +63,22 @@ class AdminAuthController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $admin
+        ]);
+    }
+
+    // ─── GET /api/admin/auth/check (FOR SSO) ────────────────
+    public function checkAuth(Request $request) {
+        $admin = $request->admin;
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'username' => $admin->username,
+                'role' => $admin->role,
+                'login_type' => $admin->login_type ?? 'password',
+                'token' => $admin->api_token
+            ]
         ]);
     }
 
@@ -141,7 +158,7 @@ class AdminAuthController extends Controller
     public function registeredUsers()
     {
         $users = DB::table('users')
-                    ->select('id', 'username', 'email', 'email_verified_at', 'created_at', 'updated_at')
+                    ->select('id', 'username', 'email', 'login_type', 'email_verified_at', 'created_at', 'updated_at')
                     ->orderBy('created_at', 'desc')
                     ->get();
         foreach($users as $user) {

@@ -53,6 +53,7 @@ const QuickMenu = () => {
 
     const adminName = typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
     const adminRole = typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Role' : 'Role';
+    const adminLoginType = typeof window !== 'undefined' ? localStorage.getItem('admin_login_type') || 'password' : 'password';
 
     const Notifications = () => {
         return (
@@ -86,7 +87,10 @@ const QuickMenu = () => {
             <Dropdown.Item as="div" className="px-4 pb-0 pt-2" bsPrefix=' '>
                 <div className="lh-1 ">
                     <h5 className="mb-1"> {adminName}</h5>
-                    <Link href="/pages/profile" className="text-inherit fs-6 text-uppercase">{adminRole}</Link>
+                    <div className="d-flex align-items-center gap-2">
+                        <Link href="/pages/profile" className="text-inherit fs-6 text-uppercase">{adminRole}</Link>
+                        <span className="badge bg-light-info text-info border px-2 py-1 x-small text-uppercase">{adminLoginType}</span>
+                    </div>
                 </div>
                 <div className=" dropdown-divider mt-3 mb-2"></div>
             </Dropdown.Item>
