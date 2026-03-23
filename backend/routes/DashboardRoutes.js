@@ -146,6 +146,12 @@ export const DashboardMenu = [
 		title: 'DMS Settings',
 		icon: 'database',
 		link: '/admin/dms-settings'
+	},
+	{
+		id: uuid(),
+		title: 'System Connections',
+		icon: 'cpu',
+		link: '/cms/connections'
 	}
 ];
 

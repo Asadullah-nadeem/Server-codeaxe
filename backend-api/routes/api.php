@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\SmtpController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\SystemSettingsController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -257,6 +258,10 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     Route::post('/admin/permissions',         [PermissionController::class, 'upsert']);
     Route::post('/admin/permissions/bulk',    [PermissionController::class, 'bulkUpsert']);
     Route::post('/admin/permissions/reset',   [PermissionController::class, 'reset']);
+
+    // ─── System Connection Settings ───
+    Route::get('/admin/system/connections', [SystemSettingsController::class, 'index']);
+    Route::put('/admin/system/connections', [SystemSettingsController::class, 'update']);
 });
 
 /*

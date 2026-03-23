@@ -134,6 +134,9 @@ class NavController extends Controller
             'site_name_prefix',
             'site_name_accent',
             'site_logo_url',
+            'site_favicon_url',
+            'site_apple_icon_url',
+            'site_footer_logo_url',
             'site_founder_name',
             'site_founder_message'
         ]);

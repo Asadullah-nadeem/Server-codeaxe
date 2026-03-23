@@ -56,15 +56,22 @@ class DmsController extends Controller
         return $this->streamMedia($media);
     }
 
+    private function getMediaBaseUrl()
+    {
+        $setting = DB::table('site_settings')->where('setting_key', 'image_base_url')->first();
+        return $setting ? $setting->setting_value : url('/api/dms/media');
+    }
+
     // ─── GET /api/dms/media – list active media ───────────
     public function index()
     {
+        $baseUrl = $this->getMediaBaseUrl();
         $images = Media::where('status', 1)
             ->orderByDesc('uploaded_at')
             ->get();
 
         foreach ($images as $img) {
-            $img->path = url("/api/dms/media/{$img->slug}/{$img->id}");
+            $img->path = $baseUrl . "/{$img->slug}/{$img->id}";
         }
 
         return response()->json(['success' => true, 'data' => $images]);
@@ -73,10 +80,11 @@ class DmsController extends Controller
     // ─── GET /api/dms/media/all – list including trashed ──
     public function all()
     {
+        $baseUrl = $this->getMediaBaseUrl();
         $images = Media::orderByDesc('uploaded_at')->get();
         
         foreach ($images as $img) {
-            $img->path = url("/api/dms/media/{$img->slug}/{$img->id}");
+            $img->path = $baseUrl . "/{$img->slug}/{$img->id}";
         }
 
         return response()->json(['success' => true, 'data' => $images]);
@@ -147,7 +155,7 @@ class DmsController extends Controller
             ]);
 
             // Generate local proxy URL (served from our own API)
-            $proxyUrl = url('/api/dms/media/' . $media->slug . '/' . $media->id);
+            $proxyUrl = $this->getMediaBaseUrl() . '/' . $media->slug . '/' . $media->id;
             $media->update(['path' => $proxyUrl]);
 
             return response()->json([

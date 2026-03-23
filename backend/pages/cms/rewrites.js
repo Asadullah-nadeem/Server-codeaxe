@@ -37,7 +37,8 @@ const RewritesCMS = () => {
     const [settingsForm, setSettingsForm] = useState({
         seo_title: '', seo_description: '', seo_google_analytics_id: '',
         seo_google_search_console_id: '', site_founder_name: '',
-        site_founder_message: '', site_logo_url: '', site_name_prefix: '', site_name_accent: ''
+        site_founder_message: '', site_logo_url: '', site_name_prefix: '', site_name_accent: '',
+        site_favicon_url: '', site_apple_icon_url: '', site_footer_logo_url: ''
     });
 
     // ── Section Visibility ──
@@ -50,6 +51,7 @@ const RewritesCMS = () => {
     const [showMediaModal, setShowMediaModal] = useState(false);
     const [mediaItems, setMediaItems] = useState([]);
     const [mediaLoading, setMediaLoading] = useState(false);
+    const [activeField, setActiveField] = useState('site_logo_url');
 
     const fetchMediaItems = async () => {
         try {
@@ -61,11 +63,12 @@ const RewritesCMS = () => {
     };
 
     const handleMediaSelect = (path) => {
-        setSettingsForm({ ...settingsForm, site_logo_url: path });
+        setSettingsForm({ ...settingsForm, [activeField]: path });
         setShowMediaModal(false);
     };
 
-    const openMediaPicker = () => {
+    const openMediaPicker = (field) => {
+        setActiveField(field);
         fetchMediaItems();
         setShowMediaModal(true);
     };
@@ -144,6 +147,9 @@ const RewritesCMS = () => {
             site_logo_url: settings.site_logo_url || '',
             site_name_prefix: settings.site_name_prefix || '',
             site_name_accent: settings.site_name_accent || '',
+            site_favicon_url: settings.site_favicon_url || '',
+            site_apple_icon_url: settings.site_apple_icon_url || '',
+            site_footer_logo_url: settings.site_footer_logo_url || '',
         });
         setShowSettingsModal(true);
     };
@@ -204,24 +210,29 @@ const RewritesCMS = () => {
                                     <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Search Optimization</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <p className="mb-1 fw-bold">{settings.seo_title || 'No Title Set'}</p>
-                                        <p className="mb-1 text-muted small">{settings.seo_description || 'No Meta Description'}</p>
-                                        {settings.seo_google_analytics_id && <p className="mb-1 text-info small"><strong>GA:</strong> {settings.seo_google_analytics_id}</p>}
-                                        {settings.seo_google_search_console_id && <p className="mb-0 text-success small"><strong>GSC:</strong> {settings.seo_google_search_console_id}</p>}
+                                        <p className="mb-1 text-muted small text-truncate">{settings.seo_description || 'No Meta Description'}</p>
+                                        <div className="d-flex gap-2">
+                                            {settings.seo_google_analytics_id && <Badge bg="info">GA Active</Badge>}
+                                            {settings.seo_google_search_console_id && <Badge bg="success">GSC Active</Badge>}
+                                        </div>
                                     </div>
                                 </Col>
                                 <Col md={4} className="mb-3">
-                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Site Branding</h6>
+                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Site Branding Assets</h6>
                                     <div className="bg-light p-3 rounded border">
-                                        {settings.site_logo_url && <img src={settings.site_logo_url} alt="Logo" style={{ height: '24px', marginBottom: '8px' }} />}
+                                        <div className="d-flex gap-4 mb-2">
+                                            {settings.site_logo_url && <div><small className="d-block text-muted mb-1">Navbar</small><img src={settings.site_logo_url} alt="Logo" style={{ height: '24px' }} /></div>}
+                                            {settings.site_footer_logo_url && <div><small className="d-block text-muted mb-1">Footer</small><img src={settings.site_footer_logo_url} alt="Logo" style={{ height: '24px' }} /></div>}
+                                            {settings.site_favicon_url && <div><small className="d-block text-muted mb-1">Favicon</small><img src={settings.site_favicon_url} alt="Logo" style={{ height: '24px' }} /></div>}
+                                        </div>
                                         <p className="mb-0 fw-bold">{settings.site_name_prefix || 'Code'}<span className="text-primary">{settings.site_name_accent || 'Axe'}</span></p>
-                                        <p className="mb-0 small text-muted">Logo: {settings.site_logo_url ? 'Configured' : 'Not Set'}</p>
                                     </div>
                                 </Col>
                                 <Col md={4} className="mb-3">
                                     <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Founder Hub</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <p className="mb-1 fw-bold">{settings.site_founder_name || 'No Founder Name'}</p>
-                                        <p className="mb-0 text-muted small">"{settings.site_founder_message || 'No quote set.'}"</p>
+                                        <p className="mb-0 text-muted small italic" style={{ fontSize: '0.7rem' }}>"{settings.site_founder_message || 'No quote set.'}"</p>
                                     </div>
                                 </Col>
                             </Row>
@@ -299,7 +310,7 @@ const RewritesCMS = () => {
             {/* ── Active Rewrite Rules ── */}
             <Card>
                 <Card.Header className="bg-secondary text-white d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Active Rewrite Rules</h5>
+                    <h5 className="mb-0 text-white">Active Rewrite Rules</h5>
                     <Button variant="light" size="sm" onClick={() => handleShow()}>Add New Rule</Button>
                 </Card.Header>
                 <Card.Body>
@@ -360,103 +371,188 @@ const RewritesCMS = () => {
 
             {/* ── Global SEO Settings Modal ── */}
             <Modal show={showSettingsModal} size="lg" onHide={() => setShowSettingsModal(false)}>
-                <Modal.Header closeButton><Modal.Title>Edit Global SEO &amp; Branding</Modal.Title></Modal.Header>
+                <Modal.Header closeButton className="bg-light pb-3">
+                    <div>
+                        <Modal.Title className="fw-bold fs-4">Global SEO &amp; Brand Settings</Modal.Title>
+                        <small className="text-muted">Changes here update the platform icons and metadata across all devices.</small>
+                    </div>
+                </Modal.Header>
                 <Form onSubmit={handleSettingsSubmit}>
-                    <Modal.Body>
-                        <h6 className="mb-3 text-primary border-bottom pb-2">Meta Tags</h6>
+                    <Modal.Body className="p-4" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                        <h6 className="mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Core Metadata</h6>
                         <Form.Group className="mb-3">
-                            <Form.Label>Meta Title</Form.Label>
+                            <Form.Label className="small fw-bold">Platform Meta Title</Form.Label>
                             <Form.Control type="text" value={settingsForm.seo_title} onChange={e => setSettingsForm({ ...settingsForm, seo_title: e.target.value })} placeholder="e.g. CodeAxe Web Agency" />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>Meta Description</Form.Label>
+                            <Form.Label className="small fw-bold">Global SEO Description</Form.Label>
                             <Form.Control as="textarea" rows={2} value={settingsForm.seo_description} onChange={e => setSettingsForm({ ...settingsForm, seo_description: e.target.value })} />
                         </Form.Group>
 
-                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Search &amp; Analytics</h6>
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Visual Branding Assets</h6>
                         <Row>
                             <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Google Analytics ID</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.seo_google_analytics_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_analytics_id: e.target.value })} placeholder="GT-XXXXXXXXX" />
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Navbar Logo (Primary)</Form.Label>
+                                    <div className="d-flex gap-2">
+                                        <Form.Control type="text" value={settingsForm.site_logo_url} readOnly />
+                                        <Button variant="outline-primary" size="sm" onClick={() => openMediaPicker('site_logo_url')}>Pick</Button>
+                                    </div>
+                                    <Form.Text className="x-small text-muted">Shown in top navigation.</Form.Text>
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Search Console ID</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.seo_google_search_console_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_search_console_id: e.target.value })} placeholder="verification code" />
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Footer Logo (Secondary)</Form.Label>
+                                    <div className="d-flex gap-2">
+                                        <Form.Control type="text" value={settingsForm.site_footer_logo_url} readOnly />
+                                        <Button variant="outline-primary" size="sm" onClick={() => openMediaPicker('site_footer_logo_url')}>Pick</Button>
+                                    </div>
+                                    <Form.Text className="x-small text-muted">Shown in bottom site footer.</Form.Text>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Favicon (.ico/.png)</Form.Label>
+                                    <div className="d-flex gap-2">
+                                        <Form.Control type="text" value={settingsForm.site_favicon_url} readOnly />
+                                        <Button variant="outline-primary" size="sm" onClick={() => openMediaPicker('site_favicon_url')}>Pick</Button>
+                                    </div>
+                                    <Form.Text className="x-small text-muted">Browser tab icon (16x16 or 32x32).</Form.Text>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Apple Web Icon (Mobile)</Form.Label>
+                                    <div className="d-flex gap-2">
+                                        <Form.Control type="text" value={settingsForm.site_apple_icon_url} readOnly />
+                                        <Button variant="outline-primary" size="sm" onClick={() => openMediaPicker('site_apple_icon_url')}>Pick</Button>
+                                    </div>
+                                    <Form.Text className="x-small text-muted">Homescreen icon for iOS (180x180).</Form.Text>
                                 </Form.Group>
                             </Col>
                         </Row>
 
-                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Branding Information</h6>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Logo URL (Full Path)</Form.Label>
-                            <InputGroup>
-                                <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({ ...settingsForm, site_logo_url: e.target.value })} placeholder="/images/logo.png" />
-                                <Button variant="outline-primary" onClick={openMediaPicker}>Select from Gallery</Button>
-                            </InputGroup>
-                        </Form.Group>
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Identity Text</h6>
                         <Row>
                             <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Prefix</Form.Label>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Site Name Prefix</Form.Label>
                                     <Form.Control type="text" value={settingsForm.site_name_prefix} onChange={e => setSettingsForm({ ...settingsForm, site_name_prefix: e.target.value })} placeholder="Code" />
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Accent</Form.Label>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Site Name Accent</Form.Label>
                                     <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({ ...settingsForm, site_name_accent: e.target.value })} placeholder="Axe" />
                                 </Form.Group>
                             </Col>
                         </Row>
 
-                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Founder Identity</h6>
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Founder Insight</h6>
                         <Form.Group className="mb-3">
-                            <Form.Label>Founder Name</Form.Label>
-                            <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({ ...settingsForm, site_founder_name: e.target.value })} placeholder="e.g. Asadullah Nadeem" />
+                            <Form.Label className="small fw-bold">Founder Display Name</Form.Label>
+                            <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({ ...settingsForm, site_founder_name: e.target.value })} placeholder="Asadullah Nadeem" />
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Founder Message / Quote</Form.Label>
-                            <Form.Control as="textarea" rows={3} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({ ...settingsForm, site_founder_message: e.target.value })} placeholder="Crafting digital experiences..." />
+                        <Form.Group className="mb-0">
+                            <Form.Label className="small fw-bold">Leadership Message</Form.Label>
+                            <Form.Control as="textarea" rows={2} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({ ...settingsForm, site_founder_message: e.target.value })} />
                         </Form.Group>
                     </Modal.Body>
-                    <Modal.Footer>
+                    <Modal.Footer className="bg-light">
                         <Button variant="secondary" onClick={() => setShowSettingsModal(false)}>Cancel</Button>
-                        <Button type="submit" variant="primary">Save SEO Settings</Button>
+                        <Button type="submit" variant="primary" className="px-4">Update Platform Settings</Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
 
             {/* Media Picker Modal */}
             <Modal show={showMediaModal} size="xl" scrollable onHide={() => setShowMediaModal(false)}>
-                <Modal.Header closeButton className="bg-light"><Modal.Title className="fw-bold">Select Site Logo from Gallery</Modal.Title></Modal.Header>
-                <Modal.Body className="p-4">
-                    {mediaLoading ? <p className="text-center py-5">Loading media library...</p> : (
-                        <Row className="g-3">
-                            {mediaItems.length === 0 ? <Col className="text-center py-5">No active media found. Upload some first!</Col> : mediaItems.map(m => (
-                                <Col key={m.id} xs={6} sm={4} md={3} lg={2}>
-                                    <Card 
-                                        className="h-100 border-0 shadow-sm cursor-pointer hover-card" 
-                                        onClick={() => handleMediaSelect(m.path)}
-                                        style={{transition: 'transform 0.2s', border: settingsForm.site_logo_url === m.path ? '2px solid #0d6efd !important' : 'none'}}
-                                    >
-                                        <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
-                                        </div>
-                                        <Card.Body className="p-2 text-center">
-                                            <div className="text-truncate x-small fw-bold">{m.file_name}</div>
-                                        </Card.Body>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    )}
+                <Modal.Header closeButton className="bg-light">
+                    <div>
+                        <Modal.Title className="fw-bold">Select or Upload Asset</Modal.Title>
+                        <small className="text-muted">Pick an existing file from your cloud library or upload a new one.</small>
+                    </div>
+                </Modal.Header>
+                <Modal.Body className="p-0">
+                    <Row className="g-0">
+                        {/* Left Sidebar: Upload */}
+                        <Col md={3} className="border-end bg-light p-4">
+                            <h6 className="fw-bold mb-3 small text-uppercase">Direct Upload</h6>
+                            <div 
+                                className="border border-dashed p-4 text-center mb-3 bg-white rounded cursor-pointer"
+                                onClick={() => document.getElementById('quickUpload').click()}
+                            >
+                                <i className="fe fe-upload-cloud fs-3 text-primary mb-2 d-block"></i>
+                                <p className="mb-0 x-small fw-bold">Click to Upload</p>
+                                <input 
+                                    type="file" 
+                                    id="quickUpload" 
+                                    hidden 
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        try {
+                                            setMediaLoading(true);
+                                            const formData = new FormData();
+                                            formData.append('photo', file);
+                                            formData.append('storage_provider', 'imagekit');
+                                            formData.append('username', 'admin');
+                                            const res = await fetchApi('/admin/dms/media', { method: 'POST', body: formData });
+                                            if (res?.success) {
+                                                await fetchMediaItems();
+                                                handleMediaSelect(res.url); // res.url is the path
+                                            } else { alert(res?.message || 'Upload failed.'); }
+                                        } catch (err) { alert('Upload error.'); }
+                                        finally { setMediaLoading(false); }
+                                    }} 
+                                />
+                            </div>
+                            <div className="small text-muted mb-4" style={{ fontSize: '0.65rem' }}>
+                                <i className="fe fe-info me-1"></i> Assets are synced to your primary cloud storage (ImageKit).
+                            </div>
+                        </Col>
+
+                        {/* Right Section: Gallery */}
+                        <Col md={9} className="p-4" style={{ backgroundColor: '#fff' }}>
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <h6 className="fw-bold mb-0 small text-uppercase">Cloud Gallery</h6>
+                                <Button variant="link" size="sm" className="p-0 text-decoration-none" onClick={fetchMediaItems}>
+                                    <i className="fe fe-refresh-cw me-1"></i> Refresh
+                                </Button>
+                            </div>
+                            {mediaLoading ? (
+                                <div className="text-center py-5"><Spinner animation="border" size="sm" variant="primary" /></div>
+                            ) : (
+                                <Row className="g-3">
+                                    {mediaItems.length === 0 ? (
+                                        <Col className="text-center py-5 text-muted">No assets found in target cloud.</Col>
+                                    ) : mediaItems.map(m => (
+                                        <Col key={m.id} xs={6} sm={4} md={3}>
+                                            <Card 
+                                                className="h-100 border-0 shadow-sm cursor-pointer hover-card" 
+                                                onClick={() => handleMediaSelect(m.path)}
+                                                style={{transition: 'transform 0.2s', border: settingsForm[activeField] === m.path ? '2px solid #0d6efd !important' : 'none'}}
+                                            >
+                                                <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
+                                                    <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                                </div>
+                                                <Card.Body className="p-2 text-center">
+                                                    <div className="text-truncate x-small fw-bold">{m.file_name}</div>
+                                                </Card.Body>
+                                            </Card>
+                                        </Col>
+                                    ))}
+                                </Row>
+                            )}
+                        </Col>
+                    </Row>
                 </Modal.Body>
                 <Modal.Footer className="bg-light">
                     <Button variant="secondary" size="sm" onClick={() => setShowMediaModal(false)}>Cancel</Button>
-                    <Button variant="primary" size="sm" onClick={() => window.open('/cms/media', '_blank')}>Manage Library</Button>
+                    <Button variant="primary" size="sm" onClick={() => window.open('/cms/media', '_blank')}>Open Full Manager</Button>
                 </Modal.Footer>
             </Modal>
 

@@ -87,9 +87,9 @@ const Footer = () => {
         </div>
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <Link href="/" className="flex items-center">
-            {settings.site_logo_url && !logoError ? (
+            {(settings.site_footer_logo_url || settings.site_logo_url) && !logoError ? (
               <img
-                src={settings.site_logo_url}
+                src={settings.site_footer_logo_url || settings.site_logo_url}
                 alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
                 className="h-8 w-auto object-contain"
                 onError={() => setLogoError(true)}

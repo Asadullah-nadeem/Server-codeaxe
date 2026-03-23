@@ -23,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
         seo_title, 
         seo_description, 
         site_founder_name, 
-        seo_google_search_console_id 
+        seo_google_search_console_id,
+        site_favicon_url,
+        site_apple_icon_url
       } = result.data.settings;
       
       const siteName = `${site_name_prefix || 'Code'}${site_name_accent || 'Axe'}`;
@@ -36,6 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
         authors: site_founder_name ? [{ name: site_founder_name }] : undefined,
         creator: site_founder_name || undefined,
         publisher: siteName,
+        icons: {
+          icon: site_favicon_url || '/favicon.ico',
+          apple: site_apple_icon_url || '/apple-touch-icon.png',
+        },
         verification: {
           google: seo_google_search_console_id || undefined,
         },

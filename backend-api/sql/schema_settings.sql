@@ -4,7 +4,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
 );
 
 INSERT INTO site_settings (setting_key, setting_value) VALUES 
-('site_logo_url', '/logo.png'),
+('site_logo_url', '/images/brand/logo/logo.svg'),
+('site_favicon_url', '/favicon.ico'),
+('site_apple_icon_url', '/apple-touch-icon.png'),
+('site_footer_logo_url', '/images/brand/logo/logo.svg'),
 ('site_name_prefix', 'Code'),
 ('site_name_accent', 'Axe'),
 ('nav_portfolio_label', 'Portfolio'),

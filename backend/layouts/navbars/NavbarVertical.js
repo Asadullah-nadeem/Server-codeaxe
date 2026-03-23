@@ -1,7 +1,6 @@
-// import node module libraries
+import { useState, useEffect, Fragment, useContext } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useContext } from "react";
 import {
   Accordion,
   AccordionContext,
@@ -12,6 +11,7 @@ import {
   useAccordionButton,
 } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
+import { fetchApi } from "utils/api";
 
 // import simple bar scrolling used for notification item scrolling
 import SimpleBar from "simplebar-react";
@@ -22,6 +22,25 @@ import { DashboardMenu } from "routes/DashboardRoutes";
 
 const NavbarVertical = (props) => {
   const location = useRouter();
+  const [settings, setSettings] = useState({
+    site_logo_url: '',
+    site_name_prefix: 'Code',
+    site_name_accent: 'Axe'
+  });
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetchApi('/admin/nav');
+        if (res?.success && res.data.settings) {
+          setSettings(res.data.settings);
+        }
+      } catch (error) {
+        console.error("Failed to load nav settings:", error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   const CustomToggle = ({ children, eventKey, icon }) => {
     const { activeEventKey } = useContext(AccordionContext);
@@ -99,8 +118,15 @@ const NavbarVertical = (props) => {
     <Fragment>
       <SimpleBar style={{ maxHeight: "100vh" }}>
         <div className="nav-scroller">
-          <Link href="/" className="navbar-brand">
-            <Image src="/images/brand/logo/logo.svg" alt="" />
+          <Link href="/" className="navbar-brand d-flex align-items-center">
+            {settings.site_logo_url ? (
+              <Image src={settings.site_logo_url} alt="" style={{ height: '32px' }} className="me-2" />
+            ) : (
+                <span className="fw-bold" style={{ fontSize: '1.6rem' }}>
+                  <span className="text-light">{settings.site_name_prefix}</span>
+                  <span className="text-primary">{settings.site_name_accent}</span>
+                </span>
+            )}
           </Link>
         </div>
         {/* Dashboard Menu */}
