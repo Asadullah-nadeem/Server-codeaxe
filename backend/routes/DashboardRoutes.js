@@ -112,8 +112,16 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
-		title: 'Admin Accounts',
+		title: 'Super Admin Panel',
 		icon: 'shield',
+		badge: 'SA',
+		badgecolor: 'danger',
+		link: '/admin/superadmin'
+	},
+	{
+		id: uuid(),
+		title: 'Admin Accounts',
+		icon: 'users',
 		link: '/admin/users'
 	},
 	{

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\SmtpController;
 use App\Http\Controllers\Api\SectionController;
+use App\Http\Controllers\Api\PermissionController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -249,6 +250,12 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     Route::get('/admin/system/status', function() {
         return response()->json(['success' => true, 'status' => 'System Online']);
     });
+
+    // ─── Role Permissions (Admin/Demo access matrix) ───
+    Route::get('/admin/permissions',          [PermissionController::class, 'index']);
+    Route::post('/admin/permissions',         [PermissionController::class, 'upsert']);
+    Route::post('/admin/permissions/bulk',    [PermissionController::class, 'bulkUpsert']);
+    Route::post('/admin/permissions/reset',   [PermissionController::class, 'reset']);
 });
 
 /*

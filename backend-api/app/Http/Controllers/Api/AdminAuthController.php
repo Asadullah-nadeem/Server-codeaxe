@@ -171,17 +171,37 @@ class AdminAuthController extends Controller
     public function updateAdmin(Request $request, $id)
     {
         $request->validate([
-            'name'  => 'sometimes|string',
-            'role'  => 'sometimes|in:superadmin,admin,demo',
-            'is_active' => 'sometimes|integer|in:0,1'
+            'name'     => 'sometimes|string|max:255',
+            'username' => 'sometimes|string|max:255|unique:admins,username,' . $id,
+            'email'    => 'sometimes|email|unique:admins,email,' . $id,
+            'password' => 'sometimes|string|min:8',
+            'role'     => 'sometimes|in:superadmin,admin,demo',
+            'is_active'=> 'sometimes|integer|in:0,1'
         ]);
 
-        DB::table('admins')->where('id', $id)->update(array_filter([
-            'name' => $request->name,
-            'role' => $request->role,
-            'is_active' => $request->is_active,
-            'updated_at' => now()
-        ], function($v) { return !is_null($v); }));
+        // Guard: Prevent removing the last superadmin
+        if ($request->has('role') && $request->role !== 'superadmin') {
+            $target = DB::table('admins')->where('id', $id)->first();
+            if ($target && $target->role === 'superadmin') {
+                $superadminCount = DB::table('admins')->where('role', 'superadmin')->count();
+                if ($superadminCount <= 1) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot demote the last Super Admin account.'
+                    ], 403);
+                }
+            }
+        }
+
+        $update = ['updated_at' => now()];
+        if ($request->has('name'))      $update['name']     = $request->name;
+        if ($request->has('username'))  $update['username'] = $request->username;
+        if ($request->has('email'))     $update['email']    = $request->email;
+        if ($request->has('password'))  $update['password'] = Hash::make($request->password);
+        if ($request->has('role'))      $update['role']     = $request->role;
+        if ($request->has('is_active')) $update['is_active']= $request->is_active;
+
+        DB::table('admins')->where('id', $id)->update($update);
 
         return response()->json(['success' => true, 'message' => 'Account updated.']);
     }
