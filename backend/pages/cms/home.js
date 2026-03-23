@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, InputGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 
 const HomeCMS = () => {
@@ -27,6 +27,37 @@ const HomeCMS = () => {
     const [technologyForm, setTechnologyForm] = useState({ id: null, name: '', src: '' });
     const [systemStatusForm, setSystemStatusForm] = useState({ id: null, label: '', status: '', ping: '' });
     const [partnerForm, setPartnerForm] = useState({ id: null, name: '', src: '' });
+    // ── Media Selector ──
+    const [showMediaModal, setShowMediaModal] = useState(false);
+    const [mediaItems, setMediaItems] = useState([]);
+    const [mediaLoading, setMediaLoading] = useState(false);
+    const [mediaTarget, setMediaTarget] = useState(null); // { type: 'service'|'project'|..., field: 'icon'|'image_url'|... }
+
+    const fetchMediaItems = async () => {
+        try {
+            setMediaLoading(true);
+            const res = await fetchApi('/admin/dms/media');
+            if (res?.success) setMediaItems(res.data);
+        } catch (error) { console.error(error); }
+        finally { setMediaLoading(false); }
+    };
+
+    const handleMediaSelect = (path) => {
+        if (!mediaTarget) return;
+        const { type, field } = mediaTarget;
+        if (type === 'service') setServiceForm(prev => ({ ...prev, [field]: path }));
+        if (type === 'project') setProjectForm(prev => ({ ...prev, [field]: path }));
+        if (type === 'principle') setPrincipleForm(prev => ({ ...prev, [field]: path }));
+        if (type === 'tech') setTechnologyForm(prev => ({ ...prev, [field]: path }));
+        if (type === 'partner') setPartnerForm(prev => ({ ...prev, [field]: path }));
+        setShowMediaModal(false);
+    };
+
+    const openMediaPicker = (type, field) => {
+        setMediaTarget({ type, field });
+        fetchMediaItems();
+        setShowMediaModal(true);
+    };
 
     const fetchHomeData = async () => {
         try {
@@ -406,7 +437,10 @@ const HomeCMS = () => {
                 <Form onSubmit={e => serviceCrud.handleSubmit(e, serviceForm)}>
                     <Modal.Body>
                         <Form.Control className="mb-2" placeholder="Index (e.g. 01)" value={serviceForm.index_number} onChange={e => setServiceForm({...serviceForm, index_number: e.target.value})} required />
-                        <Form.Control className="mb-2" placeholder="Icon (e.g. Globe)" value={serviceForm.icon} onChange={e => setServiceForm({...serviceForm, icon: e.target.value})} required />
+                        <InputGroup className="mb-2">
+                            <Form.Control placeholder="Icon (e.g. Globe or URL)" value={serviceForm.icon} onChange={e => setServiceForm({...serviceForm, icon: e.target.value})} required />
+                            <Button variant="outline-primary" onClick={() => openMediaPicker('service', 'icon')}>Gallery</Button>
+                        </InputGroup>
                         <Form.Control className="mb-2" placeholder="Title" value={serviceForm.title} onChange={e => setServiceForm({...serviceForm, title: e.target.value})} required />
                         <Form.Control className="mb-2" as="textarea" placeholder="Description" value={serviceForm.description} onChange={e => setServiceForm({...serviceForm, description: e.target.value})} required />
                     </Modal.Body>
@@ -422,7 +456,10 @@ const HomeCMS = () => {
                         <Form.Control className="mb-2" placeholder="Year" value={projectForm.year} onChange={e => setProjectForm({...projectForm, year: e.target.value})} required />
                         <Form.Control className="mb-2" as="textarea" placeholder="Description" value={projectForm.description} onChange={e => setProjectForm({...projectForm, description: e.target.value})} required />
                         <Form.Control className="mb-2" placeholder='Tags JSON (e.g. ["React", "Node"])' value={projectForm.tags} onChange={e => setProjectForm({...projectForm, tags: e.target.value})} required />
-                        <Form.Control className="mb-2" placeholder="Image URL" value={projectForm.image_url} onChange={e => setProjectForm({...projectForm, image_url: e.target.value})} />
+                        <InputGroup className="mb-2">
+                            <Form.Control placeholder="Image URL" value={projectForm.image_url} onChange={e => setProjectForm({...projectForm, image_url: e.target.value})} />
+                            <Button variant="outline-primary" onClick={() => openMediaPicker('project', 'image_url')}>Gallery</Button>
+                        </InputGroup>
                         <Form.Control className="mb-2" placeholder="Project Link" value={projectForm.project_url} onChange={e => setProjectForm({...projectForm, project_url: e.target.value})} />
                     </Modal.Body>
                     <Modal.Footer><Button type="submit">Save</Button></Modal.Footer>
@@ -445,7 +482,10 @@ const HomeCMS = () => {
                 <Form onSubmit={e => principleCrud.handleSubmit(e, principleForm)}>
                     <Modal.Body>
                         <Form.Control className="mb-2" placeholder="Title" value={principleForm.title} onChange={e => setPrincipleForm({...principleForm, title: e.target.value})} required />
-                        <Form.Control className="mb-2" placeholder="Icon (e.g. Zap)" value={principleForm.icon} onChange={e => setPrincipleForm({...principleForm, icon: e.target.value})} required />
+                        <InputGroup className="mb-2">
+                            <Form.Control placeholder="Icon (e.g. Zap or URL)" value={principleForm.icon} onChange={e => setPrincipleForm({...principleForm, icon: e.target.value})} required />
+                            <Button variant="outline-primary" onClick={() => openMediaPicker('principle', 'icon')}>Gallery</Button>
+                        </InputGroup>
                         <Form.Control className="mb-2" as="textarea" placeholder="Description" value={principleForm.description} onChange={e => setPrincipleForm({...principleForm, description: e.target.value})} required />
                     </Modal.Body>
                     <Modal.Footer><Button type="submit">Save</Button></Modal.Footer>
@@ -457,7 +497,10 @@ const HomeCMS = () => {
                 <Form onSubmit={e => techCrud.handleSubmit(e, technologyForm)}>
                     <Modal.Body>
                         <Form.Control className="mb-2" placeholder="Name (e.g. React)" value={technologyForm.name} onChange={e => setTechnologyForm({...technologyForm, name: e.target.value})} required />
-                        <Form.Control className="mb-2" placeholder="Source Key (e.g. reactLogo)" value={technologyForm.src} onChange={e => setTechnologyForm({...technologyForm, src: e.target.value})} required />
+                        <InputGroup className="mb-2">
+                            <Form.Control placeholder="Source Key or Logo URL" value={technologyForm.src} onChange={e => setTechnologyForm({...technologyForm, src: e.target.value})} required />
+                            <Button variant="outline-primary" onClick={() => openMediaPicker('tech', 'src')}>Gallery</Button>
+                        </InputGroup>
                     </Modal.Body>
                     <Modal.Footer><Button type="submit">Save</Button></Modal.Footer>
                 </Form>
@@ -485,12 +528,51 @@ const HomeCMS = () => {
                 <Form onSubmit={e => partnerCrud.handleSubmit(e, partnerForm)}>
                     <Modal.Body>
                         <Form.Control className="mb-2" placeholder="Partner Name" value={partnerForm.name} onChange={e => setPartnerForm({...partnerForm, name: e.target.value})} required />
-                        <Form.Control className="mb-2" placeholder="Logo Source (e.g. /images/logo.png)" value={partnerForm.src} onChange={e => setPartnerForm({...partnerForm, src: e.target.value})} required />
+                        <InputGroup className="mb-2">
+                            <Form.Control placeholder="Logo Source (e.g. /images/logo.png)" value={partnerForm.src} onChange={e => setPartnerForm({...partnerForm, src: e.target.value})} required />
+                            <Button variant="outline-primary" onClick={() => openMediaPicker('partner', 'src')}>Gallery</Button>
+                        </InputGroup>
                     </Modal.Body>
                     <Modal.Footer><Button type="submit">Save</Button></Modal.Footer>
                 </Form>
             </Modal>
 
+            {/* Media Picker Modal */}
+            <Modal show={showMediaModal} size="xl" scrollable onHide={() => setShowMediaModal(false)}>
+                <Modal.Header closeButton className="bg-light"><Modal.Title className="fw-bold">Select Image from Gallery</Modal.Title></Modal.Header>
+                <Modal.Body className="p-4">
+                    {mediaLoading ? <p className="text-center py-5">Loading media library...</p> : (
+                        <Row className="g-3">
+                            {mediaItems.length === 0 ? <Col className="text-center py-5">No active media found. Upload some first!</Col> : mediaItems.map(m => (
+                                <Col key={m.id} xs={6} sm={4} md={3} lg={2}>
+                                    <Card
+                                        className="h-100 border-0 shadow-sm cursor-pointer hover-card"
+                                        onClick={() => handleMediaSelect(m.path)}
+                                        style={{transition: 'transform 0.2s'}}
+                                    >
+                                        <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
+                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                        </div>
+                                        <Card.Body className="p-2 text-center">
+                                            <div className="text-truncate x-small fw-bold">{m.file_name}</div>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
+                </Modal.Body>
+                <Modal.Footer className="bg-light">
+                    <Button variant="secondary" size="sm" onClick={() => setShowMediaModal(false)}>Cancel</Button>
+                    <Button variant="primary" size="sm" onClick={() => window.open('/cms/media', '_blank')}>Manage Library</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <style jsx>{`
+                .cursor-pointer { cursor: pointer; }
+                .hover-card:hover { transform: translateY(-5px); }
+                .x-small { font-size: 11px; }
+            `}</style>
         </Container>
     );
 };
