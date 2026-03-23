@@ -36,7 +36,10 @@ class HomeController extends Controller
                 $section_headers[$header->section_key] = $header;
             }
 
-            $settingsRaw = DB::table('site_settings')->where('setting_key', 'LIKE', 'home_%')->get();
+            $settingsRaw = DB::table('site_settings')
+                ->where('setting_key', 'LIKE', 'home_%')
+                ->orWhere('setting_key', 'LIKE', 'site_founder_%')
+                ->get();
             $settings = [];
             foreach ($settingsRaw as $setting) {
                 $settings[$setting->setting_key] = $setting->setting_value;

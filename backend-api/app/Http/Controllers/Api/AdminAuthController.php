@@ -48,6 +48,7 @@ class AdminAuthController extends Controller
                 'id'       => $admin->id,
                 'name'     => $admin->name,
                 'username' => $admin->username,
+                'email'    => $admin->email,
                 'role'     => $admin->role,
                 'login_type' => $admin->login_type ?? 'password',
                 'token'    => $token,
@@ -66,6 +67,44 @@ class AdminAuthController extends Controller
         ]);
     }
 
+    // ─── PUT/POST /api/admin/profile/update ───────
+    public function updateProfile(Request $request) {
+        $admin = $request->admin;
+        
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'username' => 'sometimes|string|max:255|unique:admins,username,' . $admin->id,
+            'email' => 'sometimes|email|unique:admins,email,' . $admin->id,
+            'password' => 'sometimes|string|min:8|confirmed',
+        ]);
+
+        $updateData = [];
+        if($request->has('name')) $updateData['name'] = $request->name;
+        if($request->has('username')) $updateData['username'] = $request->username;
+        if($request->has('email')) $updateData['email'] = $request->email;
+        if($request->has('password')) $updateData['password'] = Hash::make($request->password);
+        
+        if(empty($updateData)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No changes provided.'
+            ]);
+        }
+
+        $updateData['updated_at'] = now();
+
+        DB::table('admins')->where('id', $admin->id)->update($updateData);
+
+        // Fetch updated admin
+        $updatedAdmin = DB::table('admins')->where('id', $admin->id)->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+            'data' => $updatedAdmin
+        ]);
+    }
+
     // ─── GET /api/admin/auth/check (FOR SSO) ────────────────
     public function checkAuth(Request $request) {
         $admin = $request->admin;
@@ -75,6 +114,7 @@ class AdminAuthController extends Controller
                 'id' => $admin->id,
                 'name' => $admin->name,
                 'username' => $admin->username,
+                'email' => $admin->email,
                 'role' => $admin->role,
                 'login_type' => $admin->login_type ?? 'password',
                 'token' => $admin->api_token

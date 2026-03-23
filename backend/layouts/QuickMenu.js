@@ -47,13 +47,23 @@ const QuickMenu = () => {
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_role');
             localStorage.removeItem('admin_name');
+            localStorage.removeItem('admin_username');
+            localStorage.removeItem('admin_login_type');
           router.push('/v1/auth/sign-in');
         }
     };
 
-    const adminName = typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
-    const adminRole = typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Role' : 'Role';
-    const adminLoginType = typeof window !== 'undefined' ? localStorage.getItem('admin_login_type') || 'password' : 'password';
+    const adminName = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
+    const adminRole = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Role' : 'Role';
+    const adminLoginType = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_login_type') || 'password' : 'password';
+
+    const getInitials = (name) => {
+        const parts = name.split(' ');
+        let initials = '';
+        if (parts.length > 0 && parts[0]) initials += parts[0][0];
+        if (parts.length > 1 && parts[1]) initials += parts[1][0];
+        return initials.toUpperCase() || 'A';
+    };
 
     const Notifications = () => {
         return (
@@ -109,8 +119,8 @@ const QuickMenu = () => {
                     bsPrefix=' '
                     className="rounded-circle"
                     id="dropdownUser">
-                    <div className="avatar avatar-md avatar-indicators avatar-online">
-                        <Image alt="avatar" src='/images/avatar/avatar-1.jpg' className="rounded-circle" />
+                    <div className="avatar avatar-md avatar-indicators avatar-online bg-primary rounded-circle d-flex justify-content-center align-items-center text-white fw-bold">
+                        {getInitials(adminName)}
                     </div>
                 </Dropdown.Toggle>
                 <ProfileMenu />
@@ -127,8 +137,8 @@ const QuickMenu = () => {
                     bsPrefix=' '
                     className="rounded-circle"
                     id="dropdownUser">
-                    <div className="avatar avatar-md avatar-indicators avatar-online">
-                        <Image alt="avatar" src='/images/avatar/avatar-1.jpg' className="rounded-circle" />
+                    <div className="avatar avatar-md avatar-indicators avatar-online bg-primary rounded-circle d-flex justify-content-center align-items-center text-white fw-bold">
+                        {getInitials(adminName)}
                     </div>
                 </Dropdown.Toggle>
                 <ProfileMenu />

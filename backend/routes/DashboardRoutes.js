@@ -38,6 +38,12 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
+		title: 'Section Visibility',
+		icon: 'toggle-left',
+		link: '/cms/sections'
+	},
+	{
+		id: uuid(),
 		title: 'Services',
 		icon: 'briefcase',
 		link: '/cms/services'

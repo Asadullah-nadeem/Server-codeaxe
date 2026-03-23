@@ -1,38 +1,27 @@
-// import node module libraries
 import { Col, Row, Card } from 'react-bootstrap';
+import useMounted from 'hooks/useMounted';
 
 const AboutMe = () => {
+    const hasMounted = useMounted();
+    const adminEmail = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_email') || 'admin@codeaxe.com' : 'admin@codeaxe.com';
+    const adminRole = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Administrator' : 'Administrator';
+
     return (
         <Col xl={6} lg={12} md={12} xs={12} className="mb-6">
-            {/* card */}
             <Card>
-                {/* card body */}
                 <Card.Body>
-                    {/* card title */}
                     <Card.Title as="h4">About Me</Card.Title>
-                    <span className="text-uppercase fw-medium text-dark fs-5 ls-2">Bio</span>
-                    <p className="mt-2 mb-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspen disse var ius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat.
+                    <span className="text-uppercase fw-medium text-dark fs-5 ls-2">Profile Info</span>
+                    <p className="mt-2 mb-6">You are currently logged in as {adminRole}. Your account has full access to the management dashboard.
                     </p>
                     <Row>
                         <Col xs={12} className="mb-5">
-                            <h6 className="text-uppercase fs-5 ls-2">Position</h6>
-                            <p className="mb-0">Theme designer at Bootstrap.</p>
+                            <h6 className="text-uppercase fs-5 ls-2">Role</h6>
+                            <p className="mb-0 text-uppercase">{adminRole}</p>
                         </Col>
-                        <Col xs={6} className="mb-5">
-                            <h6 className="text-uppercase fs-5 ls-2">Phone </h6>
-                            <p className="mb-0">+32112345689</p>
-                        </Col>
-                        <Col xs={6} className="mb-5">
-                            <h6 className="text-uppercase fs-5 ls-2">Date of Birth </h6>
-                            <p className="mb-0">01.10.1997</p>
-                        </Col>
-                        <Col xs={6}>
+                        <Col xs={12}>
                             <h6 className="text-uppercase fs-5 ls-2">Email </h6>
-                            <p className="mb-0">Dashui@gmail.com</p>
-                        </Col>
-                        <Col xs={6}>
-                            <h6 className="text-uppercase fs-5 ls-2">Location</h6>
-                            <p className="mb-0">Ahmedabad, India</p>
+                            <p className="mb-0">{adminEmail}</p>
                         </Col>
                     </Row>
                 </Card.Body>
@@ -41,4 +30,4 @@ const AboutMe = () => {
     )
 }
 
-export default AboutMe
+export default AboutMe;

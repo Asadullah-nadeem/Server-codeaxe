@@ -40,6 +40,8 @@ const SignIn = () => {
             localStorage.setItem("admin_token", data.data.token);
             localStorage.setItem("admin_role", data.data.role);
             localStorage.setItem("admin_name", data.data.name);
+            localStorage.setItem("admin_email", data.data.email);
+            localStorage.setItem("admin_username", data.data.username);
             localStorage.setItem("admin_login_type", data.data.login_type || 'password');
             router.push("/");
         }
@@ -70,6 +72,8 @@ const SignIn = () => {
         localStorage.setItem("admin_token", data.data.token);
         localStorage.setItem("admin_role", data.data.role);
         localStorage.setItem("admin_name", data.data.name);
+        localStorage.setItem("admin_email", data.data.email);
+        localStorage.setItem("admin_username", data.data.username);
         localStorage.setItem("admin_login_type", data.data.login_type || 'password');
 
         // Redirect to dashboard

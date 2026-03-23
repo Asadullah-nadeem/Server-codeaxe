@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Tab, Nav, Accordion, ListGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import MediaGallery from '../../components/MediaGallery';
+import useMounted from 'hooks/useMounted';
 
 const EmailTemplatesCMS = () => {
     const [templates, setTemplates] = useState([]);
@@ -9,6 +10,7 @@ const EmailTemplatesCMS = () => {
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showGallery, setShowGallery] = useState(false);
+    const hasMounted = useMounted();
     
     // Modals
     const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -129,7 +131,7 @@ const EmailTemplatesCMS = () => {
                                     <h5 className="mb-0">Configuration: {selectedTemplate.template_key}</h5>
                                     <div>
                                         <Button variant="light" size="sm" className="me-2" onClick={() => { setTemplateForm(selectedTemplate); setShowTemplateModal(true); }}>Edit Settings</Button>
-                                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}?admin_token=${typeof window !== 'undefined' ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
+                                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}?admin_token=${hasMounted ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
                                     </div>
                                 </Card.Header>
                                 <Card.Body>

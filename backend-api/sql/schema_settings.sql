@@ -20,4 +20,8 @@ INSERT INTO site_settings (setting_key, setting_value) VALUES
 ('home_hero_btn2_label', 'Start Project'),
 ('home_hero_btn2_link', '/contact'),
 ('home_featured_btn_label', 'View All Projects'),
-('home_featured_btn_link', '/work');
+('home_featured_btn_link', '/work'),
+('site_founder_name', 'Asadullah Nadeem'),
+('site_founder_message', 'We don\'t just build websites; we craft digital experiences that drive growth and innovation.'),
+('seo_google_analytics_id', ''),
+('seo_google_search_console_id', '');

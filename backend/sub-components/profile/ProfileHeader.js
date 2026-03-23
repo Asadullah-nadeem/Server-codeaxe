@@ -1,8 +1,21 @@
 // import node module libraries
 import Link from "next/link";
 import { Col, Row, Image } from "react-bootstrap";
+import useMounted from 'hooks/useMounted';
 
 const ProfileHeader = () => {
+  const hasMounted = useMounted();
+  const adminName = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
+  const adminUsername = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_username') || 'admin' : 'admin';
+
+  const getInitials = (name) => {
+    const parts = name.split(' ');
+    let initials = '';
+    if (parts.length > 0 && parts[0]) initials += parts[0][0];
+    if (parts.length > 1 && parts[1]) initials += parts[1][0];
+    return initials.toUpperCase() || 'A';
+  };
+
   return (
     <Row className="align-items-center">
       <Col xl={12} lg={12} md={12} xs={12}>
@@ -17,48 +30,34 @@ const ProfileHeader = () => {
         <div className="bg-white rounded-bottom smooth-shadow-sm ">
           <div className="d-flex align-items-center justify-content-between pt-4 pb-6 px-4">
             <div className="d-flex align-items-center">
-              {/* avatar */}
-              <div className="avatar-xxl avatar-indicators avatar-online me-2 position-relative d-flex justify-content-end align-items-end mt-n10">
-                <Image
-                  src="/images/avatar/avatar-1.jpg"
-                  className="avatar-xxl rounded-circle border border-4 border-white-color-40"
-                  alt=""
-                />
-                <Link
-                  href="#!"
-                  className="position-absolute top-0 right-0 me-2"
-                  data-bs-toggle="tooltip"
-                  data-placement="top"
-                  title=""
-                  data-original-title="Verified"
-                >
-                  <Image
-                    src="/images/svg/checked-mark.svg"
-                    alt=""
-                    height="30"
-                    width="30"
-                  />
-                </Link>
+              <div className="avatar-xxl avatar-indicators avatar-online me-2 position-relative d-flex justify-content-center align-items-center mt-n10 bg-primary rounded-circle border border-4 border-white shadow-sm text-white fw-bold fs-1" style={{ width: '8rem', height: '8rem' }}>
+                {getInitials(adminName)}
               </div>
               {/* text */}
-              <div className="lh-1">
-                <h2 className="mb-0">
-                  Jitu Chauhan
+              <div className="lh-1 ms-3 mt-3">
+                <h2 className="mb-0 d-flex align-items-center gap-2">
+                  {adminName}
                   <Link
                     href="#!"
-                    className="text-decoration-none"
                     data-bs-toggle="tooltip"
                     data-placement="top"
-                    title=""
-                    data-original-title="Beginner"
-                  ></Link>
+                    title="Verified"
+                    className="d-flex align-items-center"
+                  >
+                    <Image
+                      src="/images/svg/checked-mark.svg"
+                      alt=""
+                      height="24"
+                      width="24"
+                    />
+                  </Link>
                 </h2>
-                <p className="mb-0 d-block">@imjituchauhan</p>
+                <p className="mb-0 d-block text-muted mt-2">@{adminUsername}</p>
               </div>
             </div>
             <div>
               <Link
-                href="#"
+                href="/pages/settings"
                 className="btn btn-outline-primary d-none d-md-block"
               >
                 Edit Profile

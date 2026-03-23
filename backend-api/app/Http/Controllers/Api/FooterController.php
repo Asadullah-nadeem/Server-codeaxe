@@ -31,6 +31,8 @@ class FooterController extends Controller
             ->where('setting_key', 'LIKE', 'footer_%')
             ->orWhere('setting_key', 'LIKE', 'site_name_%')
             ->orWhere('setting_key', 'LIKE', 'site_logo_%')
+            ->orWhere('setting_key', 'LIKE', 'seo_%')
+            ->orWhere('setting_key', 'LIKE', 'site_founder_%')
             ->get();
         $settings = [];
         foreach ($settingsRaw as $setting) {
@@ -100,7 +102,13 @@ class FooterController extends Controller
             'site_logo_url',
             'site_name_prefix',
             'site_name_accent',
-            'footer_is_visible'
+            'footer_is_visible',
+            'seo_title',
+            'seo_description',
+            'seo_google_analytics_id',
+            'seo_google_search_console_id',
+            'site_founder_name',
+            'site_founder_message'
         ]);
 
         foreach ($settings as $key => $value) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Alert } from 'react-bootstrap';
+import { NextSeo } from 'next-seo';
 import { fetchApi } from '../../utils/api';
 
 const NavigationCMS = () => {
@@ -16,12 +17,7 @@ const NavigationCMS = () => {
         nav_btn_dashboard: '',
         nav_btn_login: '',
         nav_btn_signup: '',
-        nav_btn_profile: '',
-        seo_title: '',
-        seo_description: '',
-        site_name_prefix: '',
-        site_name_accent: '',
-        site_logo_url: ''
+        nav_btn_profile: ''
     });
 
     const fetchNavItems = async () => {
@@ -107,12 +103,7 @@ const NavigationCMS = () => {
             nav_btn_dashboard: settings.nav_btn_dashboard || '',
             nav_btn_login: settings.nav_btn_login || '',
             nav_btn_signup: settings.nav_btn_signup || '',
-            nav_btn_profile: settings.nav_btn_profile || '',
-            seo_title: settings.seo_title || '',
-            seo_description: settings.seo_description || '',
-            site_name_prefix: settings.site_name_prefix || '',
-            site_name_accent: settings.site_name_accent || '',
-            site_logo_url: settings.site_logo_url || ''
+            nav_btn_profile: settings.nav_btn_profile || ''
         });
         setShowSettingsModal(true);
     };
@@ -130,6 +121,10 @@ const NavigationCMS = () => {
 
     return (
         <Container fluid className="px-6 py-4">
+            <NextSeo 
+                title="Nav" 
+                description="Navigation Management Page" 
+            />
             <Row className="mb-4">
                 <Col className="d-flex justify-content-between align-items-center">
                     <h2 className="mb-0">Header & Nav Management</h2>
@@ -150,8 +145,7 @@ const NavigationCMS = () => {
                                     <Col md={6} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>SEO Tags</h6>
                                         <div className="bg-light p-3 rounded border">
-                                            <p className="mb-1 fw-bold">{settings.seo_title || 'No Title'}</p>
-                                            <p className="mb-0 text-muted small">{settings.seo_description || 'No Meta Description'}</p>
+                                            <p className="mb-0 text-muted small">Manage global SEO settings and founder information in the <a href="/cms/rewrites">SEO & Rewrites</a> section.</p>
                                         </div>
                                     </Col>
                                     <Col md={6} className="mb-3">
@@ -289,45 +283,11 @@ const NavigationCMS = () => {
                 <Modal.Header closeButton><Modal.Title>Edit Header & SEO Settings</Modal.Title></Modal.Header>
                 <Form onSubmit={handleSettingsSubmit}>
                     <Modal.Body>
-                        <h6 className="mb-3 text-primary border-bottom pb-2">SEO Variables</h6>
-                        <Row>
-                            <Col md={12}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Meta Title</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.seo_title} onChange={e => setSettingsForm({...settingsForm, seo_title: e.target.value})} placeholder="e.g. CodeAxe Web Agency" />
-                                </Form.Group>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Meta Description</Form.Label>
-                                    <Form.Control as="textarea" rows={2} value={settingsForm.seo_description} onChange={e => setSettingsForm({...settingsForm, seo_description: e.target.value})} />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-
-                        <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Branding Information</h6>
-                        <Row>
-                            <Col md={12}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Logo URL <small className="text-muted">(Enter URL from Media Manager)</small></Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({...settingsForm, site_logo_url: e.target.value})} placeholder="e.g. /logo.png or https://example.com/logo.png" />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Prefix</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_prefix} onChange={e => setSettingsForm({...settingsForm, site_name_prefix: e.target.value})} placeholder="e.g. Code" />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Accent</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({...settingsForm, site_name_accent: e.target.value})} placeholder="e.g. Axe" />
-                                </Form.Group>
-                            </Col>
-                        </Row>
+                        <Alert variant="info" className="mb-4 small">
+                            Branding, SEO, and Founder settings are now managed in the <a href="/cms/rewrites" className="fw-bold text-primary">SEO & Rewrites</a> section.
+                        </Alert>
                         
-                        <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Dropdown Labels</h6>
+                        <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Nav Dropdown Labels</h6>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">

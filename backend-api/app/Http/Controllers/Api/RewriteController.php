@@ -8,10 +8,28 @@ use Illuminate\Support\Facades\DB;
 class RewriteController extends Controller
 {
     /**
-     * Return active rewrite rules for Next.js next.config.ts
-     * This endpoint is PUBLIC (no API key) — called server-side at Next.js startup.
+     * Admin Index - Return all rules with full data
      */
     public function index()
+    {
+        try {
+            $rewrites = DB::table('route_rewrites')
+                ->orderBy('sort_order')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $rewrites
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Public List - Return only active source/destination for Next.js
+     */
+    public function publicList()
     {
         try {
             $rewrites = DB::table('route_rewrites')
@@ -24,10 +42,7 @@ class RewriteController extends Controller
                 'data' => $rewrites
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 

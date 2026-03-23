@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Tab, Nav } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import MediaGallery from '../../components/MediaGallery';
+import useMounted from 'hooks/useMounted';
 
 const ContactCMS = () => {
     const [pageData, setPageData] = useState({ header: {}, direct_info: [], response_times: [] });
@@ -10,6 +11,7 @@ const ContactCMS = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('submissions');
     const [showGallery, setShowGallery] = useState(false);
+    const hasMounted = useMounted();
 
     // Modals
     const [showInfoModal, setShowInfoModal] = useState(false);
@@ -235,7 +237,7 @@ const ContactCMS = () => {
                         <Card>
                             <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
                                 <h5 className="mb-0">Auto-Response Configuration</h5>
-                                <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${template.id}?admin_token=${typeof window !== 'undefined' ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">Preview Layout</a>
+                                <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${template.id}?admin_token=${hasMounted ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">Preview Layout</a>
                             </Card.Header>
                             <Card.Body>
                                 <Form onSubmit={handleTemplateSubmit}>

@@ -27,9 +27,9 @@ import firebaseLogo from "@/assets/tech/firebase.png";
 const transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const };
 
 const iconMap: any = { Globe, Code2, Server, Chrome, Smartphone, Workflow, Zap, Shield, Lock, CheckCircle };
-const techImageMap: any = { 
-  reactLogo, nodejsLogo, typescriptLogo, pythonLogo, 
-  dockerLogo, postgresqlLogo, awsLogo, firebaseLogo 
+const techImageMap: any = {
+  reactLogo, nodejsLogo, typescriptLogo, pythonLogo,
+  dockerLogo, postgresqlLogo, awsLogo, firebaseLogo
 };
 const partnerImageMap: any = {
   googleLogo, facebookLogo, amazonLogo, microsoftLogo, appleLogo, slackLogo, spotifyLogo, netflixLogo
@@ -49,40 +49,43 @@ const Index = () => {
     system_status: {}, partners: {}, capabilities: {}, featured_work: {}, why_codeaxe: {}, technologies: {}
   });
   const [settings, setSettings] = useState<any>({});
+  const [sections, setSections] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+  const APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || "";
+
+  // Returns true (visible) by default when section isn't configured yet
+  const isVisible = (key: string): boolean => {
+    if (Object.keys(sections).length === 0) return true;
+    return sections[key] !== false;
+  };
+
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/home`, {
-      headers: {
-        'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ""
+    Promise.all([
+      fetch(`${API}/sections`).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API}/home`, { headers: { 'X-API-KEY': APP_KEY } }).then(r => r.json()).catch(() => ({ success: false })),
+    ]).then(([secRes, homeRes]) => {
+      if (secRes?.success && secRes?.data) setSections(secRes.data);
+
+      if (homeRes?.success && homeRes?.data) {
+        const d = homeRes.data;
+        if (d.services?.length > 0)
+          setServices(d.services.map((s: any) => ({ ...s, icon: iconMap[s.icon] || Globe })));
+        if (d.projects?.length > 0) setProjects(d.projects);
+        if (d.stats?.length > 0) setStats(d.stats);
+        if (d.principles?.length > 0) setPrinciples(d.principles);
+        if (d.technologies?.length > 0)
+          setTechnologies(d.technologies.map((t: any) => ({ ...t, src: techImageMap[t.src] || reactLogo })));
+        if (d.system_status?.length > 0) setSystemStatus(d.system_status);
+        if (d.partners?.length > 0)
+          setPartners(d.partners.map((p: any) => ({ ...p, src: partnerImageMap[p.src] || googleLogo })));
+        if (d.hero) setHero(d.hero);
+        if (d.cta) setCta(d.cta);
+        if (d.section_headers) setSectionHeaders((prev: any) => ({ ...prev, ...d.section_headers }));
+        if (d.settings) setSettings((prev: any) => ({ ...prev, ...d.settings }));
       }
-    })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success && res.data) {
-          if (res.data.services?.length > 0) {
-            setServices(res.data.services.map((s: any) => ({ ...s, icon: iconMap[s.icon] || Globe })));
-          }
-          if (res.data.projects?.length > 0) setProjects(res.data.projects);
-          if (res.data.stats?.length > 0) setStats(res.data.stats);
-          if (res.data.principles?.length > 0) {
-            setPrinciples(res.data.principles.map((p: any) => ({ ...p, icon: p.icon })));
-          }
-          if (res.data.technologies?.length > 0) {
-            setTechnologies(res.data.technologies.map((t: any) => ({ ...t, src: techImageMap[t.src] || reactLogo })));
-          }
-          if (res.data.system_status?.length > 0) setSystemStatus(res.data.system_status);
-          if (res.data.partners?.length > 0) {
-            setPartners(res.data.partners.map((p: any) => ({ ...p, src: partnerImageMap[p.src] || googleLogo })));
-          }
-          if (res.data.hero) setHero(res.data.hero);
-          if (res.data.cta) setCta(res.data.cta);
-          if (res.data.section_headers) setSectionHeaders((prev: any) => ({ ...prev, ...res.data.section_headers }));
-          if (res.data.settings) setSettings((prev: any) => ({ ...prev, ...res.data.settings }));
-        }
-      })
-      .catch(err => console.error("Failed fetching home data", err))
-      .finally(() => setIsLoading(false));
+    }).finally(() => setIsLoading(false));
   }, []);
 
   if (isLoading) {
@@ -95,7 +98,8 @@ const Index = () => {
 
   return (
   <>
-    {/* Hero */}
+    {/* ── Hero ── */}
+    {isVisible('hero') && (
     <section className="border-b border-border">
       <div className="container pt-8 pb-20 md:pt-12 md:pb-32">
         <div className="grid md:grid-cols-5 gap-16 items-start">
@@ -118,6 +122,7 @@ const Index = () => {
               </Link>
             </motion.div>
           </div>
+          {isVisible('system_status') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ ...transition, delay: 0.4 }} className="md:col-span-2 border border-border p-6 hidden md:block">
             <div className="font-mono-label text-xs text-muted-foreground mb-4 uppercase tracking-widest">{sectionHeaders.system_status.label}</div>
             <div className="space-y-3">
@@ -132,11 +137,14 @@ const Index = () => {
               ))}
             </div>
           </motion.div>
+          )}
         </div>
       </div>
     </section>
+    )}
 
-    {/* Stats */}
+    {/* ── Stats ── */}
+    {isVisible('stats') && stats.length > 0 && (
     <section className="border-b border-border">
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4">
@@ -149,8 +157,10 @@ const Index = () => {
         </div>
       </div>
     </section>
+    )}
 
-    {/* Partners */}
+    {/* ── Partners ── */}
+    {isVisible('partners') && partners.length > 0 && (
     <section className="border-b border-border">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={transition}>
@@ -166,7 +176,10 @@ const Index = () => {
         </motion.div>
       </div>
     </section>
+    )}
 
+    {/* ── Services ── */}
+    {isVisible('services') && services.length > 0 && (
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
         {sectionHeaders?.capabilities && (
@@ -179,8 +192,10 @@ const Index = () => {
         </div>
       </div>
     </section>
+    )}
 
-    {/* Featured Work */}
+    {/* ── Featured Projects ── */}
+    {isVisible('projects') && projects.length > 0 && (
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
         {sectionHeaders?.featured_work && (
@@ -198,8 +213,10 @@ const Index = () => {
         </div>
       </div>
     </section>
+    )}
 
-    {/* Why CodeAxe */}
+    {/* ── Principles / Why CodeAxe ── */}
+    {isVisible('principles') && principles.length > 0 && (
     <section className="border-b border-border">
       <div className="container py-24 md:py-32">
         {sectionHeaders?.why_codeaxe && (
@@ -219,8 +236,10 @@ const Index = () => {
         </div>
       </div>
     </section>
+    )}
 
-    {/* Best Technologies */}
+    {/* ── Technologies ── */}
+    {isVisible('technologies') && technologies.length > 0 && (
     <section className="border-b border-border">
       <div className="container py-16 md:py-24">
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={transition}>
@@ -236,7 +255,32 @@ const Index = () => {
         </motion.div>
       </div>
     </section>
+    )}
 
+    {/* ── Founder ── */}
+    {isVisible('hero') && settings.site_founder_name && (
+      <section className="border-b border-border bg-muted/30">
+        <div className="container py-24 md:py-32">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={transition} className="mb-12">
+              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-8 border border-primary/20">
+                <Globe className="text-primary" size={40} />
+              </div>
+              <h2 className="text-3xl md:text-5xl font-display tracking-tighter mb-8 leading-tight italic">
+                {settings.site_founder_message || "We don't just build websites; we craft digital experiences that drive growth and innovation."}
+              </h2>
+              <div className="flex flex-col items-center">
+                <span className="font-display text-xl">{settings.site_founder_name}</span>
+                <span className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground mt-2">Founder & CEO, CodeAxe</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* ── CTA ── */}
+    {isVisible('cta') && (
     <section className="border-b border-border grid-bg">
       <div className="container py-24 md:py-32 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={transition}>
@@ -249,6 +293,7 @@ const Index = () => {
         </motion.div>
       </div>
     </section>
+    )}
   </>
   );
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Badge } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Badge, Alert } from 'react-bootstrap';
+import { NextSeo } from 'next-seo';
 import { fetchApi } from '../../utils/api';
 
 const FooterCMS = () => {
@@ -26,9 +27,6 @@ const FooterCMS = () => {
         footer_contact_email: '',
         footer_contact_phone: '',
         footer_copyright: '',
-        site_logo_url: '',
-        site_name_prefix: '',
-        site_name_accent: '',
         footer_is_visible: 1
     });
 
@@ -98,9 +96,6 @@ const FooterCMS = () => {
             footer_contact_email: settings.footer_contact_email || '',
             footer_contact_phone: settings.footer_contact_phone || '',
             footer_copyright: settings.footer_copyright || '',
-            site_logo_url: settings.site_logo_url || '',
-            site_name_prefix: settings.site_name_prefix || '',
-            site_name_accent: settings.site_name_accent || '',
             footer_is_visible: settings.footer_is_visible !== undefined ? settings.footer_is_visible : 1
         });
         setShowSettingsModal(true);
@@ -119,6 +114,10 @@ const FooterCMS = () => {
 
     return (
         <Container fluid className="px-6 py-4">
+            <NextSeo 
+                title="Footer" 
+                description="Footer Management Page" 
+            />
             <h2 className="mb-4">Footer Management</h2>
 
             <Row className="mb-4">
@@ -131,7 +130,7 @@ const FooterCMS = () => {
                         <Card.Body>
                             {loading ? <p>Loading...</p> : (
                                 <Row>
-                                    <Col md={4} className="mb-3">
+                                    <Col md={3} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Branding</h6>
                                         <div className="d-flex align-items-center mb-2">
                                             {settings.site_logo_url ? (
@@ -143,23 +142,35 @@ const FooterCMS = () => {
                                                 />
                                             ) : null}
                                             <span className="fs-5 fw-bold">
-                                                {settings.site_name_prefix || 'Code'} <span className="text-primary">{settings.site_name_accent || 'Axe'}</span>
+                                        {settings.site_name_prefix || 'Code'} <span className="text-primary">{settings.site_name_accent || 'Axe'}</span>
                                             </span>
                                         </div>
                                     </Col>
-                                    <Col md={4} className="mb-3">
+                                    <Col md={3} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Contact Details</h6>
                                         <p className="mb-1 text-truncate" title={settings.footer_contact_email}><i className="bi bi-envelope me-2 text-primary"></i> <a href={`mailto:${settings.footer_contact_email}`} className="text-decoration-none text-body">{settings.footer_contact_email || '-'}</a></p>
                                         <p className="mb-0 text-truncate" title={settings.footer_contact_phone}><i className="bi bi-telephone me-2 text-primary"></i> {settings.footer_contact_phone || '-'}</p>
                                     </Col>
-                                    <Col md={4} className="mb-3">
+                                    <Col md={3} className="mb-3">
+                                        <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Visibility</h6>
+                                        <Badge bg={settings.footer_is_visible ? 'success' : 'danger'} className="px-3 py-2">
+                                            {settings.footer_is_visible ? 'PUBLICLY VISIBLE' : 'HIDDEN'}
+                                        </Badge>
+                                    </Col>
+                                    <Col md={3} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Footer Text Area</h6>
                                         <div className="bg-light p-3 rounded border">
                                             <p className="mb-1 fw-bold">{settings.footer_title || 'No Title'}</p>
                                             <p className="mb-0 text-muted small">{settings.footer_subtitle || 'No Subtitle'}</p>
                                         </div>
                                     </Col>
-                                    <Col md={12} className="mt-2 pt-3 border-top">
+                                    <Col md={3} className="mb-3">
+                                        <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>SEO & Branding</h6>
+                                        <div className="bg-light p-3 rounded border">
+                                            <p className="mb-0 text-muted small">Manage global SEO settings and founder information in the <a href="/cms/rewrites">SEO & Rewrites</a> section.</p>
+                                        </div>
+                                    </Col>
+                                    <Col md={12} className="mt-3 pt-3 border-top">
                                         <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Copyright Notice</h6>
                                         <div className="p-2 border rounded bg-light font-monospace small" dangerouslySetInnerHTML={{ __html: settings.footer_copyright || '-' }}></div>
                                     </Col>
@@ -273,29 +284,9 @@ const FooterCMS = () => {
                 <Modal.Header closeButton><Modal.Title>Edit Global Footer Settings</Modal.Title></Modal.Header>
                 <Form onSubmit={handleSettingsSubmit}>
                     <Modal.Body>
-                        <h6 className="mb-3 text-primary border-bottom pb-2">Branding Information</h6>
-                        <Row>
-                            <Col md={12}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Logo URL <small className="text-muted">(Enter URL from Media Manager)</small></Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({...settingsForm, site_logo_url: e.target.value})} placeholder="e.g. /logo.png or https://example.com/logo.png" />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Prefix</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_prefix} onChange={e => setSettingsForm({...settingsForm, site_name_prefix: e.target.value})} placeholder="e.g. Code" />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Site Name Accent</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({...settingsForm, site_name_accent: e.target.value})} placeholder="e.g. Axe" />
-                                </Form.Group>
-                            </Col>
-                        </Row>
+                        <Alert variant="info" className="mb-4 small">
+                            Branding, SEO, and Founder settings are now managed in the <a href="/cms/rewrites" className="fw-bold text-primary">SEO & Rewrites</a> section.
+                        </Alert>
 
                         <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Footer General Details</h6>
                         <Row>

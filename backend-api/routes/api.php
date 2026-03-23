@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\EmailTemplateController;
 use App\Http\Controllers\Api\SmtpController;
+use App\Http\Controllers\Api\SectionController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -26,7 +27,8 @@ use App\Http\Middleware\AdminRoleMiddleware;
 use App\Http\Middleware\DemoModeMiddleware;
 
 // Public routes — called client-side without API key
-Route::get('/rewrites', [RewriteController::class, 'index']);
+Route::get('/rewrites', [RewriteController::class, 'publicList']);
+Route::get('/sections', [SectionController::class, 'publicIndex']);
 Route::get('/portfolio', [PortfolioController::class, 'categories']);
 Route::get('/portfolio/{slug}', [PortfolioController::class, 'show']);
 
@@ -85,6 +87,7 @@ Route::get('/dms/media/{slug}/{id}', [DmsController::class, 'showImage']);
 // General Admin Protected Routes (Basic Admin session)
 Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
     Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
+    Route::post('/admin/profile/update', [AdminAuthController::class, 'updateProfile']);
     Route::get('/admin/auth/check', [AdminAuthController::class, 'checkAuth']);
     Route::post('/admin/logout', [AdminAuthController::class, 'logout']);
 
@@ -222,6 +225,10 @@ Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Ht
     Route::get('/admin/smtp/settings', [SmtpController::class, 'getSettings']);
     Route::put('/admin/smtp/settings', [SmtpController::class, 'updateSettings']);
     Route::post('/admin/smtp/test',    [SmtpController::class, 'testSmtp']);
+
+    // ─── Section Visibility Control ───
+    Route::get('/admin/sections',  [SectionController::class, 'index']);
+    Route::post('/admin/sections', [SectionController::class, 'upsert']);
 });
 
 // Super Admin ONLY Routes (Hierarchy check)
