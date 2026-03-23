@@ -89,13 +89,13 @@ const SignUp = () => {
                 </div>
                 <div className="d-md-flex justify-content-between mt-4">
                   <div className="mb-2 mb-md-0">
-                    <Link href="/authentication/sign-in" className="fs-5">
+                    <Link href="/v1/auth/sign-in" className="fs-5">
                       Already member? Login{" "}
                     </Link>
                   </div>
                   <div>
                     <Link
-                      href="/authentication/forget-password"
+                      href="/v1/auth/forget-password"
                       className="text-inherit fs-5"
                     >
                       Forgot your password?

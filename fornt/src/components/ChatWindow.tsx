@@ -10,6 +10,9 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
     const [newMessage, setNewMessage] = useState("");
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
+    const typingTimer = useRef<NodeJS.Timeout | null>(null);
+    const lastTypingTime = useRef(0);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const loadMessages = async (showLoading = false) => {
@@ -20,8 +23,18 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
+            if (res.status === 401 || (data.message && data.message.includes("Unauthorized"))) {
+                localStorage.removeItem("api_token");
+                localStorage.removeItem("user");
+                window.location.href = "/login";
+                return;
+            }
+
             if (data.success) {
                 setMessages(data.data);
+                if (data.other_typing !== undefined) {
+                    setIsOtherTyping(data.other_typing);
+                }
             }
         } catch (err) {
             console.error("Chat fetch error", err);
@@ -50,7 +63,16 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
         if (!newMessage.trim() || sending) return;
 
         setSending(true);
+        // Cancel typing status
+        if (typingTimer.current) clearTimeout(typingTimer.current);
         const token = localStorage.getItem("api_token");
+        fetch(`${API}/chat/typing/${requestId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ is_typing: false })
+        });
+        lastTypingTime.current = 0;
+
         try {
             const res = await fetch(`${API}/chat/send/${requestId}`, {
                 method: "POST",
@@ -70,6 +92,32 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
         } finally {
             setSending(false);
         }
+    };
+
+    const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+        
+        const now = Date.now();
+        const token = localStorage.getItem("api_token");
+        
+        if (now - lastTypingTime.current > 3000) {
+            fetch(`${API}/chat/typing/${requestId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ is_typing: true })
+            });
+            lastTypingTime.current = now;
+        }
+        
+        if (typingTimer.current) clearTimeout(typingTimer.current);
+        typingTimer.current = setTimeout(() => {
+            fetch(`${API}/chat/typing/${requestId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ is_typing: false })
+            });
+            lastTypingTime.current = 0;
+        }, 4000);
     };
 
     return (
@@ -128,6 +176,23 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
                         </div>
                     ))
                 )}
+                
+                {isOtherTyping && (
+                    <div className="flex justify-start">
+                        <div className="max-w-[85%] group">
+                            <div className="px-4 py-3 bg-muted border border-border flex gap-1 items-center h-10 w-16 shadow-sm">
+                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></span>
+                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.15s]"></span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-1.5 text-[9px] font-mono-label uppercase tracking-tighter text-muted-foreground justify-start">
+                                <Shield size={8} />
+                                <span>Admin is typing</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Input */}
@@ -136,7 +201,7 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
                     <input 
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
+                        onChange={handleTyping}
                         placeholder="Type your reply..."
                         className="w-full bg-background border border-border px-4 py-3 pr-12 text-sm focus:outline-none focus:border-accent transition-colors"
                     />

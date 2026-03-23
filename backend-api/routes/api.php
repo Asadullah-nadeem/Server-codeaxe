@@ -57,6 +57,7 @@ Route::middleware([AuthUserMiddleware::class])->group(function () {
     // Chat
     Route::get('/chat/messages/{request_id}', [ChatController::class, 'getUserMessages']);
     Route::post('/chat/send/{request_id}',    [ChatController::class, 'userSendMessage']);
+    Route::post('/chat/typing/{request_id}',  [ChatController::class, 'userSetTyping']);
 });
 
 // Send Request UI (Public or semi-public to get text)
@@ -202,6 +203,7 @@ Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Ht
     Route::get('/admin/chat/overview',              [ChatController::class, 'getChatOverview']);
     Route::get('/admin/chat/messages/{request_id}', [ChatController::class, 'getAdminMessages']);
     Route::post('/admin/chat/send/{request_id}',    [ChatController::class, 'adminSendMessage']);
+    Route::post('/admin/chat/typing/{request_id}',  [ChatController::class, 'adminSetTyping']);
     Route::delete('/admin/chat/clear/{request_id}', [ChatController::class, 'clearChat']);
     Route::post('/admin/chat/status/{request_id}', [ChatController::class, 'updateRequestStatus']);
 
@@ -233,6 +235,8 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     // Management of registered frontend users
     Route::get('/admin/users/registered', [AdminAuthController::class, 'registeredUsers']);
     Route::post('/admin/users/verify/{id}', [AdminAuthController::class, 'verifyUser']);
+    Route::post('/admin/users/toggle-ban/{id}', [AdminAuthController::class, 'toggleBanUser']);
+    Route::post('/admin/users/create', [AdminAuthController::class, 'createFrontendUser']);
 
     // Sensitive DB settings or other system configs
     Route::get('/admin/system/status', function() {

@@ -1,7 +1,7 @@
 // import node module libraries
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { Row, Col, Card, Form, Button, Image, Alert } from "react-bootstrap";
+import { Row, Col, Card, Form, Button, Image, Alert, Spinner } from "react-bootstrap";
 import Link from "next/link";
 
 // import authlayout to override default layout
@@ -14,6 +14,13 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [ssoProcessing, setSsoProcessing] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  useEffect(() => {
+    // Artificial 1.5s splash screen as requested
+    const timer = setTimeout(() => setPageLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const { token } = router.query;
@@ -77,32 +84,43 @@ const SignIn = () => {
     }
   };
 
+  if (pageLoading) {
+    return (
+      <div className="d-flex flex-column justify-content-center align-items-center min-vh-100 bg-white shadow-soft">
+        <Spinner animation="border" variant="primary" style={{ width: '3.5rem', height: '3.5rem', borderWidth: '0.25rem' }} role="status" className="mb-4" />
+        <h4 className="fw-bold text-primary mb-1">Code Axe Admin</h4>
+        <p className="text-muted small">Initializing Secure Management Panel...</p>
+      </div>
+    );
+  }
+
   return (
-    <Row className="align-items-center justify-content-center g-0 min-vh-100">
+    <Row className="align-items-center justify-content-center g-0 min-vh-100 bg-light bg-opacity-50">
       <Col xxl={4} lg={6} md={8} xs={12} className="py-8 py-xl-0">
         {/* Card */}
-        <Card className="smooth-shadow-md">
+        <Card className="smooth-shadow-md border-0">
           {/* Card body */}
           <Card.Body className="p-6">
-            {ssoProcessing && <div className="text-center py-5"><p className="mb-0 fw-bold">Detecting Secure Session...</p></div>}
+            {ssoProcessing && (
+              <div className="text-center py-5">
+                <Spinner animation="grow" variant="primary" size="sm" className="me-2" />
+                <p className="mb-0 fw-bold d-inline-block">Detecting Secure Session...</p>
+              </div>
+            )}
             <div className={ssoProcessing ? "d-none" : "mb-4"}>
               <Link href="/">
-                <Image
-                  src="/images/brand/logo/logo-primary.svg"
-                  className="mb-2"
-                  alt=""
-                />
+                <h3 className="fw-bold text-primary mb-1">Code Axe</h3>
               </Link>
-              <p className="mb-6">Please enter your admin credentials.</p>
+              <p className="mb-6 text-muted">Please enter your admin credentials.</p>
             </div>
-            
-            {error && <Alert variant="danger">{error}</Alert>}
-            
+
+            {error && <Alert variant="danger" className="py-2 small">{error}</Alert>}
+
             {/* Form */}
             <Form onSubmit={handleLogin}>
               {/* Username */}
               <Form.Group className="mb-3" controlId="username">
-                <Form.Label>Username</Form.Label>
+                <Form.Label className="small fw-semibold text-muted">Username</Form.Label>
                 <Form.Control
                   type="text"
                   name="username"
@@ -110,36 +128,39 @@ const SignIn = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="bg-light border-0 py-2"
                 />
               </Form.Group>
+               {/* Password */}
+               <Form.Group className="mb-3" controlId="password">
+                 <Form.Label className="small fw-semibold text-muted">Password</Form.Label>
+                 <Form.Control
+                   type="password"
+                   name="password"
+                   placeholder="**************"
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   required
+                   className="bg-light border-0 py-2"
+                 />
+               </Form.Group>
 
-              {/* Password */}
-              <Form.Group className="mb-3" controlId="password">
-                <Form.Label>Password</Form.Label>
-                <Form.Control
-                  type="password"
-                  name="password"
-                  placeholder="**************"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </Form.Group>
-
-              <div>
-                {/* Button */}
-                <div className="d-grid mt-4">
-                  <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? "Signing In..." : "Sign In"}
-                  </Button>
-                </div>
-              </div>
-            </Form>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  );
+               <div className="d-grid mt-4">
+                 <Button variant="primary" type="submit" disabled={loading} className="py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                   {loading ? (
+                     <>
+                       <Spinner animation="border" size="sm" variant="light" />
+                       <span>Authenticating...</span>
+                     </>
+                   ) : "Sign In"}
+                 </Button>
+               </div>
+             </Form>
+           </Card.Body>
+         </Card>
+       </Col>
+     </Row>
+   );
 };
 
 SignIn.Layout = AuthLayout;

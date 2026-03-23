@@ -46,6 +46,20 @@ export default function Dashboard() {
       })
       .catch(() => setError("Failed to fetch dashboard data."))
       .finally(() => setLoading(false));
+
+    // Background polling for instant logout if banned by admin
+    const checkAuthInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API}/dashboard`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem("api_token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        }
+      } catch (e) {}
+    }, 5000);
+
+    return () => clearInterval(checkAuthInterval);
   }, [router]);
 
   const handleLogout = () => {

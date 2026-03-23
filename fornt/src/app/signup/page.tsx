@@ -45,7 +45,7 @@ export default function Signup() {
         setError(data.message || "Failed to create account.");
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("Email and username must exist.");
     } finally {
       setIsSubmitting(false);
     }

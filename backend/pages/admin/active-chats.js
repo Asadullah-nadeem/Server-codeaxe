@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Badge, Button, Container, Dropdown, Form, ListGroup, Spinner } from 'react-bootstrap';
+import { Badge, Button, Container, Dropdown, Form, ListGroup, Spinner, Offcanvas } from 'react-bootstrap';
 import { Check, CheckCircle, Clock, Info, MessageCircle, MoreVertical, RotateCcw, Search, Send, Trash2, User } from 'react-feather';
 import { fetchApi } from '../../utils/api';
 
@@ -12,6 +12,10 @@ const ActiveChats = () => {
   const [fetchingMessages, setFetchingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const typingTimer = useRef(null);
+  const lastTypingTime = useRef(0);
   const scrollRef = useRef(null);
 
   const loadChats = async (silent = false) => {
@@ -39,6 +43,9 @@ const ActiveChats = () => {
       const res = await fetchApi(`/admin/chat/messages/${requestId}`);
       if (res.success) {
         setMessages(res.data);
+        if (res.other_typing !== undefined) {
+          setIsOtherTyping(res.other_typing);
+        }
         setChats(prev => prev.map(c => c.id === requestId ? { ...c, unread_count: 0 } : c));
       }
     } catch (err) {
@@ -102,6 +109,10 @@ const ActiveChats = () => {
     if (!newMessage.trim() || sending || !selectedChat) return;
 
     setSending(true);
+    // Cancel typing
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    fetchApi(`/admin/chat/typing/${selectedChat.id}`, { method: 'POST', body: JSON.stringify({ is_typing: false }) });
+    lastTypingTime.current = 0;
     try {
       const res = await fetchApi(`/admin/chat/send/${selectedChat.id}`, {
         method: 'POST',
@@ -116,6 +127,30 @@ const ActiveChats = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value);
+    
+    if (!selectedChat) return;
+
+    const now = Date.now();
+    if (now - lastTypingTime.current > 3000) {
+      fetchApi(`/admin/chat/typing/${selectedChat.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ is_typing: true })
+      });
+      lastTypingTime.current = now;
+    }
+    
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      fetchApi(`/admin/chat/typing/${selectedChat.id}`, {
+        method: 'POST',
+        body: JSON.stringify({ is_typing: false })
+      });
+      lastTypingTime.current = 0;
+    }, 4000);
   };
 
   const filteredChats = chats.filter(c =>
@@ -206,7 +241,7 @@ const ActiveChats = () => {
               {/* Chat Header */}
               <div className="p-3 bg-white border-bottom d-flex justify-content-between align-items-center shadow-sm z-index-1">
                 <div className="d-flex align-items-center gap-3">
-                  <div className="bg-primary bg-opacity-10 text-primary rounded-circle p-2">
+                  <div className="bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px' }}>
                     <User size={20} />
                   </div>
                   <div>
@@ -224,12 +259,12 @@ const ActiveChats = () => {
                   </div>
                 </div>
                 <div className="d-flex gap-2">
-                  <Button variant="link" className="text-muted p-2" title="View Request Details" onClick={() => alert(`Project Details:\n\nTitle: ${selectedChat.request_title}\nClient: ${selectedChat.username}\nStatus: ${selectedChat.status}`)}>
+                  <Button variant="link" className="text-muted p-2" title="View Request Details" onClick={() => setShowDetails(true)}>
                     <Clock size={18} />
                   </Button>
 
                   <Dropdown align="end">
-                    <Dropdown.Toggle variant="link" className="text-muted p-2 shadow-none border-0 no-caret">
+                    <Dropdown.Toggle bsPrefix=" " as="span" role="button" className="text-muted p-2 shadow-none border-0 d-inline-flex align-items-center justify-content-center" style={{ cursor: 'pointer' }}>
                       <MoreVertical size={18} />
                     </Dropdown.Toggle>
                     <Dropdown.Menu className="shadow-sm border-0">
@@ -275,6 +310,24 @@ const ActiveChats = () => {
                     </div>
                   </div>
                 ))}
+                
+                {isOtherTyping && (
+                  <div className="d-flex justify-content-start">
+                    <div className="d-flex flex-column" style={{ maxWidth: '70%' }}>
+                      <div className="p-3 rounded shadow-sm bg-white text-dark border d-flex align-items-center">
+                        <div className="typing-dots-container d-flex gap-1 align-items-center">
+                          <span className="typing-dot"></span>
+                          <span className="typing-dot"></span>
+                          <span className="typing-dot"></span>
+                          <span className="typing-dot"></span>
+                        </div>
+                      </div>
+                      <div className="mt-1 d-flex gap-2 align-items-center x-small text-muted justify-content-start">
+                        <span>{selectedChat.username} is typing...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Chat Input */}
@@ -285,7 +338,7 @@ const ActiveChats = () => {
                     placeholder="Type your message here..."
                     className="py-3 px-4 bg-light border-0 shadow-none rounded-pill"
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={handleTyping}
                     disabled={sending}
                   />
                   <Button
@@ -311,14 +364,87 @@ const ActiveChats = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <Offcanvas show={showDetails} onHide={() => setShowDetails(false)} placement="end">
+        <Offcanvas.Header closeButton className="border-bottom pb-3">
+          <Offcanvas.Title className="fw-bold">Project Details</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="p-4">
+          {selectedChat ? (
+            <div className="d-flex flex-column gap-4">
+              <div>
+                <small className="text-muted text-uppercase fw-bold x-small">Client Name</small>
+                <div className="d-flex align-items-center gap-2 mt-2">
+                  <div className="bg-light-primary text-primary rounded-circle p-1 d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+                    <User size={16} />
+                  </div>
+                  <h6 className="mb-0 fw-semibold">{selectedChat.username}</h6>
+                </div>
+              </div>
+              
+              <div>
+                <small className="text-muted text-uppercase fw-bold x-small">Request Title</small>
+                <p className="mb-0 mt-2 text-dark">{selectedChat.request_title}</p>
+              </div>
+
+              <div>
+                <small className="text-muted text-uppercase fw-bold x-small">Project Status</small>
+                <div className="mt-2">
+                  <Badge bg={selectedChat.status === 'resolved' ? 'success' : (selectedChat.status === 'pending' ? 'warning' : 'info')} className="text-uppercase x-small px-2 py-1">
+                    {selectedChat.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedChat.email && (
+                <div>
+                  <small className="text-muted text-uppercase fw-bold x-small">Contact Email</small>
+                  <p className="mb-0 mt-2 text-dark">{selectedChat.email}</p>
+                </div>
+              )}
+
+              {selectedChat.created_at && (
+                <div>
+                  <small className="text-muted text-uppercase fw-bold x-small">Task Created At</small>
+                  <p className="mb-0 mt-2 text-dark">{new Date(selectedChat.created_at).toLocaleString()}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center mt-5 text-muted">
+              <Info size={40} className="mb-3 opacity-50" />
+              <p>No chat selected.</p>
+            </div>
+          )}
+        </Offcanvas.Body>
+      </Offcanvas>
+
+      <style jsx global>{`
                 .x-small { font-size: 11px; }
-                .no-caret::after { display: none !important; }
+                .no-caret.dropdown-toggle::after { display: none !important; }
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
                 .min-width-0 { min-width: 0; }
+                
+                .typing-dots-container {
+                  height: 12px;
+                }
+                .typing-dot {
+                  width: 6px;
+                  height: 6px;
+                  background-color: #6c757d;
+                  border-radius: 50%;
+                  animation: blink-anim 1.4s infinite both;
+                }
+                .typing-dot:nth-child(1) { animation-delay: 0s; }
+                .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+                .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+                .typing-dot:nth-child(4) { animation-delay: 0.6s; }
+                @keyframes blink-anim {
+                  0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+                  40% { opacity: 1; transform: translateY(-3px); }
+                }
             `}</style>
     </Container>
   );

@@ -25,7 +25,7 @@ const QuickMenu = () => {
 
     const hasMounted = useMounted();
     const router = useRouter();
-    
+
     const isDesktop = useMediaQuery({
         query: '(min-width: 1224px)'
     })
@@ -47,7 +47,7 @@ const QuickMenu = () => {
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_role');
             localStorage.removeItem('admin_name');
-            router.push('/authentication/sign-in');
+          router.push('/v1/auth/sign-in');
         }
     };
 

@@ -960,6 +960,10 @@ html, body {
   width: 3rem;
 }
 
+.w-16 {
+  width: 4rem;
+}
+
 .min-w-0 {
   min-width: 0;
 }
@@ -1122,6 +1126,22 @@ html, body {
 
 .animate-spin {
   animation: 1s linear infinite spin;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    animation-timing-function: cubic-bezier(.8, 0, 1, 1);
+    transform: translateY(-25%);
+  }
+
+  50% {
+    animation-timing-function: cubic-bezier(0, 0, .2, 1);
+    transform: none;
+  }
+}
+
+.animate-bounce {
+  animation: 1s infinite bounce;
 }
 
 .cursor-default {
@@ -2360,6 +2380,18 @@ html, body {
   display: flex;
   position: fixed;
   inset: 0;
+}
+
+.\[animation-delay\:-0\.15s\] {
+  animation-delay: -.15s;
+}
+
+.\[animation-delay\:-0\.3s\] {
+  animation-delay: -.3s;
+}
+
+.\[animation-delay\:0\.15s\] {
+  animation-delay: .15s;
 }
 
 .file\:border-0::file-selector-button {

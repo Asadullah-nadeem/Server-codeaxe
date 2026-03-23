@@ -40,7 +40,13 @@ class ChatController extends Controller
             ->where('sender_type', 'admin')
             ->update(['is_read' => 1]);
 
-        return response()->json(['success' => true, 'data' => $messages]);
+        $isAdminTyping = \Illuminate\Support\Facades\Cache::has("typing_{$requestId}_admin");
+
+        return response()->json([
+            'success' => true, 
+            'data' => $messages,
+            'other_typing' => $isAdminTyping
+        ]);
     }
 
     // POST /api/chat/send/{request_id}
@@ -85,6 +91,19 @@ class ChatController extends Controller
         ]);
     }
 
+    // POST /api/chat/typing/{request_id}
+    public function userSetTyping(Request $request, $requestId)
+    {
+        $isTyping = $request->input('is_typing', false);
+        $key = "typing_{$requestId}_user";
+        if ($isTyping) {
+            \Illuminate\Support\Facades\Cache::put($key, true, now()->addSeconds(6));
+        } else {
+            \Illuminate\Support\Facades\Cache::forget($key);
+        }
+        return response()->json(['success' => true]);
+    }
+
     // ─── ADMIN METHODS ──────────────────────────────────────────────
 
     // GET /api/admin/chat/messages/{request_id}
@@ -102,7 +121,13 @@ class ChatController extends Controller
             ->where('sender_type', 'user')
             ->update(['is_read' => 1]);
 
-        return response()->json(['success' => true, 'data' => $messages]);
+        $isUserTyping = \Illuminate\Support\Facades\Cache::has("typing_{$requestId}_user");
+
+        return response()->json([
+            'success' => true, 
+            'data' => $messages,
+            'other_typing' => $isUserTyping
+        ]);
     }
 
     // POST /api/admin/chat/send/{request_id}
@@ -146,6 +171,19 @@ class ChatController extends Controller
             'success' => true,
             'data' => DB::table('client_messages')->where('id', $id)->first()
         ]);
+    }
+
+    // POST /api/admin/chat/typing/{request_id}
+    public function adminSetTyping(Request $request, $requestId)
+    {
+        $isTyping = $request->input('is_typing', false);
+        $key = "typing_{$requestId}_admin";
+        if ($isTyping) {
+            \Illuminate\Support\Facades\Cache::put($key, true, now()->addSeconds(6));
+        } else {
+            \Illuminate\Support\Facades\Cache::forget($key);
+        }
+        return response()->json(['success' => true]);
     }
 
     // GET /api/admin/chat/overview

@@ -24,19 +24,19 @@ function MyApp({ Component, pageProps }) {
     // Only run on client side
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('admin_token');
-      const isAuthPage = router.pathname.startsWith('/authentication/');
-      
+      const isAuthPage = router.pathname.startsWith('/v1/auth/');
+
       if (!token && !isAuthPage) {
-        router.push('/authentication/sign-in');
+        router.push('/v1/auth/sign-in');
       }
     }
   }, [router.pathname]);
 
   // Identify the layout, which will be applied conditionally
-  const Layout = Component.Layout || (router.pathname.includes('dashboard') ? 
-  (router.pathname.includes('instructor') || router.pathname.includes('student') ? 
+  const Layout = Component.Layout || (router.pathname.includes('dashboard') ?
+  (router.pathname.includes('instructor') || router.pathname.includes('student') ?
   DefaultDashboardLayout : DefaultDashboardLayout) : DefaultDashboardLayout)
-  
+
   return (
     <SSRProvider>
       <Head>

@@ -73,7 +73,7 @@ const UsersCMS = () => {
                                     <td><strong>{a.name}</strong></td>
                                     <td><code>{a.username}</code></td>
                                     <td>{a.email}<br/><small className="text-muted text-uppercase">{a.role}</small></td>
-                                    <td><Badge bg={a.is_active ? 'success' : 'secondary'}>{a.is_active ? 'Active' : 'Disabled'}</Badge></td>
+                                    <td><Badge bg={a.is_active == 1 ? 'success' : 'secondary'}>{a.is_active == 1 ? 'Active' : 'Disabled'}</Badge></td>
                                     <td>{new Date(a.created_at).toLocaleDateString()}</td>
                                     <td>
                                         <Button size="sm" variant="info" className="me-2" onClick={() => handleShow(a)}>Edit</Button>
@@ -122,7 +122,7 @@ const UsersCMS = () => {
                             <Form.Control type="password" placeholder="Min 8 characters" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
                         </Form.Group>
                         )}
-                        <Form.Check type="switch" label="Account Active" checked={form.is_active === 1} onChange={e => setForm({...form, is_active: e.target.checked ? 1 : 0})} />
+                        <Form.Check type="switch" label="Account Active" checked={form.is_active == 1} onChange={e => setForm({...form, is_active: e.target.checked ? 1 : 0})} />
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>

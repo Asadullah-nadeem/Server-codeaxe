@@ -115,6 +115,10 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid credentials.'], 401);
         }
 
+        if (isset($user->is_banned) && $user->is_banned) {
+            return response()->json(['success' => false, 'message' => 'This account has been suspended.'], 403);
+        }
+
         if (!$user->email_verified_at) {
             return response()->json(['success' => false, 'message' => 'Please verify your email before logging in.'], 403);
         }

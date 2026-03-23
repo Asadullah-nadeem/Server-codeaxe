@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button, Modal, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, Button, Modal, Spinner, Form } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { User, Mail, Calendar, MessageSquare, Info, Shield, MessageCircle } from 'react-feather';
 import AdminChatWindow from '../../components/AdminChatWindow';
@@ -9,6 +9,8 @@ const RegisteredUsers = () => {
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState(null);
     const [activeChat, setActiveChat] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newUser, setNewUser] = useState({ username: '', email: '', password: '' });
 
     const loadUsers = async () => {
         setLoading(true);
@@ -47,6 +49,39 @@ const RegisteredUsers = () => {
         setSelectedUser(user);
     };
 
+    const handleToggleBan = async (user) => {
+        const action = user.is_banned ? 'unban' : 'ban';
+        if (!confirm(`Are you sure you want to ${action} ${user.username || user.name}?`)) return;
+        
+        try {
+            const res = await fetchApi(`/admin/users/toggle-ban/${user.id}`, { method: 'POST' });
+            if (res.success) {
+                alert(res.message);
+                loadUsers();
+            }
+        } catch (err) {
+            alert(err.message || 'Failed to toggle ban status');
+        }
+    };
+
+    const handleAddUser = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetchApi('/admin/users/create', {
+                method: 'POST',
+                body: JSON.stringify(newUser)
+            });
+            if (res.success) {
+                alert(res.message);
+                setShowAddModal(false);
+                setNewUser({ username: '', email: '', password: '' });
+                loadUsers();
+            }
+        } catch (err) {
+            alert(err.message || 'Failed to create user');
+        }
+    };
+
     if (loading && users.length === 0) {
         return (
             <Container fluid className="p-6 text-center mt-10">
@@ -72,7 +107,10 @@ const RegisteredUsers = () => {
                     <Card className="border-0 shadow-sm">
                         <Card.Header className="bg-white py-4 d-flex justify-content-between align-items-center">
                             <h5 className="mb-0 fw-bold">User Directory</h5>
-                            <Badge bg="primary">{users.length} Total Users</Badge>
+                            <div className="d-flex align-items-center gap-2">
+                                <Badge bg="primary">{users.length} Total Users</Badge>
+                                <Button variant="success" size="sm" onClick={() => setShowAddModal(true)}>+ Add User</Button>
+                            </div>
                         </Card.Header>
                         <Table responsive className="text-nowrap mb-0 table-hover align-middle">
                             <thead className="table-light">
@@ -80,6 +118,7 @@ const RegisteredUsers = () => {
                                     <th className="border-bottom-0">Name</th>
                                     <th className="border-bottom-0">Email</th>
                                     <th className="border-bottom-0">Login Type</th>
+                                    <th className="border-bottom-0">Status</th>
                                     <th className="border-bottom-0">Registration Date</th>
                                     <th className="border-bottom-0">Verified</th>
                                     <th className="border-bottom-0">Verification</th>
@@ -105,6 +144,13 @@ const RegisteredUsers = () => {
                                             <Badge bg={u.login_type === 'sso' ? 'info' : 'secondary'} className="text-uppercase x-small">
                                                 {u.login_type || 'password'}
                                             </Badge>
+                                        </td>
+                                        <td className="py-3">
+                                            {u.is_banned == 1 ? (
+                                                <Badge bg="danger" className="text-uppercase x-small px-2">Banned</Badge>
+                                            ) : (
+                                                <Badge bg="success" className="text-uppercase x-small px-2">Active</Badge>
+                                            )}
                                         </td>
                                         <td className="py-3">
                                             {new Date(u.created_at).toLocaleDateString()}
@@ -158,9 +204,14 @@ const RegisteredUsers = () => {
                                             )}
                                         </td>
                                         <td className="py-3 text-center">
-                                            <Button variant="outline-primary" size="sm" onClick={() => handleViewProfile(u)}>
-                                                View Profile
-                                            </Button>
+                                            <div className="d-flex gap-2 justify-content-center">
+                                                <Button variant="outline-primary" size="sm" onClick={() => handleViewProfile(u)}>
+                                                    Profile
+                                                </Button>
+                                                <Button variant={u.is_banned == 1 ? "success" : "danger"} size="sm" onClick={() => handleToggleBan(u)}>
+                                                    {u.is_banned == 1 ? 'Unban' : 'Ban'}
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 )) : (
@@ -183,6 +234,7 @@ const RegisteredUsers = () => {
                         <Modal.Header closeButton className="border-0 bg-light">
                             <Modal.Title className="fw-bold d-flex align-items-center">
                                 <User size={20} className="me-2 text-primary" /> User Profile: {selectedUser.username || selectedUser.name}
+                                {selectedUser.is_banned == 1 && <Badge bg="danger" className="ms-2">BANNED</Badge>}
                             </Modal.Title>
                         </Modal.Header>
                         <Modal.Body className="p-0">
@@ -347,6 +399,36 @@ const RegisteredUsers = () => {
                         </Modal.Footer>
                     </>
                 )}
+            </Modal>
+
+            {/* Add User Modal */}
+            <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
+                <Modal.Header closeButton className="border-0 bg-light">
+                    <Modal.Title className="fw-bold d-flex align-items-center">
+                        <User size={20} className="me-2 text-primary" /> Add New User
+                    </Modal.Title>
+                </Modal.Header>
+                <Form onSubmit={handleAddUser}>
+                    <Modal.Body className="p-4">
+                        <p className="text-muted small mb-4">Create a verified frontend user. They will instantly be able to log in with these credentials, without receiving an email verification link.</p>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-semibold">Username</Form.Label>
+                            <Form.Control type="text" value={newUser.username} onChange={(e) => setNewUser({...newUser, username: e.target.value})} required placeholder="Enter username" />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-semibold">Email Address</Form.Label>
+                            <Form.Control type="email" value={newUser.email} onChange={(e) => setNewUser({...newUser, email: e.target.value})} required placeholder="Enter email address" />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-semibold">Password</Form.Label>
+                            <Form.Control type="password" value={newUser.password} onChange={(e) => setNewUser({...newUser, password: e.target.value})} required minLength={6} placeholder="Enter password (min 6 characters)" />
+                        </Form.Group>
+                    </Modal.Body>
+                    <Modal.Footer className="border-0 bg-light">
+                        <Button variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                        <Button variant="primary" type="submit">Create User</Button>
+                    </Modal.Footer>
+                </Form>
             </Modal>
 
             <style jsx>{`

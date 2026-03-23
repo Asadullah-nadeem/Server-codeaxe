@@ -30,7 +30,7 @@ class AdminAuthController extends Controller
         if (!$admin->is_active) {
             return response()->json([
                 'success' => false,
-                'message' => 'Your account is disabled. Please contact the super admin.'
+                'message' => 'Your account is Suspended.'
             ], 403);
         }
 
@@ -111,6 +111,7 @@ class AdminAuthController extends Controller
             'email'    => 'required|email|unique:admins,email',
             'password' => 'required|string|min:8',
             'role'     => 'required|in:superadmin,admin,demo',
+            'is_active' => 'sometimes|integer|in:0,1',
         ]);
 
         DB::table('admins')->insert([
@@ -119,6 +120,7 @@ class AdminAuthController extends Controller
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
             'role'       => $request->role,
+            'is_active'  => $request->has('is_active') ? $request->is_active : 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -130,8 +132,8 @@ class AdminAuthController extends Controller
     {
         $request->validate([
             'name'  => 'sometimes|string',
-            'role'  => 'sometimes|in:superadmin,admin',
-            'is_active' => 'sometimes|boolean'
+            'role'  => 'sometimes|in:superadmin,admin,demo',
+            'is_active' => 'sometimes|integer|in:0,1'
         ]);
 
         DB::table('admins')->where('id', $id)->update(array_filter([
@@ -158,7 +160,7 @@ class AdminAuthController extends Controller
     public function registeredUsers()
     {
         $users = DB::table('users')
-                    ->select('id', 'username', 'email', 'login_type', 'email_verified_at', 'created_at', 'updated_at')
+                    ->select('id', 'username', 'email', 'login_type', 'is_banned', 'email_verified_at', 'created_at', 'updated_at')
                     ->orderBy('created_at', 'desc')
                     ->get();
         foreach($users as $user) {
@@ -198,5 +200,50 @@ class AdminAuthController extends Controller
         DB::table('verification_tokens')->where('email', $user->email)->delete();
 
         return response()->json(['success' => true, 'message' => 'User address verified successfully.']);
+    }
+
+    public function toggleBanUser($id)
+    {
+        $user = DB::table('users')->where('id', $id)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        $newStatus = $user->is_banned ? 0 : 1;
+        DB::table('users')->where('id', $id)->update([
+            'is_banned' => $newStatus,
+            'updated_at' => now()
+        ]);
+
+        return response()->json(['success' => true, 'message' => $newStatus ? 'User has been restricted from logging in.' : 'User ban has been lifted.']);
+    }
+
+    public function createFrontendUser(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:255',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6'
+        ]);
+
+        if (DB::table('users')->where('email', $request->email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This email address is already in use by another user.'
+            ], 400);
+        }
+
+        $id = DB::table('users')->insertGetId([
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'login_type' => 'password',
+            'email_verified_at' => now(), // Pre-verify so they don't need email verification
+            'is_banned' => 0,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'User created successfully without sending email.']);
     }
 }
