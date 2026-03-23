@@ -3,21 +3,21 @@
 
 type AppRoutes = "/" | "/about" | "/contact" | "/dashboard" | "/forgot-password" | "/login" | "/portfolio/[category]" | "/privacy" | "/profile" | "/refund-cancellation" | "/refund-policy" | "/reset-password" | "/send-request" | "/services" | "/signup" | "/terms" | "/work"
 type PageRoutes = never
-type LayoutRoutes = "/"
+type LayoutRoutes = "/" | "/about" | "/contact" | "/portfolio" | "/privacy" | "/refund-policy" | "/services" | "/terms" | "/work"
 type RedirectRoutes = never
-type RewriteRoutes = "/_api/v1/[[...path]]" | "/_next/v1/[[...path]]"
+type RewriteRoutes = "/_api/v1/[[...path]]"
 type Routes = AppRoutes | PageRoutes | LayoutRoutes | RedirectRoutes | RewriteRoutes
 
 
 interface ParamMap {
   "/": {}
   "/_api/v1/[[...path]]": { "path"?: string[]; }
-  "/_next/v1/[[...path]]": { "path"?: string[]; }
   "/about": {}
   "/contact": {}
   "/dashboard": {}
   "/forgot-password": {}
   "/login": {}
+  "/portfolio": {}
   "/portfolio/[category]": { "category": string; }
   "/privacy": {}
   "/profile": {}
@@ -36,6 +36,14 @@ export type ParamsOf<Route extends Routes> = ParamMap[Route]
 
 interface LayoutSlotMap {
   "/": never
+  "/about": never
+  "/contact": never
+  "/portfolio": never
+  "/privacy": never
+  "/refund-policy": never
+  "/services": never
+  "/terms": never
+  "/work": never
 }
 
 

@@ -1,45 +1,88 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert, Spinner } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 
+// ─── Default Section Definitions ───────────────────────────────────────────
+const SECTION_DEFS = [
+    { key: 'hero',          label: 'Hero Banner',        page: 'Home',   desc: 'Main landing hero with CTA buttons.' },
+    { key: 'stats',         label: 'Company Stats',      page: 'Home',   desc: 'Achievement numbers on homepage.' },
+    { key: 'partners',      label: 'Partners / Clients', page: 'Home',   desc: 'Partner logo strip.' },
+    { key: 'services',      label: 'Services',           page: 'Home',   desc: 'Core services showcase cards.' },
+    { key: 'projects',      label: 'Featured Projects',  page: 'Home',   desc: 'Portfolio highlights on homepage.' },
+    { key: 'principles',    label: 'Why CodeAxe',        page: 'Home',   desc: 'Core values and principles.' },
+    { key: 'technologies',  label: 'Technologies',       page: 'Home',   desc: 'Tech stack logos carousel.' },
+    { key: 'system_status', label: 'System Status',      page: 'Home',   desc: 'Live uptime panel in hero sidebar.' },
+    { key: 'cta',           label: 'Call To Action',     page: 'Home',   desc: 'Bottom CTA conversion banner.' },
+    { key: 'navigation',    label: 'Navigation Bar',     page: 'Global', desc: 'Top navbar shown on all pages.' },
+    { key: 'footer',        label: 'Footer',             page: 'Global', desc: 'Bottom footer on all pages.' },
+    { key: 'about_hero',    label: 'About Hero',         page: 'About',  desc: 'About page hero header.' },
+    { key: 'about_team',    label: 'Team Members',       page: 'About',  desc: 'Team member cards grid.' },
+    { key: 'portfolio',     label: 'Portfolio Grid',     page: 'Portfolio', desc: 'Full portfolio project grid.' },
+    { key: 'contact_form',  label: 'Contact Form',       page: 'Contact', desc: 'Main contact form.' },
+    { key: 'legal',         label: 'Legal Pages',        page: 'Global', desc: 'Privacy, Terms, Refund pages.' },
+];
+
+const PAGE_GROUPS = ['All', 'Home', 'Global', 'About', 'Portfolio', 'Contact'];
+
 const RewritesCMS = () => {
+    // ── Rewrites ──
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ id: null, source: '', destination: '', description: '', sort_order: 0, is_active: 1 });
+
+    // ── Global SEO Settings ──
     const [settings, setSettings] = useState({});
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [settingsForm, setSettingsForm] = useState({
-        seo_title: '',
-        seo_description: '',
-        seo_google_analytics_id: '',
-        seo_google_search_console_id: '',
-        site_founder_name: '',
-        site_founder_message: '',
-        site_logo_url: '',
-        site_name_prefix: '',
-        site_name_accent: ''
+        seo_title: '', seo_description: '', seo_google_analytics_id: '',
+        seo_google_search_console_id: '', site_founder_name: '',
+        site_founder_message: '', site_logo_url: '', site_name_prefix: '', site_name_accent: ''
     });
 
-    const fetchRewrites = async () => {
+    // ── Section Visibility ──
+    const [sectionMap, setSectionMap] = useState({});   // { hero: true, services: false, ... }
+    const [sectionsLoading, setSectionsLoading] = useState(true);
+    const [sectionSaving, setSectionSaving] = useState(null); // key of section being saved
+    const [pageFilter, setPageFilter] = useState('All');
+    const [sectionSuccess, setSectionSuccess] = useState('');
+
+    // ────────────────────────────────────────────────────────────────────────
+    const fetchAll = async () => {
         try {
             setLoading(true);
-            const res = await fetchApi('/admin/rewrites');
-            if (res?.success) setData(res.data);
-            
-            // Also fetch global settings
-            const settingsRes = await fetchApi('/admin/nav');
-            if (settingsRes?.success) setSettings(settingsRes.data.settings || {});
+            const [rewriteRes, navRes] = await Promise.all([
+                fetchApi('/admin/rewrites'),
+                fetchApi('/admin/nav'),
+            ]);
+            if (rewriteRes?.success) setData(rewriteRes.data);
+            if (navRes?.success) setSettings(navRes.data.settings || {});
         } catch (error) {
             console.error(error);
-            alert('Failed to fetch data.');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchRewrites(); }, []);
+    const fetchSections = async () => {
+        try {
+            setSectionsLoading(true);
+            const res = await fetchApi('/admin/sections');
+            if (res?.success && Array.isArray(res.data)) {
+                const map = {};
+                res.data.forEach(s => { map[s.section_key] = Boolean(s.is_enabled); });
+                setSectionMap(map);
+            }
+        } catch (err) {
+            console.error('Failed fetching sections', err);
+        } finally {
+            setSectionsLoading(false);
+        }
+    };
 
+    useEffect(() => { fetchAll(); fetchSections(); }, []);
+
+    // ── Rewrite handlers ───────────────────────────────────────────────────
     const handleShow = (item = null) => {
         setForm(item ? item : { id: null, source: '', destination: '', description: '', sort_order: 0, is_active: 1 });
         setShowModal(true);
@@ -54,18 +97,19 @@ const RewritesCMS = () => {
                 await fetchApi('/admin/rewrites', { method: 'POST', body: JSON.stringify(form) });
             }
             setShowModal(false);
-            fetchRewrites();
-        } catch (error) { alert("Failed to save rewrite rule."); }
+            fetchAll();
+        } catch { alert('Failed to save rewrite rule.'); }
     };
 
     const handleDelete = async (id) => {
         if (!confirm('Are you sure?')) return;
         try {
             await fetchApi(`/admin/rewrites/${id}`, { method: 'DELETE' });
-            fetchRewrites();
-        } catch (error) { alert("Failed to delete rule."); }
+            fetchAll();
+        } catch { alert('Failed to delete rule.'); }
     };
 
+    // ── Settings handlers ──────────────────────────────────────────────────
     const handleSettingsShow = () => {
         setSettingsForm({
             seo_title: settings.seo_title || '',
@@ -76,7 +120,7 @@ const RewritesCMS = () => {
             site_founder_message: settings.site_founder_message || '',
             site_logo_url: settings.site_logo_url || '',
             site_name_prefix: settings.site_name_prefix || '',
-            site_name_accent: settings.site_name_accent || ''
+            site_name_accent: settings.site_name_accent || '',
         });
         setShowSettingsModal(true);
     };
@@ -86,27 +130,49 @@ const RewritesCMS = () => {
         try {
             await fetchApi('/admin/nav/settings', { method: 'PUT', body: JSON.stringify(settingsForm) });
             setShowSettingsModal(false);
-            fetchRewrites();
-        } catch (error) {
-            alert('Failed to save SEO settings.');
+            fetchAll();
+        } catch { alert('Failed to save SEO settings.'); }
+    };
+
+    // ── Section toggle ──────────────────────────────────────────────────────
+    const toggleSection = async (key, currentValue) => {
+        const newValue = !currentValue;
+        setSectionMap(prev => ({ ...prev, [key]: newValue }));
+        setSectionSaving(key);
+        try {
+            await fetchApi('/admin/sections', {
+                method: 'POST',
+                body: JSON.stringify({ section_key: key, is_enabled: newValue }),
+            });
+            setSectionSuccess(`"${SECTION_DEFS.find(s => s.key === key)?.label}" ${newValue ? 'enabled' : 'disabled'}.`);
+            setTimeout(() => setSectionSuccess(''), 3000);
+        } catch {
+            // revert on error
+            setSectionMap(prev => ({ ...prev, [key]: currentValue }));
+            alert('Failed to update section.');
+        } finally {
+            setSectionSaving(null);
         }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading rewrites...</p></Container>;
+    const filteredSections = SECTION_DEFS.filter(s => pageFilter === 'All' || s.page === pageFilter);
+
+    if (loading) return <Container fluid className="p-4"><p>Loading...</p></Container>;
 
     return (
         <Container fluid className="px-6 py-4">
-            <h2 className="mb-4">SEO & Route Rewrites</h2>
-            
+            <h2 className="mb-4">SEO &amp; Route Rewrites</h2>
+
             <Alert variant="info" className="mb-4">
-                <strong>Note:</strong> Route rewrites allow you to map custom URLs to internal paths. Global SEO settings below apply to your entire site.
+                <strong>Note:</strong> Manage global SEO settings, route rewrites, and frontend section visibility from this page.
             </Alert>
 
+            {/* ── Global SEO Settings ── */}
             <Row className="mb-4">
                 <Col md={12}>
                     <Card>
                         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0 text-white">Global SEO & Founder Settings</h5>
+                            <h5 className="mb-0 text-white">Global SEO &amp; Founder Settings</h5>
                             <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit SEO Settings</Button>
                         </Card.Header>
                         <Card.Body>
@@ -132,7 +198,7 @@ const RewritesCMS = () => {
                                     <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Founder Hub</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <p className="mb-1 fw-bold">{settings.site_founder_name || 'No Founder Name'}</p>
-                                        <p className="mb-0 text-muted small italic line-clamp-2">"{settings.site_founder_message || 'No quote set.'}"</p>
+                                        <p className="mb-0 text-muted small">"{settings.site_founder_message || 'No quote set.'}"</p>
                                     </div>
                                 </Col>
                             </Row>
@@ -141,8 +207,75 @@ const RewritesCMS = () => {
                 </Col>
             </Row>
 
-            <Card>
+            {/* ── Section Visibility ── */}
+            <Card className="mb-4">
                 <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 className="mb-0 text-white">Frontend Section Visibility</h5>
+                        <small className="text-white-50">Toggle which sections appear on the live website</small>
+                    </div>
+                    <div className="d-flex gap-2 flex-wrap">
+                        {PAGE_GROUPS.map(g => (
+                            <Button
+                                key={g}
+                                size="sm"
+                                variant={pageFilter === g ? 'light' : 'outline-light'}
+                                onClick={() => setPageFilter(g)}
+                            >
+                                {g}
+                            </Button>
+                        ))}
+                    </div>
+                </Card.Header>
+                <Card.Body>
+                    {sectionSuccess && <Alert variant="success" className="py-2 small mb-3">{sectionSuccess}</Alert>}
+                    {sectionsLoading ? (
+                        <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>
+                    ) : (
+                        <Row className="g-3">
+                            {filteredSections.map(s => {
+                                const enabled = sectionMap[s.key] !== false;
+                                const saving = sectionSaving === s.key;
+                                return (
+                                    <Col md={4} key={s.key}>
+                                        <div className={`border rounded p-3 h-100 d-flex align-items-start gap-3 ${enabled ? 'border-success bg-light' : 'border-danger bg-light opacity-75'}`}>
+                                            <div
+                                                onClick={() => !saving && toggleSection(s.key, enabled)}
+                                                style={{
+                                                    width: 42, height: 24, borderRadius: 12, flexShrink: 0, cursor: saving ? 'not-allowed' : 'pointer',
+                                                    backgroundColor: enabled ? '#198754' : '#dc3545',
+                                                    position: 'relative', transition: 'background 0.2s', marginTop: 2,
+                                                }}
+                                            >
+                                                <div style={{
+                                                    width: 18, height: 18, borderRadius: '50%', backgroundColor: '#fff',
+                                                    position: 'absolute', top: 3, transition: 'left 0.2s',
+                                                    left: enabled ? 20 : 4,
+                                                    boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+                                                }} />
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <span className="fw-semibold small">{s.label}</span>
+                                                    <Badge bg={enabled ? 'success' : 'danger'} style={{ fontSize: '0.65rem' }}>
+                                                        {saving ? '…' : enabled ? 'ON' : 'OFF'}
+                                                    </Badge>
+                                                    <Badge bg="secondary" style={{ fontSize: '0.6rem' }}>{s.page}</Badge>
+                                                </div>
+                                                <p className="text-muted small mb-0 mt-1">{s.desc}</p>
+                                            </div>
+                                        </div>
+                                    </Col>
+                                );
+                            })}
+                        </Row>
+                    )}
+                </Card.Body>
+            </Card>
+
+            {/* ── Active Rewrite Rules ── */}
+            <Card>
+                <Card.Header className="bg-secondary text-white d-flex justify-content-between align-items-center">
                     <h5 className="mb-0">Active Rewrite Rules</h5>
                     <Button variant="light" size="sm" onClick={() => handleShow()}>Add New Rule</Button>
                 </Card.Header>
@@ -164,32 +297,36 @@ const RewritesCMS = () => {
                                     </td>
                                 </tr>
                             ))}
+                            {data.length === 0 && (
+                                <tr><td colSpan="5" className="text-center text-muted py-4">No rewrite rules yet. Add one above.</td></tr>
+                            )}
                         </tbody>
                     </Table>
                 </Card.Body>
             </Card>
 
+            {/* ── Rewrite Rule Modal ── */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton><Modal.Title>{form.id ? 'Edit' : 'Add'} Rewrite Rule</Modal.Title></Modal.Header>
                 <Form onSubmit={handleSubmit}>
                     <Modal.Body>
                         <Form.Group className="mb-2">
                             <Form.Label>Browser URL (Incoming Path)</Form.Label>
-                            <Form.Control type="text" placeholder="/web-services" value={form.source} onChange={e => setForm({...form, source: e.target.value})} required />
+                            <Form.Control type="text" placeholder="/web-services" value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} required />
                         </Form.Group>
                         <Form.Group className="mb-2">
                             <Form.Label>Internal Path (Destination)</Form.Label>
-                            <Form.Control type="text" placeholder="/service/web-dev" value={form.destination} onChange={e => setForm({...form, destination: e.target.value})} required />
+                            <Form.Control type="text" placeholder="/service/web-dev" value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} required />
                         </Form.Group>
                         <Form.Group className="mb-2">
                             <Form.Label>Sort Order</Form.Label>
-                            <Form.Control type="number" value={form.sort_order} onChange={e => setForm({...form, sort_order: parseInt(e.target.value)})} required />
+                            <Form.Control type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) })} required />
                         </Form.Group>
                         <Form.Group className="mb-2">
                             <Form.Label>Description (internal notes)</Form.Label>
-                            <Form.Control as="textarea" rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+                            <Form.Control as="textarea" rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                         </Form.Group>
-                        <Form.Check type="switch" label="Active" checked={form.is_active === 1} onChange={e => setForm({...form, is_active: e.target.checked ? 1 : 0})} />
+                        <Form.Check type="switch" label="Active" checked={form.is_active === 1} onChange={e => setForm({ ...form, is_active: e.target.checked ? 1 : 0 })} />
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
@@ -198,33 +335,33 @@ const RewritesCMS = () => {
                 </Form>
             </Modal>
 
-            {/* Global SEO Settings Modal */}
+            {/* ── Global SEO Settings Modal ── */}
             <Modal show={showSettingsModal} size="lg" onHide={() => setShowSettingsModal(false)}>
-                <Modal.Header closeButton><Modal.Title>Edit Global SEO & Branding</Modal.Title></Modal.Header>
+                <Modal.Header closeButton><Modal.Title>Edit Global SEO &amp; Branding</Modal.Title></Modal.Header>
                 <Form onSubmit={handleSettingsSubmit}>
                     <Modal.Body>
                         <h6 className="mb-3 text-primary border-bottom pb-2">Meta Tags</h6>
                         <Form.Group className="mb-3">
                             <Form.Label>Meta Title</Form.Label>
-                            <Form.Control type="text" value={settingsForm.seo_title} onChange={e => setSettingsForm({...settingsForm, seo_title: e.target.value})} placeholder="e.g. CodeAxe Web Agency" />
+                            <Form.Control type="text" value={settingsForm.seo_title} onChange={e => setSettingsForm({ ...settingsForm, seo_title: e.target.value })} placeholder="e.g. CodeAxe Web Agency" />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Meta Description</Form.Label>
-                            <Form.Control as="textarea" rows={2} value={settingsForm.seo_description} onChange={e => setSettingsForm({...settingsForm, seo_description: e.target.value})} />
+                            <Form.Control as="textarea" rows={2} value={settingsForm.seo_description} onChange={e => setSettingsForm({ ...settingsForm, seo_description: e.target.value })} />
                         </Form.Group>
-                        
-                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Search & Analytics</h6>
+
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Search &amp; Analytics</h6>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Google Analytics ID</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.seo_google_analytics_id} onChange={e => setSettingsForm({...settingsForm, seo_google_analytics_id: e.target.value})} placeholder="GT-XXXXXXXXX" />
+                                    <Form.Control type="text" value={settingsForm.seo_google_analytics_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_analytics_id: e.target.value })} placeholder="GT-XXXXXXXXX" />
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Search Console ID</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.seo_google_search_console_id} onChange={e => setSettingsForm({...settingsForm, seo_google_search_console_id: e.target.value})} placeholder="verification code" />
+                                    <Form.Control type="text" value={settingsForm.seo_google_search_console_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_search_console_id: e.target.value })} placeholder="verification code" />
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -232,19 +369,19 @@ const RewritesCMS = () => {
                         <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Branding Information</h6>
                         <Form.Group className="mb-3">
                             <Form.Label>Logo URL (Full Path)</Form.Label>
-                            <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({...settingsForm, site_logo_url: e.target.value})} placeholder="/images/logo.png" />
+                            <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({ ...settingsForm, site_logo_url: e.target.value })} placeholder="/images/logo.png" />
                         </Form.Group>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Site Name Prefix</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_prefix} onChange={e => setSettingsForm({...settingsForm, site_name_prefix: e.target.value})} placeholder="Code" />
+                                    <Form.Control type="text" value={settingsForm.site_name_prefix} onChange={e => setSettingsForm({ ...settingsForm, site_name_prefix: e.target.value })} placeholder="Code" />
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Site Name Accent</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({...settingsForm, site_name_accent: e.target.value})} placeholder="Axe" />
+                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({ ...settingsForm, site_name_accent: e.target.value })} placeholder="Axe" />
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -252,11 +389,11 @@ const RewritesCMS = () => {
                         <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Founder Identity</h6>
                         <Form.Group className="mb-3">
                             <Form.Label>Founder Name</Form.Label>
-                            <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({...settingsForm, site_founder_name: e.target.value})} placeholder="e.g. Asadullah Nadeem" />
+                            <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({ ...settingsForm, site_founder_name: e.target.value })} placeholder="e.g. Asadullah Nadeem" />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Founder Message / Quote</Form.Label>
-                            <Form.Control as="textarea" rows={3} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({...settingsForm, site_founder_message: e.target.value})} placeholder="Crafting digital experiences..." />
+                            <Form.Control as="textarea" rows={3} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({ ...settingsForm, site_founder_message: e.target.value })} placeholder="Crafting digital experiences..." />
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
