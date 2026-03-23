@@ -7,10 +7,8 @@ import useMounted from 'hooks/useMounted';
 const ContactCMS = () => {
     const [pageData, setPageData] = useState({ header: {}, direct_info: [], response_times: [] });
     const [submissions, setSubmissions] = useState([]);
-    const [template, setTemplate] = useState({});
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('submissions');
-    const [showGallery, setShowGallery] = useState(false);
     const hasMounted = useMounted();
 
     // Modals
@@ -27,9 +25,6 @@ const ContactCMS = () => {
             setLoading(true);
             const resSub = await fetchApi('/admin/contact/submissions');
             if (resSub?.success) setSubmissions(resSub.data);
-            
-            const resTemp = await fetchApi('/admin/contact/template');
-            if (resTemp?.success) setTemplate(resTemp.data);
 
             const resPage = await fetchApi('/contact'); // Public but we use it to get the header/info
             if (resPage?.success) {
@@ -61,14 +56,6 @@ const ContactCMS = () => {
             await fetchApi(`/admin/contact/submissions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
             fetchAllContactData();
         } catch (error) { alert("Failed to update status."); }
-    };
-
-    const handleTemplateSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await fetchApi(`/admin/contact/template/${template.id}`, { method: 'PUT', body: JSON.stringify(template) });
-            alert("Email template updated!");
-        } catch (error) { alert("Failed to update template."); }
     };
 
     const handleInfoSubmit = async (e) => {
@@ -117,7 +104,6 @@ const ContactCMS = () => {
                 <Nav variant="tabs" className="mb-4">
                     <Nav.Item><Nav.Link eventKey="submissions">Form Submissions</Nav.Link></Nav.Item>
                     <Nav.Item><Nav.Link eventKey="page_settings">Contact Page Layout</Nav.Link></Nav.Item>
-                    <Nav.Item><Nav.Link eventKey="email_template">Thank-You Email</Nav.Link></Nav.Item>
                 </Nav>
 
                 <Tab.Content>
@@ -233,58 +219,8 @@ const ContactCMS = () => {
                         </Row>
                     </Tab.Pane>
 
-                    <Tab.Pane eventKey="email_template">
-                        <Card>
-                            <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0">Auto-Response Configuration</h5>
-                                <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${template.id}?admin_token=${hasMounted ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">Preview Layout</a>
-                            </Card.Header>
-                            <Card.Body>
-                                <Form onSubmit={handleTemplateSubmit}>
-                                    <Row>
-                                        <Col md={6}>
-                                            <Form.Group className="mb-3">
-                                                <Form.Label>Email Subject</Form.Label>
-                                                <Form.Control type="text" value={template.subject} onChange={e => setTemplate({...template, subject: e.target.value})} required />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Group className="mb-3">
-                                                <Form.Label>Main Headline (in email)</Form.Label>
-                                                <Form.Control type="text" value={template.headline} onChange={e => setTemplate({...template, headline: e.target.value})} required />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Body HTML (Variables: {'{name}'})</Form.Label>
-                                        <Form.Control as="textarea" rows={6} value={template.body_html} onChange={e => setTemplate({...template, body_html: e.target.value})} required />
-                                    </Form.Group>
-                                    <Row>
-                                        <Col md={3}><Form.Group className="mb-3"><Form.Label>Brand Color</Form.Label><Form.Control type="color" value={template.brand_color} onChange={e => setTemplate({...template, brand_color: e.target.value})} /></Form.Group></Col>
-                                        <Col md={3}><Form.Group className="mb-3"><Form.Label>Accent Color</Form.Label><Form.Control type="color" value={template.accent_color} onChange={e => setTemplate({...template, accent_color: e.target.value})} /></Form.Group></Col>
-                                        <Col md={6}><Form.Group className="mb-3"><Form.Label>Logo URL (Galleries Enabled)</Form.Label>
-                                            <div className="d-flex gap-2">
-                                                <Form.Control type="text" value={template.logo_url} onChange={e => setTemplate({...template, logo_url: e.target.value})} />
-                                                <Button size="sm" variant="outline-dark" onClick={() => setShowGallery(true)}>Gallery</Button>
-                                            </div>
-                                        </Form.Group></Col>
-                                    </Row>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <Form.Check type="switch" label="Template Active" checked={template.is_active === 1} onChange={e => setTemplate({...template, is_active: e.target.checked ? 1 : 0})} />
-                                        <Button type="submit" variant="primary">Save Template Settings</Button>
-                                    </div>
-                                </Form>
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
                 </Tab.Content>
             </Tab.Container>
-
-            <MediaGallery 
-                show={showGallery} 
-                onHide={() => setShowGallery(false)} 
-                onSelect={(url) => { setTemplate({...template, logo_url: url}); setShowGallery(false); }} 
-            />
 
             {/* Modals for Direct Info / Response Times */}
             <Modal show={showInfoModal} onHide={() => setShowInfoModal(false)}>

@@ -9,7 +9,6 @@ const MediaCMS = () => {
     const [uploading, setUploading] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
     const [auditMedia, setAuditMedia] = useState(null);
 
     const [uploadConfig, setUploadConfig] = useState({ provider: 'imagekit', folder: 'general' });
@@ -34,13 +33,7 @@ const MediaCMS = () => {
 
     useEffect(() => { fetchMedia(); }, []);
 
-    const filteredMedia = media.filter(item => {
-        const matchesSearch = (item.file_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             (item.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filterStatus === 'all' ? true : 
-                             (filterStatus === 'trash' ? item.status === 0 : item.status === 1);
-        return matchesSearch && matchesFilter;
-    });
+
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -87,10 +80,30 @@ const MediaCMS = () => {
         } catch (error) { alert("Restore failed."); }
     };
 
+    const handlePermanentDelete = async (id) => {
+        if (!confirm('CRITICAL: This will PERMANENTLY delete the asset from Cloud Storage (ImageKit/S3) and the database. This action CANNOT be undone. Proceed?')) return;
+        try {
+            const res = await fetchApi(`/admin/dms/media/${id}/permanent`, { method: 'DELETE' });
+            if (res?.success) fetchMedia();
+            else alert(res?.message || "Permanent delete failed.");
+        } catch (error) { alert("Permanent delete error."); }
+    };
+
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         alert("Proxied URL copied!");
     };
+
+    const [activeTab, setActiveTab] = useState('active'); // active, trash
+
+    const displayMedia = activeTab === 'active' 
+        ? media.filter(m => m.status === 1) 
+        : media.filter(m => m.status === 0);
+
+    const filteredMedia = displayMedia.filter(item => {
+        return (item.file_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+               (item.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     if (loading) return <Container fluid className="p-4"><p className="text-muted"><ArrowClockwise size={14} className="animate-spin me-2"/> Loading Media Library...</p></Container>;
 
@@ -101,51 +114,61 @@ const MediaCMS = () => {
 
             <Card className="mb-4">
                 <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center py-3">
-                    <h5 className="mb-0">All Assets</h5>
+                    <h5 className="mb-0">{activeTab === 'active' ? 'Active Assets' : 'Trash Bin'}</h5>
                     <div className="d-flex gap-2">
-                        <Button variant="light" size="sm" onClick={() => fetchMedia()}>Refresh Library</Button>
-                        <Button variant="dark" size="sm" onClick={() => setShowUploadModal(true)}>Upload to Cloud</Button>
+                        <Button variant="light" size="sm" onClick={() => fetchMedia()}>Refresh</Button>
+                        <Button variant="dark" size="sm" onClick={() => setShowUploadModal(true)}>Upload New</Button>
                     </div>
                 </Card.Header>
                 <Card.Body>
-                    <Row className="mb-4">
-                        <Col md={8}>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-white"><Search size={14}/></InputGroup.Text>
+                    <div className="d-flex justify-content-between flex-wrap gap-3 mb-4 border-bottom pb-3">
+                        <div className="d-flex gap-2">
+                            <Button 
+                                variant={activeTab === 'active' ? 'primary' : 'outline-primary'} 
+                                size="sm" 
+                                className="px-4 fw-bold"
+                                onClick={() => setActiveTab('active')}
+                            >
+                                <CheckCircle size={14} className="me-2"/> Library
+                            </Button>
+                            <Button 
+                                variant={activeTab === 'trash' ? 'danger' : 'outline-danger'} 
+                                size="sm" 
+                                className="px-4 fw-bold"
+                                onClick={() => setActiveTab('trash')}
+                            >
+                                <Trash size={14} className="me-2"/> Trash ({media.filter(m => m.status === 0).length})
+                            </Button>
+                        </div>
+                        <div className="flex-grow-1" style={{maxWidth: '400px'}}>
+                            <InputGroup size="sm">
+                                <InputGroup.Text><Search size={12}/></InputGroup.Text>
                                 <Form.Control 
-                                    placeholder="Search assets by name or slug..." 
+                                    placeholder="Search by filename or slug..." 
                                     value={searchTerm} 
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
                             </InputGroup>
-                        </Col>
-                        <Col md={4}>
-                            <div className="d-flex align-items-center">
-                                <Filter size={14} className="me-2 text-muted"/>
-                                <Form.Select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                                    <option value="all">Display All Assets</option>
-                                    <option value="active">Active Only</option>
-                                    <option value="trash">Trash Only</option>
-                                </Form.Select>
-                            </div>
-                        </Col>
-                    </Row>
+                        </div>
+                    </div>
 
                     <Row className="g-4">
                         {filteredMedia.length === 0 ? (
-                            <Col xs={12} className="text-center py-5 text-muted">No media items found matching your filters.</Col>
+                            <Col xs={12} className="text-center py-5 text-muted">
+                                {activeTab === 'active' ? 'No active assets found.' : 'Trash is empty.'}
+                            </Col>
                         ) : filteredMedia.map(item => (
                             <Col key={item.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-                                <Card className={`h-100 border ${item.status === 0 ? 'bg-light opacity-75' : ''}`}>
+                                <Card className={`h-100 border shadow-sm ${item.status === 0 ? 'bg-light border-danger border-opacity-25' : ''}`}>
                                     <div className="p-1">
-                                        <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border">
+                                        <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border position-relative">
                                             <img src={item.path} alt={item.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                            {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)'}}><Badge bg="danger">IN TRASH</Badge></div>}
                                         </div>
                                     </div>
                                     <Card.Body className="p-3 pt-2">
                                         <div className="d-flex justify-content-between align-items-start mb-2">
                                             <div className="text-truncate small fw-bold" style={{maxWidth: '120px'}} title={item.file_name}>
-                                                {item.status === 0 && <Badge bg="danger" className="me-1 x-small py-0 px-1">TRASHED</Badge>}
                                                 {item.file_name}
                                             </div>
                                             <Dropdown align="end">
@@ -160,7 +183,10 @@ const MediaCMS = () => {
                                                     {item.status === 1 ? (
                                                         <Dropdown.Item className="text-danger" onClick={() => handleDelete(item.id)}><Trash size={14} className="me-2"/> Move to Trash</Dropdown.Item>
                                                     ) : (
-                                                        <Dropdown.Item className="text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={14} className="me-2"/> Restore Asset</Dropdown.Item>
+                                                        <>
+                                                            <Dropdown.Item className="text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={14} className="me-2"/> Restore Asset</Dropdown.Item>
+                                                            <Dropdown.Item className="text-danger fw-bold" onClick={() => handlePermanentDelete(item.id)}><Trash size={14} className="me-2"/> Permanent Delete</Dropdown.Item>
+                                                        </>
                                                     )}
                                                 </Dropdown.Menu>
                                             </Dropdown>

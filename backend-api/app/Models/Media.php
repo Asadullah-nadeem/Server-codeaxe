@@ -17,6 +17,7 @@ class Media extends Model
         'provider',
         'size',
         'url',
+        'provider_file_id',
         'path',
         'status',
         'uploaded_at',

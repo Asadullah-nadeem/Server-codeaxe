@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert, Spinner } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert, Spinner, InputGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 
 // ─── Default Section Definitions ───────────────────────────────────────────
@@ -46,6 +46,29 @@ const RewritesCMS = () => {
     const [sectionSaving, setSectionSaving] = useState(null); // key of section being saved
     const [pageFilter, setPageFilter] = useState('All');
     const [sectionSuccess, setSectionSuccess] = useState('');
+    // ── Media Selector ──
+    const [showMediaModal, setShowMediaModal] = useState(false);
+    const [mediaItems, setMediaItems] = useState([]);
+    const [mediaLoading, setMediaLoading] = useState(false);
+
+    const fetchMediaItems = async () => {
+        try {
+            setMediaLoading(true);
+            const res = await fetchApi('/admin/dms/media');
+            if (res?.success) setMediaItems(res.data);
+        } catch (error) { console.error(error); }
+        finally { setMediaLoading(false); }
+    };
+
+    const handleMediaSelect = (path) => {
+        setSettingsForm({ ...settingsForm, site_logo_url: path });
+        setShowMediaModal(false);
+    };
+
+    const openMediaPicker = () => {
+        fetchMediaItems();
+        setShowMediaModal(true);
+    };
 
     // ────────────────────────────────────────────────────────────────────────
     const fetchAll = async () => {
@@ -369,7 +392,10 @@ const RewritesCMS = () => {
                         <h6 className="mt-4 mb-3 text-primary border-bottom pb-2">Branding Information</h6>
                         <Form.Group className="mb-3">
                             <Form.Label>Logo URL (Full Path)</Form.Label>
-                            <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({ ...settingsForm, site_logo_url: e.target.value })} placeholder="/images/logo.png" />
+                            <InputGroup>
+                                <Form.Control type="text" value={settingsForm.site_logo_url} onChange={e => setSettingsForm({ ...settingsForm, site_logo_url: e.target.value })} placeholder="/images/logo.png" />
+                                <Button variant="outline-primary" onClick={openMediaPicker}>Select from Gallery</Button>
+                            </InputGroup>
                         </Form.Group>
                         <Row>
                             <Col md={6}>
@@ -402,6 +428,43 @@ const RewritesCMS = () => {
                     </Modal.Footer>
                 </Form>
             </Modal>
+
+            {/* Media Picker Modal */}
+            <Modal show={showMediaModal} size="xl" scrollable onHide={() => setShowMediaModal(false)}>
+                <Modal.Header closeButton className="bg-light"><Modal.Title className="fw-bold">Select Site Logo from Gallery</Modal.Title></Modal.Header>
+                <Modal.Body className="p-4">
+                    {mediaLoading ? <p className="text-center py-5">Loading media library...</p> : (
+                        <Row className="g-3">
+                            {mediaItems.length === 0 ? <Col className="text-center py-5">No active media found. Upload some first!</Col> : mediaItems.map(m => (
+                                <Col key={m.id} xs={6} sm={4} md={3} lg={2}>
+                                    <Card 
+                                        className="h-100 border-0 shadow-sm cursor-pointer hover-card" 
+                                        onClick={() => handleMediaSelect(m.path)}
+                                        style={{transition: 'transform 0.2s', border: settingsForm.site_logo_url === m.path ? '2px solid #0d6efd !important' : 'none'}}
+                                    >
+                                        <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
+                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                        </div>
+                                        <Card.Body className="p-2 text-center">
+                                            <div className="text-truncate x-small fw-bold">{m.file_name}</div>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
+                </Modal.Body>
+                <Modal.Footer className="bg-light">
+                    <Button variant="secondary" size="sm" onClick={() => setShowMediaModal(false)}>Cancel</Button>
+                    <Button variant="primary" size="sm" onClick={() => window.open('/cms/media', '_blank')}>Manage Library</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <style jsx>{`
+                .cursor-pointer { cursor: pointer; }
+                .hover-card:hover { transform: translateY(-5px); }
+                .x-small { font-size: 11px; }
+            `}</style>
         </Container>
     );
 };

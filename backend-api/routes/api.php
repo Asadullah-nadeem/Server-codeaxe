@@ -149,7 +149,7 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->grou
     Route::delete('/admin/services/{id}', [ServicesController::class, 'destroy']);
 
     // Portfolio Management
-    Route::get('/admin/portfolio/categories', [PortfolioController::class, 'categories']); // Admin can view categories
+    Route::get('/admin/portfolio/categories', [PortfolioController::class, 'indexCategories']); // Admin can view all categories
     Route::post('/admin/portfolio/categories', [PortfolioController::class, 'storeCategory']);
     Route::put('/admin/portfolio/categories/{id}', [PortfolioController::class, 'updateCategory']);
     Route::delete('/admin/portfolio/categories/{id}', [PortfolioController::class, 'destroyCategory']);
@@ -180,6 +180,7 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->grou
     Route::post('/admin/dms/media',                      [DmsController::class, 'store']);
     Route::put('/admin/dms/media/{id}',                  [DmsController::class, 'update']);
     Route::delete('/admin/dms/media/{id}',               [DmsController::class, 'destroy']);
+    Route::delete('/admin/dms/media/{id}/permanent',     [DmsController::class, 'permanentDestroy']);
     Route::post('/admin/dms/media/{id}/restore',         [DmsController::class, 'restore']);
     Route::get('/admin/dms/media/{id}/logs',             [DmsController::class, 'logs']);
     Route::get('/admin/dms/keys',                        [DmsController::class, 'listKeys']);

@@ -17,6 +17,7 @@ const PortfolioCMS = () => {
     const itemsPerPage = 10;
     
     const [searchCat, setSearchCat] = useState('');
+    const [filterCatStatus, setFilterCatStatus] = useState('all'); // all, active, inactive
     const [catPage, setCatPage] = useState(1);
     const catsPerPage = 10;
 
@@ -130,16 +131,42 @@ const PortfolioCMS = () => {
     const paginatedItems = filteredItems.slice((itemPage - 1) * itemsPerPage, itemPage * itemsPerPage);
 
     // Filter and Paginate Categories
-    const filteredCats = categories.filter(c => 
-        c.label.toLowerCase().includes(searchCat.toLowerCase()) || 
-        c.slug.toLowerCase().includes(searchCat.toLowerCase())
-    );
+    const filteredCats = categories.filter(c => {
+        const matchesSearch = c.label.toLowerCase().includes(searchCat.toLowerCase()) || 
+                              c.slug.toLowerCase().includes(searchCat.toLowerCase());
+        const matchesStatus = filterCatStatus === 'all' ? true : 
+                              (filterCatStatus === 'active' ? c.is_active == 1 : c.is_active == 0);
+        return matchesSearch && matchesStatus;
+    });
     const totalCatPages = Math.ceil(filteredCats.length / catsPerPage) || 1;
     const paginatedCats = filteredCats.slice((catPage - 1) * catsPerPage, catPage * catsPerPage);
 
     // Reset page if search changes
     useEffect(() => { setItemPage(1); }, [searchItem]);
-    useEffect(() => { setCatPage(1); }, [searchCat]);
+    useEffect(() => { setCatPage(1); }, [searchCat, filterCatStatus]);
+
+    const [showMediaModal, setShowMediaModal] = useState(false);
+    const [mediaItems, setMediaItems] = useState([]);
+    const [mediaLoading, setMediaLoading] = useState(false);
+
+    const fetchMediaItems = async () => {
+        try {
+            setMediaLoading(true);
+            const res = await fetchApi('/admin/dms/media');
+            if (res?.success) setMediaItems(res.data);
+        } catch (error) { console.error(error); }
+        finally { setMediaLoading(false); }
+    };
+
+    const handleMediaSelect = (path) => {
+        setItemForm({ ...itemForm, image_url: path });
+        setShowMediaModal(false);
+    };
+
+    const openMediaPicker = () => {
+        fetchMediaItems();
+        setShowMediaModal(true);
+    };
 
     return (
         <Container fluid className="px-6 py-4">
@@ -188,7 +215,7 @@ const PortfolioCMS = () => {
                                                         <td><strong>{item.title}</strong></td>
                                                         <td>{getCatName(item.category_id)}</td>
                                                         <td>{item.project_year || '-'}</td>
-                                                        <td><span className={`badge bg-${item.is_active ? 'success' : 'secondary'}`}>{item.is_active ? 'Yes' : 'No'}</span></td>
+                                                        <td><span className={`badge bg-${item.is_active == 1 ? 'success' : 'secondary'}`}>{item.is_active == 1 ? 'Yes' : 'No'}</span></td>
                                                         <td>{item.sort_order}</td>
                                                         <td>
                                                             <Button size="sm" variant="info" className="me-2" onClick={() => handleItemShow(item)}>Edit</Button>
@@ -219,13 +246,20 @@ const PortfolioCMS = () => {
                     {/* CATEGORIES TAB */}
                     <Tab.Pane eventKey="categories">
                         <Row className="mb-3 align-items-center">
-                            <Col md={6}>
+                            <Col md={4}>
                                 <InputGroup>
                                     <InputGroup.Text>Search</InputGroup.Text>
                                     <Form.Control placeholder="Search categories by label or slug..." value={searchCat} onChange={e => setSearchCat(e.target.value)} />
                                 </InputGroup>
                             </Col>
-                            <Col md={6} className="text-end">
+                            <Col md={4}>
+                                <Form.Select value={filterCatStatus} onChange={e => setFilterCatStatus(e.target.value)}>
+                                    <option value="all">Display All Status</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="inactive">Inactive Only</option>
+                                </Form.Select>
+                            </Col>
+                            <Col md={4} className="text-end">
                                 <Button variant="primary" onClick={() => handleCatShow()}>Add Category</Button>
                             </Col>
                         </Row>
@@ -250,7 +284,7 @@ const PortfolioCMS = () => {
                                                         <td>{cat.id}</td>
                                                         <td><strong>{cat.label}</strong></td>
                                                         <td><code>{cat.slug}</code></td>
-                                                        <td><span className={`badge bg-${cat.is_active ? 'success' : 'secondary'}`}>{cat.is_active ? 'Yes' : 'No'}</span></td>
+                                                        <td><span className={`badge bg-${cat.is_active == 1 ? 'success' : 'secondary'}`}>{cat.is_active == 1 ? 'Yes' : 'No'}</span></td>
                                                         <td>{cat.sort_order}</td>
                                                         <td>
                                                             <Button size="sm" variant="info" className="me-2" onClick={() => handleCatShow(cat)}>Edit</Button>
@@ -340,7 +374,13 @@ const PortfolioCMS = () => {
                                 <Form.Group className="mb-3"><Form.Label>Tags (JSON formatting)</Form.Label><Form.Control type="text" placeholder='["React", "Node"]' value={itemForm.tags || ''} onChange={e => setItemForm({...itemForm, tags: e.target.value})} /></Form.Group>
                             </Col>
                             <Col md={12}>
-                                <Form.Group className="mb-3"><Form.Label>Image URL (High Res)</Form.Label><Form.Control type="text" value={itemForm.image_url || ''} onChange={e => setItemForm({...itemForm, image_url: e.target.value})} /></Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Image URL (High Res)</Form.Label>
+                                    <InputGroup>
+                                        <Form.Control type="text" placeholder="https://..." value={itemForm.image_url || ''} onChange={e => setItemForm({...itemForm, image_url: e.target.value})} />
+                                        <Button variant="outline-primary" onClick={openMediaPicker}>Select from Gallery</Button>
+                                    </InputGroup>
+                                </Form.Group>
                             </Col>
                             <Col md={12}>
                                 <Form.Group className="mb-3"><Form.Label>Project External Link</Form.Label><Form.Control type="text" value={itemForm.project_url || ''} onChange={e => setItemForm({...itemForm, project_url: e.target.value})} /></Form.Group>
@@ -355,6 +395,14 @@ const PortfolioCMS = () => {
                                 <Form.Check type="checkbox" label="Is Active?" className="mt-4" checked={itemForm.is_active == 1} onChange={e => setItemForm({...itemForm, is_active: e.target.checked ? 1 : 0})} />
                             </Col>
                         </Row>
+                        {itemForm.image_url && (
+                             <Row className="mt-3">
+                                <Col md={12}>
+                                    <div className="small text-muted mb-1">Image Preview:</div>
+                                    <img src={itemForm.image_url} alt="Preview" style={{maxHeight:'150px', borderRadius:'8px', border:'1px solid #ddd'}} />
+                                </Col>
+                             </Row>
+                        )}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowItemModal(false)}>Close</Button>
@@ -362,6 +410,44 @@ const PortfolioCMS = () => {
                     </Modal.Footer>
                 </Form>
             </Modal>
+
+            {/* Media Picker Modal */}
+            <Modal show={showMediaModal} size="xl" scrollable onHide={() => setShowMediaModal(false)}>
+                <Modal.Header closeButton className="bg-light"><Modal.Title className="fw-bold">Select Asset from Gallery</Modal.Title></Modal.Header>
+                <Modal.Body className="p-4">
+                    {mediaLoading ? <p className="text-center py-5">Loading media library...</p> : (
+                        <Row className="g-3">
+                            {mediaItems.length === 0 ? <Col className="text-center py-5">No active media found. Upload some first!</Col> : mediaItems.map(m => (
+                                <Col key={m.id} xs={6} sm={4} md={3} lg={2}>
+                                    <Card 
+                                        className="h-100 border-0 shadow-sm cursor-pointer hover-card" 
+                                        onClick={() => handleMediaSelect(m.path)}
+                                        style={{transition: 'transform 0.2s', border: itemForm.image_url === m.path ? '2px solid #0d6efd !important' : 'none'}}
+                                    >
+                                        <div style={{height:'120px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
+                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                        </div>
+                                        <Card.Body className="p-2 text-center">
+                                            <div className="text-truncate x-small fw-bold">{m.file_name}</div>
+                                            <div className="text-muted x-small text-uppercase">{m.provider}</div>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
+                </Modal.Body>
+                <Modal.Footer className="bg-light">
+                    <Button variant="secondary" size="sm" onClick={() => setShowMediaModal(false)}>Cancel</Button>
+                    <Button variant="primary" size="sm" onClick={() => window.open('/cms/media', '_blank')}>Manage Library</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <style jsx>{`
+                .cursor-pointer { cursor: pointer; }
+                .hover-card:hover { transform: translateY(-5px); }
+                .x-small { font-size: 11px; }
+            `}</style>
         </Container>
     );
 };

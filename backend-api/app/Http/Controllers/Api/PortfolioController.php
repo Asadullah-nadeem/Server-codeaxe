@@ -20,6 +20,16 @@ class PortfolioController extends Controller
         return response()->json(['success' => true, 'data' => $cats], 200);
     }
 
+    // ─── GET /admin/portfolio/categories ──────────────────────────────
+    public function indexCategories()
+    {
+        $cats = DB::table('portfolio_categories')
+            ->orderBy('sort_order')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $cats], 200);
+    }
+
     // ─── GET /admin/portfolio/items ───────────────────────────────────
     // Admin only - returns all items including inactive ones
     public function index()

@@ -125,22 +125,25 @@ class DmsController extends Controller
                 }
 
                 $finalUrl = $response->json()['url'];
+                $provFileId = $response->json()['fileId'];
 
             } else { // s3
                 // For S3, we really need the flysystem-aws-s3-v3 package installed via composer.
                 // If it's missing, this will fail.
                 Storage::disk('s3')->putFileAs($folder, $file, $randomName, 'private');
                 $finalUrl = $folder . '/' . $randomName;
+                $provFileId = $finalUrl;
             }
 
             $media = Media::create([
-                'slug'        => $slug,
-                'file_name'   => $randomName,
-                'provider'    => $provider,
-                'size'        => $file->getSize(),
-                'url'         => $finalUrl,
-                'status'      => 1,
-                'uploaded_at' => now(),
+                'slug'             => $slug,
+                'file_name'        => $randomName,
+                'provider'         => $provider,
+                'size'             => $file->getSize(),
+                'url'              => $finalUrl,
+                'provider_file_id' => $provFileId,
+                'status'           => 1,
+                'uploaded_at'      => now(),
             ]);
 
             // Generate local proxy URL (served from our own API)
@@ -215,6 +218,52 @@ class DmsController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Media moved to trash.']);
+    }
+
+    // ─── DELETE /api/dms/media/{id}/permanent – permanent delete
+    public function permanentDestroy(int $id)
+    {
+        $media = Media::findOrFail($id);
+        $provider = $media->provider;
+        $fileId   = $media->provider_file_id;
+
+        try {
+            if ($provider === 'imagekit') {
+                $privKey = $this->getProviderKey('imagekit', 'private_key') ?? env('IMAGEKIT_PRIVATE_KEY');
+                
+                // If we don't have fileId, try to find it by searching files with same name
+                if (!$fileId) {
+                    $search = Http::withBasicAuth($privKey, '')
+                        ->get('https://api.imagekit.io/v1/files', [
+                            'name' => $media->file_name,
+                            'path' => 'data-dms-api/'
+                        ]);
+                    if ($search->successful() && !empty($search->json())) {
+                        $fileId = $search->json()[0]['fileId'];
+                    }
+                }
+
+                if ($fileId) {
+                    $del = Http::withBasicAuth($privKey, '')
+                        ->delete("https://api.imagekit.io/v1/files/{$fileId}");
+                }
+            } elseif ($provider === 's3') {
+                Storage::disk('s3')->delete($media->url);
+            }
+
+            // Also delete from DB
+            $media->delete();
+
+            // Note: media_logs might be deleted due to cascade, but if we want a record we should create one before delete
+            // However, after record is gone, the log might persist if no FK or if we handle it differently.
+            // In schema, it says: FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
+            // So logs will be gone. That's fine for permanent delete.
+
+            return response()->json(['success' => true, 'message' => 'Media permanently deleted from storage and database.']);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Permanent Delete failed: ' . $e->getMessage()], 500);
+        }
     }
 
     // ─── POST /api/dms/media/{id}/restore – restore soft-deleted
