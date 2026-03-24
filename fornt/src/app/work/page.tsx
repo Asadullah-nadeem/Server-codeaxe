@@ -1,9 +1,8 @@
 "use client";
+export const dynamic = 'force-static';
 
-import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
-import SectionHeader from "@/components/SectionHeader";
 import ProjectCard from "@/components/ProjectCard";
+import SectionHeader from "@/components/SectionHeader";
 import {
   Carousel,
   CarouselContent,
@@ -11,6 +10,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Work = () => {
   const [header, setHeader] = useState<any>(null);
@@ -18,7 +19,7 @@ const Work = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/work`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/work`, {
       headers: {
         "X-API-KEY": process.env.NEXT_PUBLIC_APP_KEY || "",
       },

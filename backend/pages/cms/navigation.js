@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Alert } from 'react-bootstrap';
 import { NextSeo } from 'next-seo';
+import Link from 'next/link';
+import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
 
 const NavigationCMS = () => {
@@ -145,18 +147,21 @@ const NavigationCMS = () => {
                                     <Col md={6} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>SEO Tags</h6>
                                         <div className="bg-light p-3 rounded border">
-                                            <p className="mb-0 text-muted small">Manage global SEO settings and founder information in the <a href="/cms/rewrites">SEO & Rewrites</a> section.</p>
+                                            <p className="mb-0 text-muted small">Manage global SEO settings and founder information in the <Link href="/cms/rewrites">SEO & Rewrites</Link> section.</p>
                                         </div>
                                     </Col>
                                     <Col md={6} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Branding</h6>
                                         <div className="d-flex align-items-center mb-2">
                                             {settings.site_logo_url ? (
-                                                <img 
+                                                <Image 
                                                     src={settings.site_logo_url} 
                                                     alt="Logo" 
-                                                    style={{ height: '32px', marginRight: '12px' }} 
+                                                    width={32}
+                                                    height={32}
+                                                    style={{ height: '32px', width: 'auto', marginRight: '12px' }} 
                                                     onError={(e) => { e.target.style.display = 'none'; }}
+                                                    unoptimized
                                                 />
                                             ) : null}
                                             <span className="fs-5 fw-bold">
@@ -284,7 +289,7 @@ const NavigationCMS = () => {
                 <Form onSubmit={handleSettingsSubmit}>
                     <Modal.Body>
                         <Alert variant="info" className="mb-4 small">
-                            Branding, SEO, and Founder settings are now managed in the <a href="/cms/rewrites" className="fw-bold text-primary">SEO & Rewrites</a> section.
+                            Branding, SEO, and Founder settings are now managed in the <Link href="/cms/rewrites" className="fw-bold text-primary">SEO & Rewrites</Link> section.
                         </Alert>
                         
                         <h6 className="mt-2 mb-3 text-primary border-bottom pb-2">Nav Dropdown Labels</h6>

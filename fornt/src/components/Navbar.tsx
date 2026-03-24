@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Menu, Send, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronDown, Send } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 import * as Icons from "lucide-react";
 
@@ -29,8 +29,8 @@ const Navbar = () => {
     setIsLoggedIn(!!localStorage.getItem("mock_session"));
     const handleStorage = () => setIsLoggedIn(!!localStorage.getItem("mock_session"));
     window.addEventListener("storage", handleStorage);
-    
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/nav`, {
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/nav`, {
       headers: {
         'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ""
       }
@@ -63,7 +63,7 @@ const Navbar = () => {
   const isActive = (path: string) => pathname === path;
 
   const [logoError, setLogoError] = useState(false);
-  
+
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">

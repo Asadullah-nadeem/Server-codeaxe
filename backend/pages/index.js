@@ -2,7 +2,7 @@ import { Fragment, useState, useEffect } from "react";
 import Link from 'next/link';
 import { Container, Col, Row, Card, Table, Badge, Spinner } from 'react-bootstrap';
 import { fetchApi } from '../utils/api';
-import { Users, MessageSquare, Image, CheckCircle, Shield } from 'react-feather';
+import { Users, MessageSquare, Image as ImageIcon, CheckCircle, Shield } from 'react-feather';
 
 const Home = () => {
     const [messages, setMessages] = useState([]);
@@ -62,7 +62,7 @@ const Home = () => {
             id: 3,
             title: "Media Assets",
             value: media.length,
-            icon: <Image size={24} className="text-info" />,
+            icon: <ImageIcon size={24} className="text-info" />,
             statInfo: 'Images hosted on cloud'
         },
         {
@@ -92,7 +92,7 @@ const Home = () => {
                         <div className="d-flex justify-content-between align-items-center mb-5 mt-2">
                             <div>
                                 <h3 className="mb-0 text-white">Dashboard Overview</h3>
-                                <p className="text-white-50 small mb-0">Welcome back. Here's a summary of recent activity.</p>
+                                <p className="text-white-50 small mb-0">Welcome back. Here&apos;s a summary of recent activity.</p>
                             </div>
                         </div>
                     </Col>
@@ -149,7 +149,7 @@ const Home = () => {
                                             <td className="py-3">
                                                 <div className="text-truncate" style={{ maxWidth: '300px' }}>
                                                     <span className="fw-semibold small d-block mb-1">{chat.request_title}</span>
-                                                    <span className="text-muted small">"{chat.latest_message.message}"</span>
+                                                    <span className="text-muted small">&quot;{chat.latest_message.message}&quot;</span>
                                                 </div>
                                             </td>
                                             <td className="py-3 text-center">

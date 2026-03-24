@@ -249,11 +249,25 @@ const ConnectionsCMS = () => {
                                 <li><strong>Cross-Domain Security:</strong> Prevents unauthorized hotlinking by validating origin.</li>
                                 <li><strong>Cache Control:</strong> Backend automatically attaches browser caching headers for performance.</li>
                             </ul>
-                            <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded border">
-                                <span className="small fw-bold">Proxy Status</span>
-                                <Badge bg={data.image_proxy_enabled === '1' ? 'success' : 'secondary'}>
-                                    {data.image_proxy_enabled === '1' ? 'ACTIVE & PROTECTED' : 'DISABLED'}
-                                </Badge>
+                            <div className="p-3 bg-light rounded border">
+                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                    <span className="small fw-bold">Proxy Status</span>
+                                    <Badge bg={data.image_proxy_enabled === '1' ? 'success' : 'secondary'}>
+                                        {data.image_proxy_enabled === '1' ? 'ACTIVE & PROTECTED' : 'DISABLED'}
+                                    </Badge>
+                                </div>
+                                <Form.Check 
+                                    type="switch"
+                                    id="proxy-switch"
+                                    label={<span className="small text-muted fw-bold">Enable Media Proxy Pipeline</span>}
+                                    checked={data.image_proxy_enabled === '1'}
+                                    onChange={(e) => handleChange({ target: { name: 'image_proxy_enabled', value: e.target.checked ? '1' : '0' } })}
+                                />
+                                {data.image_proxy_enabled === '0' && (
+                                    <div className="text-danger mt-2" style={{fontSize: '0.75rem'}}>
+                                        <b>Warning:</b> Media will now load directly from the Cloud Provider (ImageKit/S3). Click &quot;Apply Connectivity Settings&quot; to save, then refresh the Media Manager.
+                                    </div>
+                                )}
                             </div>
                         </Card.Body>
                     </Card>

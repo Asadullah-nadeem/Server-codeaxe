@@ -42,7 +42,7 @@ class SmtpController extends Controller
         $email = $request->email ?: 'hello@codeaxe.co.in';
 
         // Set config temporarily for this request
-        $this->applySmtpConfig();
+        self::applySmtpConfig();
 
         try {
             Mail::raw("SMTP Test Successful manually configured via Admin Panel.", function ($message) use ($email) {
@@ -62,8 +62,10 @@ class SmtpController extends Controller
      * We should integrate this into a ServiceProvider for Global use.
      */
     public static function applySmtpConfig() {
-        $settings = DB::table('smtp_settings')->where('is_active', 1)->first();
+        // Drop where('is_active', 1) so we can run tests securely before enabling globally
+        $settings = DB::table('smtp_settings')->first();
         if ($settings) {
+            Config::set('mail.default',                 'smtp');
             Config::set('mail.mailers.smtp.host',       $settings->mail_host);
             Config::set('mail.mailers.smtp.port',       $settings->mail_port);
             Config::set('mail.mailers.smtp.username',   $settings->mail_username);
@@ -71,6 +73,9 @@ class SmtpController extends Controller
             Config::set('mail.mailers.smtp.encryption', $settings->mail_encryption);
             Config::set('mail.from.address',            $settings->mail_from_address);
             Config::set('mail.from.name',               $settings->mail_from_name);
+            
+            // Force Laravel to clear the cached mailer instance to adopt runtime configuration changes
+            app()->forgetInstance('mail.manager');
         }
     }
 }

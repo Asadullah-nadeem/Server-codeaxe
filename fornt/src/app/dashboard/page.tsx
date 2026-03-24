@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Loader2, Plus, LogOut, ArrowRight, FolderKanban, Clock, CheckCircle, MessageSquare } from "lucide-react";
-import { useRouter } from "next/navigation";
 import ChatWindow from "@/components/ChatWindow";
+import { motion } from "framer-motion";
+import { ArrowRight, CheckCircle, Clock, FolderKanban, Loader2, LogOut, MessageSquare, Plus } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Dashboard() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function Dashboard() {
           localStorage.removeItem("user");
           window.location.href = "/login";
         }
-      } catch (e) {}
+      } catch (e) { }
     }, 5000);
 
     return () => clearInterval(checkAuthInterval);
@@ -137,7 +137,7 @@ export default function Dashboard() {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <h2 className="text-xl font-display mb-6">Your Projects</h2>
-        
+
         {requests && requests.length > 0 ? (
           <div className="grid gap-6">
             {requests.map((req: any) => (
@@ -160,7 +160,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex shrink-0">
-                  <button 
+                  <button
                     onClick={() => setActiveChat({ id: req.id, title: req.title })}
                     className="inline-flex items-center gap-2 border border-border bg-background px-4 py-3 font-mono-label text-[10px] uppercase tracking-widest text-muted-foreground hover:text-accent hover:border-accent transition-all duration-200"
                   >
@@ -185,10 +185,10 @@ export default function Dashboard() {
       </motion.div>
 
       {activeChat && (
-        <ChatWindow 
-            requestId={activeChat.id} 
-            title={activeChat.title} 
-            onClose={() => setActiveChat(null)} 
+        <ChatWindow
+          requestId={activeChat.id}
+          title={activeChat.title}
+          onClose={() => setActiveChat(null)}
         />
       )}
     </div>

@@ -1,219 +1,218 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { Send, User, Shield, Loader2, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Loader2, Send, Shield, User, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ChatWindow({ requestId, title, onClose }: { requestId: number, title: string, onClose: () => void }) {
-    const [messages, setMessages] = useState<any[]>([]);
-    const [newMessage, setNewMessage] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [sending, setSending] = useState(false);
-    const [isOtherTyping, setIsOtherTyping] = useState(false);
-    const typingTimer = useRef<NodeJS.Timeout | null>(null);
-    const lastTypingTime = useRef(0);
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const typingTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingTime = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    const loadMessages = async (showLoading = false) => {
-        if (showLoading) setLoading(true);
-        const token = localStorage.getItem("api_token");
-        try {
-            const res = await fetch(`${API}/chat/messages/${requestId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (res.status === 401 || (data.message && data.message.includes("Unauthorized"))) {
-                localStorage.removeItem("api_token");
-                localStorage.removeItem("user");
-                window.location.href = "/login";
-                return;
-            }
+  const loadMessages = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    const token = localStorage.getItem("api_token");
+    try {
+      const res = await fetch(`${API}/chat/messages/${requestId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.status === 401 || (data.message && data.message.includes("Unauthorized"))) {
+        localStorage.removeItem("api_token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return;
+      }
 
-            if (data.success) {
-                setMessages(data.data);
-                if (data.other_typing !== undefined) {
-                    setIsOtherTyping(data.other_typing);
-                }
-            }
-        } catch (err) {
-            console.error("Chat fetch error", err);
-        } finally {
-            if (showLoading) setLoading(false);
+      if (data.success) {
+        setMessages(data.data);
+        if (data.other_typing !== undefined) {
+          setIsOtherTyping(data.other_typing);
         }
-    };
+      }
+    } catch (err) {
+      console.error("Chat fetch error", err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
 
-    // Initial load
-    useEffect(() => {
-        loadMessages(true);
-        // Polling for "real-time" Feel
-        const interval = setInterval(() => loadMessages(false), 3000);
-        return () => clearInterval(interval);
-    }, [requestId]);
+  // Initial load
+  useEffect(() => {
+    loadMessages(true);
+    // Polling for "real-time" Feel
+    const interval = setInterval(() => loadMessages(false), 3000);
+    return () => clearInterval(interval);
+  }, [requestId]);
 
-    // Scroll to bottom on new messages
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages]);
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || sending) return;
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || sending) return;
 
-        setSending(true);
-        // Cancel typing status
-        if (typingTimer.current) clearTimeout(typingTimer.current);
-        const token = localStorage.getItem("api_token");
-        fetch(`${API}/chat/typing/${requestId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ is_typing: false })
-        });
-        lastTypingTime.current = 0;
+    setSending(true);
+    // Cancel typing status
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    const token = localStorage.getItem("api_token");
+    fetch(`${API}/chat/typing/${requestId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ is_typing: false })
+    });
+    lastTypingTime.current = 0;
 
-        try {
-            const res = await fetch(`${API}/chat/send/${requestId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ message: newMessage })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setMessages([...messages, data.data]);
-                setNewMessage("");
-            }
-        } catch (err) {
-            console.error("Send error", err);
-        } finally {
-            setSending(false);
-        }
-    };
+    try {
+      const res = await fetch(`${API}/chat/send/${requestId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: newMessage })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages([...messages, data.data]);
+        setNewMessage("");
+      }
+    } catch (err) {
+      console.error("Send error", err);
+    } finally {
+      setSending(false);
+    }
+  };
 
-    const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNewMessage(e.target.value);
-        
-        const now = Date.now();
-        const token = localStorage.getItem("api_token");
-        
-        if (now - lastTypingTime.current > 3000) {
-            fetch(`${API}/chat/typing/${requestId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ is_typing: true })
-            });
-            lastTypingTime.current = now;
-        }
-        
-        if (typingTimer.current) clearTimeout(typingTimer.current);
-        typingTimer.current = setTimeout(() => {
-            fetch(`${API}/chat/typing/${requestId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ is_typing: false })
-            });
-            lastTypingTime.current = 0;
-        }, 4000);
-    };
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
 
-    return (
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed bottom-6 right-6 w-full max-w-[400px] h-[600px] bg-background border border-border shadow-2xl z-[100] flex flex-col"
-        >
-            {/* Header */}
-            <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
-                <div>
-                    <h3 className="text-sm font-display font-semibold truncate max-w-[200px]">{title}</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[10px] font-mono-label uppercase tracking-widest text-muted-foreground">Support Sync Active</span>
-                    </div>
-                </div>
-                <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                    <X size={18} />
-                </button>
+    const now = Date.now();
+    const token = localStorage.getItem("api_token");
+
+    if (now - lastTypingTime.current > 3000) {
+      fetch(`${API}/chat/typing/${requestId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ is_typing: true })
+      });
+      lastTypingTime.current = now;
+    }
+
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      fetch(`${API}/chat/typing/${requestId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ is_typing: false })
+      });
+      lastTypingTime.current = 0;
+    }, 4000);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed bottom-6 right-6 w-full max-w-[400px] h-[600px] bg-background border border-border shadow-2xl z-[100] flex flex-col"
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-display font-semibold truncate max-w-[200px]">{title}</h3>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-mono-label uppercase tracking-widest text-muted-foreground">Support Sync Active</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+        {loading && messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="animate-spin text-accent" size={24} />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6">
+            <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-4 text-accent">
+              <Shield size={24} />
             </div>
-
-            {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                {loading && messages.length === 0 ? (
-                    <div className="h-full flex items-center justify-center">
-                        <Loader2 className="animate-spin text-accent" size={24} />
-                    </div>
-                ) : messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center px-6">
-                        <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-4 text-accent">
-                            <Shield size={24} />
-                        </div>
-                        <p className="text-sm font-medium mb-1">Secure Channel Established</p>
-                        <p className="text-xs text-muted-foreground">Send a message to start conversing with our team.</p>
-                    </div>
-                ) : (
-                    messages.map((msg, index) => (
-                        <div key={msg.id || index} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] group`}>
-                                <div className={`px-4 py-2.5 text-sm ${
-                                    msg.sender_type === 'user' 
-                                        ? 'bg-primary text-primary-foreground' 
-                                        : 'bg-muted border border-border'
-                                }`}>
-                                    {msg.message}
-                                </div>
-                                <div className={`mt-1 flex items-center gap-1.5 text-[9px] font-mono-label uppercase tracking-tighter text-muted-foreground ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    {msg.sender_type === 'admin' ? <Shield size={8} /> : <User size={8} />}
-                                    <span>{msg.sender_type}</span>
-                                    <span>•</span>
-                                    <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                )}
-                
-                {isOtherTyping && (
-                    <div className="flex justify-start">
-                        <div className="max-w-[85%] group">
-                            <div className="px-4 py-3 bg-muted border border-border flex gap-1 items-center h-10 w-16 shadow-sm">
-                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></span>
-                                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.15s]"></span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-1.5 text-[9px] font-mono-label uppercase tracking-tighter text-muted-foreground justify-start">
-                                <Shield size={8} />
-                                <span>Admin is typing</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Input */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-muted/10">
-                <div className="relative flex items-center">
-                    <input 
-                        type="text"
-                        value={newMessage}
-                        onChange={handleTyping}
-                        placeholder="Type your reply..."
-                        className="w-full bg-background border border-border px-4 py-3 pr-12 text-sm focus:outline-none focus:border-accent transition-colors"
-                    />
-                    <button 
-                        type="submit"
-                        disabled={!newMessage.trim() || sending}
-                        className="absolute right-2 p-2 text-accent hover:text-primary transition-colors disabled:opacity-30"
-                    >
-                        {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} strokeWidth={1.5} />}
-                    </button>
+            <p className="text-sm font-medium mb-1">Secure Channel Established</p>
+            <p className="text-xs text-muted-foreground">Send a message to start conversing with our team.</p>
+          </div>
+        ) : (
+          messages.map((msg, index) => (
+            <div key={msg.id || index} className={`flex ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] group`}>
+                <div className={`px-4 py-2.5 text-sm ${msg.sender_type === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted border border-border'
+                  }`}>
+                  {msg.message}
                 </div>
-            </form>
-        </motion.div>
-    );
+                <div className={`mt-1 flex items-center gap-1.5 text-[9px] font-mono-label uppercase tracking-tighter text-muted-foreground ${msg.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.sender_type === 'admin' ? <Shield size={8} /> : <User size={8} />}
+                  <span>{msg.sender_type}</span>
+                  <span>•</span>
+                  <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+
+        {isOtherTyping && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] group">
+              <div className="px-4 py-3 bg-muted border border-border flex gap-1 items-center h-10 w-16 shadow-sm">
+                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:0.15s]"></span>
+              </div>
+              <div className="mt-1 flex items-center gap-1.5 text-[9px] font-mono-label uppercase tracking-tighter text-muted-foreground justify-start">
+                <Shield size={8} />
+                <span>Admin is typing</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-muted/10">
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={handleTyping}
+            placeholder="Type your reply..."
+            className="w-full bg-background border border-border px-4 py-3 pr-12 text-sm focus:outline-none focus:border-accent transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={!newMessage.trim() || sending}
+            className="absolute right-2 p-2 text-accent hover:text-primary transition-colors disabled:opacity-30"
+          >
+            {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} strokeWidth={1.5} />}
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  );
 }

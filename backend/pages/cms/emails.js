@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Tab, Nav, Accordion, ListGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import MediaGallery from '../../components/MediaGallery';
@@ -20,7 +20,19 @@ const EmailTemplatesCMS = () => {
     const [templateForm, setTemplateForm] = useState({ id: null, template_key: '', subject: '', headline: '', body_html: '', footer_text: '', brand_color: '#0a0a0a', accent_color: '#3b82f6', logo_url: '', is_active: 1 });
     const [sectionForm, setSectionForm] = useState({ id: null, template_id: null, section_name: '', content: '', sort_order: 0, is_active: 1 });
 
-    const fetchTemplates = async () => {
+    const handleSelectTemplate = useCallback(async (template) => {
+        setSelectedTemplate(template);
+        try {
+            const res = await fetchApi(`/admin/email/templates/${template.id}`);
+            if (res?.success) {
+                setSections(res.data.sections);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
+
+    const fetchTemplates = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetchApi('/admin/email/templates');
@@ -36,21 +48,9 @@ const EmailTemplatesCMS = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedTemplate, handleSelectTemplate]);
 
-    const handleSelectTemplate = async (template) => {
-        setSelectedTemplate(template);
-        try {
-            const res = await fetchApi(`/admin/email/templates/${template.id}`);
-            if (res?.success) {
-                setSections(res.data.sections);
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    useEffect(() => { fetchTemplates(); }, []);
+    useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
     const handleTemplateSubmit = async (e) => {
         e.preventDefault();
@@ -177,7 +177,7 @@ const EmailTemplatesCMS = () => {
                                         </Accordion.Body>
                                     </Accordion.Item>
                                 )) : (
-                                    <Card><Card.Body className="text-center py-4 text-muted">No sections found for this template. Use the "Add Section" button to create one.</Card.Body></Card>
+                                    <Card><Card.Body className="text-center py-4 text-muted">No sections found for this template. Use the &quot;Add Section&quot; button to create one.</Card.Body></Card>
                                 )}
                             </Accordion>
                         </>

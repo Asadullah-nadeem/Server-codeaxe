@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import * as Icons from "lucide-react";
 
@@ -19,7 +19,7 @@ const Footer = () => {
   const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/footer`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/footer`, {
       headers: {
         'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ""
       }

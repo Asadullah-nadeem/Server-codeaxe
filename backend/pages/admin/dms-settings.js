@@ -200,7 +200,7 @@ const DMSSettings = () => {
                                         <div className="bg-primary text-white p-2 rounded h-auto" style={{alignSelf: 'start'}}>2</div>
                                         <div>
                                             <h6 className="fw-bold">Image Optimization Proxy</h6>
-                                            <p className="text-muted small">ImageKit URLs are proxied through our API to resolve "broken links" automatically if your keys change.</p>
+                                            <p className="text-muted small">ImageKit URLs are proxied through our API to resolve &quot;broken links&quot; automatically if your keys change.</p>
                                         </div>
                                     </div>
                                 </Col>

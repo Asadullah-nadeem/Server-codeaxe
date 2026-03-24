@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import SectionHeader from "@/components/SectionHeader";
+import { AnimatePresence, motion } from "framer-motion";
 import * as LucideIcons from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const transition = { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const };
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "" });

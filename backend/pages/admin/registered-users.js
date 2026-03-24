@@ -269,7 +269,7 @@ const RegisteredUsers = () => {
                                                             {msg.status?.toUpperCase()}
                                                         </Badge>
                                                     </div>
-                                                    <p className="text-muted small mb-3 fst-italic">"{msg.message}"</p>
+                                                    <p className="text-muted small mb-3 fst-italic">&quot;{msg.message}&quot;</p>
 
                                                     {msg.admin_reply && (
                                                         <div className="bg-white p-3 border rounded border-start border-4 border-success mt-2">
@@ -288,7 +288,7 @@ const RegisteredUsers = () => {
                                 ) : (
                                     <div className="text-center py-4 bg-light rounded border border-dashed mb-4">
                                         <Info size={24} className="text-muted mb-2 opacity-50" />
-                                        <p className="text-muted small mb-0">This user hasn't sent any messages to contact support yet.</p>
+                                        <p className="text-muted small mb-0">This user hasn&apos;t sent any messages to contact support yet.</p>
                                     </div>
                                 )}
 
@@ -317,7 +317,7 @@ const RegisteredUsers = () => {
                                                         <Badge bg="secondary" className="bg-opacity-10 text-dark border"><small>Service: {req.service_type}</small></Badge>
                                                         {req.budget && <Badge bg="secondary" className="bg-opacity-10 text-dark border"><small>Budget: {req.budget}</small></Badge>}
                                                     </div>
-                                                    <p className="text-muted small mb-3">"{req.description}"</p>
+                                                    <p className="text-muted small mb-3">&quot;{req.description}&quot;</p>
 
                                                     <div className="d-flex justify-content-between align-items-center mt-2">
                                                         <Button 
@@ -339,7 +339,7 @@ const RegisteredUsers = () => {
                                 ) : (
                                     <div className="text-center py-4 bg-light rounded border border-dashed">
                                         <Info size={24} className="text-muted mb-2 opacity-50" />
-                                        <p className="text-muted small mb-0">This user hasn't submitted any service requests yet.</p>
+                                        <p className="text-muted small mb-0">This user hasn&apos;t submitted any service requests yet.</p>
                                     </div>
                                 )}
 

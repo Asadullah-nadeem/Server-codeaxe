@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Row, Col, Card, Button, Form, Modal, Container, Badge, ProgressBar, InputGroup, OverlayTrigger, Tooltip, Alert, Dropdown, Table } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { CloudUpload, Trash, ArrowClockwise, Eye, Search, CheckCircle, ThreeDotsVertical, Database, Filter, ClockHistory, Files } from 'react-bootstrap-icons';
@@ -162,8 +163,15 @@ const MediaCMS = () => {
                                 <Card className={`h-100 border shadow-sm ${item.status === 0 ? 'bg-light border-danger border-opacity-25' : ''}`}>
                                     <div className="p-1">
                                         <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border position-relative">
-                                            <img src={item.path} alt={item.file_name} className="mw-100 mh-100 object-fit-contain" />
-                                            {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)'}}><Badge bg="danger">IN TRASH</Badge></div>}
+                                            <Image 
+                                                src={item.path} 
+                                                alt={item.file_name} 
+                                                width={200}
+                                                height={140}
+                                                className="mw-100 mh-100 object-fit-contain" 
+                                                unoptimized
+                                            />
+                                            {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)', zIndex: 1}}><Badge bg="danger">IN TRASH</Badge></div>}
                                         </div>
                                     </div>
                                     <Card.Body className="p-3 pt-2">
@@ -212,7 +220,15 @@ const MediaCMS = () => {
                     <Modal.Body className="p-4">
                         <div className="border border-dashed p-5 text-center mb-3 bg-light cursor-pointer rounded-3" onClick={() => !uploading && document.getElementById('fileInput').click()}>
                             {previewUrl ? (
-                                <img src={previewUrl} className="rounded shadow-sm mw-100 mb-2" style={{maxHeight: '200px'}} alt="Preview" />
+                                <Image 
+                                    src={previewUrl} 
+                                    className="rounded shadow-sm mw-100 mb-2" 
+                                    style={{maxHeight: '200px', width: 'auto'}} 
+                                    alt="Preview" 
+                                    width={300}
+                                    height={200}
+                                    unoptimized
+                                />
                             ) : (
                                 <div>
                                     <CloudUpload size={40} className="text-primary mb-2 opacity-50" />

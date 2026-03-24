@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, Form, Spinner, Card, Badge } from 'react-bootstrap';
 import { Send, User, Shield, X, Check } from 'react-feather';
 import { fetchApi } from '../utils/api';
@@ -10,7 +10,7 @@ const AdminChatWindow = ({ requestId, title, onClose }) => {
     const [sending, setSending] = useState(false);
     const scrollRef = useRef(null);
 
-    const loadMessages = async (showLoading = false) => {
+    const loadMessages = useCallback(async (showLoading = false) => {
         if (showLoading) setLoading(true);
         try {
             const res = await fetchApi(`/admin/chat/messages/${requestId}`);
@@ -22,13 +22,13 @@ const AdminChatWindow = ({ requestId, title, onClose }) => {
         } finally {
             if (showLoading) setLoading(false);
         }
-    };
+    }, [requestId]);
 
     useEffect(() => {
         loadMessages(true);
         const interval = setInterval(() => loadMessages(false), 3000);
         return () => clearInterval(interval);
-    }, [requestId]);
+    }, [loadMessages]);
 
     useEffect(() => {
         if (scrollRef.current) {

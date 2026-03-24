@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, ArrowLeft, CheckCircle, Loader2, Send } from "lucide-react";
 import Link from "next/link";
-import { Loader2, ArrowLeft, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ForgotPassword() {
   const [pageData, setPageData] = useState<any>(null);

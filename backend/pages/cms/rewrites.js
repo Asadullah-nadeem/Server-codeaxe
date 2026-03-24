@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert, Spinner, InputGroup } from 'react-bootstrap';
+import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
 
 // ─── Default Section Definitions ───────────────────────────────────────────
@@ -221,9 +222,9 @@ const RewritesCMS = () => {
                                     <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Site Branding Assets</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <div className="d-flex gap-4 mb-2">
-                                            {settings.site_logo_url && <div><small className="d-block text-muted mb-1">Navbar</small><img src={settings.site_logo_url} alt="Logo" style={{ height: '24px' }} /></div>}
-                                            {settings.site_footer_logo_url && <div><small className="d-block text-muted mb-1">Footer</small><img src={settings.site_footer_logo_url} alt="Logo" style={{ height: '24px' }} /></div>}
-                                            {settings.site_favicon_url && <div><small className="d-block text-muted mb-1">Favicon</small><img src={settings.site_favicon_url} alt="Logo" style={{ height: '24px' }} /></div>}
+                                            {settings.site_logo_url && <div><small className="d-block text-muted mb-1">Navbar</small><Image src={settings.site_logo_url} alt="Logo" width={48} height={24} style={{ height: '24px', width: 'auto' }} unoptimized /></div>}
+                                            {settings.site_footer_logo_url && <div><small className="d-block text-muted mb-1">Footer</small><Image src={settings.site_footer_logo_url} alt="Logo" width={48} height={24} style={{ height: '24px', width: 'auto' }} unoptimized /></div>}
+                                            {settings.site_favicon_url && <div><small className="d-block text-muted mb-1">Favicon</small><Image src={settings.site_favicon_url} alt="Logo" width={24} height={24} style={{ height: '24px', width: 'auto' }} unoptimized /></div>}
                                         </div>
                                         <p className="mb-0 fw-bold">{settings.site_name_prefix || 'Code'}<span className="text-primary">{settings.site_name_accent || 'Axe'}</span></p>
                                     </div>
@@ -232,7 +233,7 @@ const RewritesCMS = () => {
                                     <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Founder Hub</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <p className="mb-1 fw-bold">{settings.site_founder_name || 'No Founder Name'}</p>
-                                        <p className="mb-0 text-muted small italic" style={{ fontSize: '0.7rem' }}>"{settings.site_founder_message || 'No quote set.'}"</p>
+                                        <p className="mb-0 text-muted small italic" style={{ fontSize: '0.7rem' }}>&quot;{settings.site_founder_message || 'No quote set.'}&quot;</p>
                                     </div>
                                 </Col>
                             </Row>
@@ -537,7 +538,14 @@ const RewritesCMS = () => {
                                                 style={{transition: 'transform 0.2s', border: settingsForm[activeField] === m.path ? '2px solid #0d6efd !important' : 'none'}}
                                             >
                                                 <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                                    <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                                    <Image 
+                                                        src={m.path} 
+                                                        alt={m.file_name} 
+                                                        width={100} 
+                                                        height={100}
+                                                        className="mw-100 mh-100 object-fit-contain" 
+                                                        unoptimized
+                                                    />
                                                 </div>
                                                 <Card.Body className="p-2 text-center">
                                                     <div className="text-truncate x-small fw-bold">{m.file_name}</div>

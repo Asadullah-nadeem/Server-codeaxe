@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Pagination, InputGroup } from 'react-bootstrap';
+import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
 
 const PortfolioCMS = () => {
@@ -211,7 +212,7 @@ const PortfolioCMS = () => {
                                             <tbody>
                                                 {paginatedItems.length === 0 ? <tr><td colSpan="7">No items found.</td></tr> : paginatedItems.map(item => (
                                                     <tr key={item.id}>
-                                                        <td>{item.image_url ? <img src={item.image_url} alt="" style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'4px'}} /> : 'None'}</td>
+                                                        <td>{item.image_url ? <Image src={item.image_url} alt="" width={60} height={40} style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'4px'}} unoptimized /> : 'None'}</td>
                                                         <td><strong>{item.title}</strong></td>
                                                         <td>{getCatName(item.category_id)}</td>
                                                         <td>{item.project_year || '-'}</td>
@@ -399,7 +400,14 @@ const PortfolioCMS = () => {
                              <Row className="mt-3">
                                 <Col md={12}>
                                     <div className="small text-muted mb-1">Image Preview:</div>
-                                    <img src={itemForm.image_url} alt="Preview" style={{maxHeight:'150px', borderRadius:'8px', border:'1px solid #ddd'}} />
+                                     <Image 
+                                        src={itemForm.image_url} 
+                                        alt="Preview" 
+                                        width={200}
+                                        height={150}
+                                        style={{maxHeight:'150px', width: 'auto', borderRadius:'8px', border:'1px solid #ddd'}} 
+                                        unoptimized
+                                    />
                                 </Col>
                              </Row>
                         )}
@@ -425,7 +433,14 @@ const PortfolioCMS = () => {
                                         style={{transition: 'transform 0.2s', border: itemForm.image_url === m.path ? '2px solid #0d6efd !important' : 'none'}}
                                     >
                                         <div style={{height:'120px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                            <Image 
+                                                src={m.path} 
+                                                alt={m.file_name} 
+                                                width={120}
+                                                height={120}
+                                                className="mw-100 mh-100 object-fit-contain" 
+                                                unoptimized
+                                            />
                                         </div>
                                         <Card.Body className="p-2 text-center">
                                             <div className="text-truncate x-small fw-bold">{m.file_name}</div>

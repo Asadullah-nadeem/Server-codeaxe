@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+const API = process.env.NEXT_PUBLIC_API_URL;
 const APP_KEY = process.env.NEXT_PUBLIC_APP_KEY || '';
 
 interface SeoPageConfig {
@@ -21,15 +21,24 @@ export async function generatePageMetadata(page: SeoPageConfig): Promise<Metadat
 
   try {
     const res = await fetch(`${API}/nav`, {
-      headers: { 'X-API-KEY': APP_KEY },
+      headers: {
+        'X-API-KEY': APP_KEY,
+        'Accept': 'application/json'
+      },
       next: { revalidate: 300 },
     });
-    const result = await res.json();
-    if (result?.success && result?.data?.settings) {
-      const s = result.data.settings;
-      siteName = `${s.site_name_prefix || 'Code'}${s.site_name_accent || 'Axe'}`;
-      siteDesc = s.seo_description || siteDesc;
-      gaConsole = s.seo_google_search_console_id;
+
+    if (res.ok) {
+      const text = await res.text();
+      try {
+        const result = JSON.parse(text);
+        if (result?.success && result?.data?.settings) {
+          const s = result.data.settings;
+          siteName = `${s.site_name_prefix || 'Code'}${s.site_name_accent || 'Axe'}`;
+          siteDesc = s.seo_description || siteDesc;
+          gaConsole = s.seo_google_search_console_id;
+        }
+      } catch { /* parse fail - ignore */ }
     }
   } catch { /* use defaults */ }
 

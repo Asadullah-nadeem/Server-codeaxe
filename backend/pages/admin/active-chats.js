@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Badge, Button, Container, Dropdown, Form, ListGroup, Spinner, Offcanvas } from 'react-bootstrap';
 import { Check, CheckCircle, Clock, Info, MessageCircle, MoreVertical, RotateCcw, Search, Send, Trash2, User } from 'react-feather';
 import { fetchApi } from '../../utils/api';
@@ -18,7 +18,7 @@ const ActiveChats = () => {
   const lastTypingTime = useRef(0);
   const scrollRef = useRef(null);
 
-  const loadChats = async (silent = false) => {
+  const loadChats = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const res = await fetchApi('/admin/chat/overview');
@@ -35,9 +35,9 @@ const ActiveChats = () => {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [selectedChat]);
 
-  const loadMessages = async (requestId, silent = false) => {
+  const loadMessages = useCallback(async (requestId, silent = false) => {
     if (!silent) setFetchingMessages(true);
     try {
       const res = await fetchApi(`/admin/chat/messages/${requestId}`);
@@ -53,7 +53,7 @@ const ActiveChats = () => {
     } finally {
       if (!silent) setFetchingMessages(false);
     }
-  };
+  }, []);
 
   const handleUpdateStatus = async (status) => {
     if (!selectedChat) return;
@@ -87,7 +87,7 @@ const ActiveChats = () => {
     loadChats();
     const chatInterval = setInterval(() => loadChats(true), 10000);
     return () => clearInterval(chatInterval);
-  }, []);
+  }, [loadChats]);
 
   useEffect(() => {
     let msgInterval;
@@ -96,7 +96,7 @@ const ActiveChats = () => {
       msgInterval = setInterval(() => loadMessages(selectedChat.id, true), 3000);
     }
     return () => clearInterval(msgInterval);
-  }, [selectedChat?.id]);
+  }, [selectedChat, loadMessages]);
 
   useEffect(() => {
     if (scrollRef.current) {

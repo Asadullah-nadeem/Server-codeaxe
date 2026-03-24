@@ -7,12 +7,12 @@ export const fetchApi = async (url, options = {}) => {
   const headers = {
     'Accept': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
-    ...(appKey && { 'X-App-Key': appKey }),
+    ...(appKey && { 'X-API-KEY': appKey }),
     ...(!isFormData && { 'Content-Type': 'application/json' }),
     ...options.headers,
   };
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const response = await fetch(`${API_URL}${url}`, {
     ...options,
@@ -23,10 +23,13 @@ export const fetchApi = async (url, options = {}) => {
 
   if (response.status === 401) {
     if (typeof window !== 'undefined') {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_name');
-        localStorage.removeItem('admin_role');
+      [
+        'admin_token', 'admin_role', 'admin_name', 'admin_email',
+        'admin_username', 'admin_login_type', 'admin_session_at'
+      ].forEach(k => localStorage.removeItem(k));
+      if (window.location.pathname !== '/v1/auth/sign-in') {
         window.location.href = '/v1/auth/sign-in';
+      }
     }
     throw new Error('Session expired. Redirecting to login...');
   }

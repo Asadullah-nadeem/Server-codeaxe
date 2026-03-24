@@ -1,37 +1,57 @@
-import { Inter } from 'next/font/google';
-import Script from 'next/script';
-import "../index.css";
-import Layout from "../components/Layout";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Inter } from 'next/font/google';
+import Script from 'next/script';
+import Layout from "../components/Layout";
+import "../index.css";
 
 import { Metadata } from 'next';
+export const dynamic = 'force-static';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const fallbackMetadata: Metadata = {
+    title: "CodeAxe Web Agency",
+    description: "Leading Web Development & Digital Solutions Agency",
+    openGraph: {
+      type: 'website',
+      title: 'CodeAxe Web Agency',
+      description: 'Leading Web Development & Digital Solutions Agency',
+    }
+  };
+
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/nav`, {
-      headers: { 'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || "" },
-      next: { revalidate: 60 }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nav`, {
+      headers: {
+        'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || "",
+        'Accept': 'application/json'
+      }
     });
-    const result = await res.json();
+
+    if (!res.ok) return fallbackMetadata;
+
+    const text = await res.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch { return fallbackMetadata; }
+
     if (result?.success && result?.data?.settings) {
-      const { 
-        site_name_prefix, 
-        site_name_accent, 
-        seo_title, 
-        seo_description, 
-        site_founder_name, 
+      const {
+        site_name_prefix,
+        site_name_accent,
+        seo_title,
+        seo_description,
+        site_founder_name,
         seo_google_search_console_id,
         site_favicon_url,
         site_apple_icon_url
       } = result.data.settings;
-      
+
       const siteName = `${site_name_prefix || 'Code'}${site_name_accent || 'Axe'}`;
       const title = seo_title || siteName;
       const description = seo_description || `${siteName} Web Agency`;
-      
+
       return {
         title: title,
         description: description,
@@ -66,16 +86,8 @@ export async function generateMetadata(): Promise<Metadata> {
   } catch (e) {
     console.error('Failed to load SEO metatags', e);
   }
-  
-  return { 
-    title: "CodeAxe Web Agency", 
-    description: "Leading Web Development & Digital Solutions Agency",
-    openGraph: {
-      type: 'website',
-      title: 'CodeAxe Web Agency',
-      description: 'Leading Web Development & Digital Solutions Agency',
-    }
-  };
+
+  return fallbackMetadata;
 }
 
 const inter = Inter({ subsets: ['latin'] });
@@ -83,20 +95,30 @@ const inter = Inter({ subsets: ['latin'] });
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let gaId = '';
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api"}/nav`, {
-      headers: { 'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || "" },
-      next: { revalidate: 300 }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/nav`, {
+      headers: {
+        'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || "",
+        'Accept': 'application/json'
+      }
     });
-    const result = await res.json();
-    gaId = result?.data?.settings?.seo_google_analytics_id;
+
+    if (res.ok) {
+      const text = await res.text();
+      try {
+        const result = JSON.parse(text);
+        gaId = result?.data?.settings?.seo_google_analytics_id;
+      } catch (parseError) {
+        console.warn("Could not parse Nav API JSON for GA ID", parseError);
+      }
+    }
   } catch (e) {
-    console.error("RootLayout data fetch failed", e);
+    console.error("RootLayout data fetch failed (likely offline backend)", e);
   }
 
   return (
     <html lang="en">
-      <head>
-        {gaId && (
+      <body className={inter.className} suppressHydrationWarning>
+        {gaId ? (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
@@ -113,16 +135,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               `}
             </Script>
           </>
-        )}
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
-          <TooltipProvider>
-            <Layout>
-              {children}
-            </Layout>
-          </TooltipProvider>
-          <Toaster />
-          <Sonner />
+        ) : null}
+        <TooltipProvider>
+          <Layout>
+            {children}
+          </Layout>
+        </TooltipProvider>
+        <Toaster />
+        <Sonner />
       </body>
     </html>
   );

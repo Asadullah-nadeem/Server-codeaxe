@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+export const dynamic = 'force-static';
 import { generatePageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {

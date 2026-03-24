@@ -1,0 +1,7 @@
+User-Agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /reset-password/
+
+Sitemap: https://codeaxe.co.in/sitemap.xml

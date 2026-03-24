@@ -1,12 +1,28 @@
-// import node module libraries
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Col, Row, Image } from "react-bootstrap";
-import useMounted from 'hooks/useMounted';
+import { Col, Row, Image, Spinner } from "react-bootstrap";
+import { fetchApi } from "utils/api";
 
 const ProfileHeader = () => {
-  const hasMounted = useMounted();
-  const adminName = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
-  const adminUsername = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_username') || 'admin' : 'admin';
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetchApi('/admin/profile');
+        if (res.success) setProfile(res.data);
+      } catch (error) {
+        console.error("Failed to load profile", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const adminName = profile?.name || 'Admin';
+  const adminUsername = profile?.username || 'admin';
 
   const getInitials = (name) => {
     const parts = name.split(' ');

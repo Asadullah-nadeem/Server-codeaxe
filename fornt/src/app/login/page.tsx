@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { AlertCircle, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Loader2, ArrowRight, AlertCircle, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Login() {
   const [pageData, setPageData] = useState<any>(null);
@@ -69,7 +68,7 @@ export default function Login() {
         localStorage.setItem("mock_session", "true"); // Ensures UI elements like Navbar see auth state
         setVerificationMessage("Successfully logged in! Redirecting...");
         setTimeout(() => {
-            window.location.href = "/dashboard"; // Direct user to dashboard
+          window.location.href = "/dashboard"; // Direct user to dashboard
         }, 1500);
       } else {
         setError(data.message || "Failed to login.");

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Tab, Nav } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
@@ -23,7 +23,21 @@ const LegalCMS = () => {
     const [pageForm, setPageForm] = useState({ id: null, page_type: '', label: '', title: '', last_updated: '', is_active: 1 });
     const [sectionForm, setSectionForm] = useState({ id: null, page_id: null, heading: '', content: '', sort_order: 0, is_active: 1 });
 
-    const fetchLegalPages = async () => {
+    const fetchPageDetails = useCallback(async (type) => {
+        try {
+            const res = await fetchApi(`/admin/pages/legal/${type}`);
+            if (res?.success) {
+                setSelectedPage(res.data.page);
+                setSections(res.data.sections);
+                setPageForm(res.data.page);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Failed to fetch page details.');
+        }
+    }, []);
+
+    const fetchLegalPages = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetchApi('/admin/pages/legal');
@@ -40,27 +54,13 @@ const LegalCMS = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, fetchPageDetails]);
 
-    const fetchPageDetails = async (type) => {
-        try {
-            const res = await fetchApi(`/admin/pages/legal/${type}`);
-            if (res?.success) {
-                setSelectedPage(res.data.page);
-                setSections(res.data.sections);
-                setPageForm(res.data.page);
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Failed to fetch page details.');
-        }
-    };
-
-    useEffect(() => { fetchLegalPages(); }, []);
+    useEffect(() => { fetchLegalPages(); }, [fetchLegalPages]);
 
     useEffect(() => {
         if (pages.length > 0) fetchPageDetails(activeTab);
-    }, [activeTab, pages]);
+    }, [activeTab, pages, fetchPageDetails]);
 
     const handlePageSubmit = async (e) => {
         e.preventDefault();

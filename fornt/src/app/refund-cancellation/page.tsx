@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-static';
 import LegalPage from "@/components/LegalPage";
 
 export default function Page() {

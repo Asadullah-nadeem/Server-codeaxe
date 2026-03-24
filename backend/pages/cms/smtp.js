@@ -213,7 +213,7 @@ const SmtpSettingsCMS = () => {
                         <Card.Body className="p-4">
                             <Shield size={24} className="mb-3" />
                             <h6>Security Note</h6>
-                            <p className="small mb-0 opacity-75">Your SMTP credentials are stored securely in your database. This panel allow you to 're-wire' the system without manual .env file edits.</p>
+                            <p className="small mb-0 opacity-75">Your SMTP credentials are stored securely in your database. This panel allow you to &apos;re-wire&apos; the system without manual .env file edits.</p>
                         </Card.Body>
                     </Card>
                 </Col>

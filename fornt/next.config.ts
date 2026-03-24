@@ -1,32 +1,50 @@
 import type { NextConfig } from "next";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 async function fetchRewrites(): Promise<{ source: string; destination: string }[]> {
+  const fallback = [{ source: "/_api/v1/:path*", destination: "/:path*" }];
   try {
-    const res = await fetch(`${API_BASE}/rewrites`, { cache: "no-store" });
-    const json = await res.json();
-    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+    const res = await fetch(`${API_BASE}/rewrites`, {
+      cache: "no-store",
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!res.ok) {
+      console.warn(`[next.config] Rewrites API returned status ${res.status}. Using fallback.`);
+      return fallback;
+    }
+
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      console.warn("[next.config] Rewrites API returned invalid JSON. Using fallback.");
+      return fallback;
+    }
+
+    if (json?.success && Array.isArray(json.data)) {
+      console.log(`[next.config] Successfully loaded ${json.data.length} rewrite rules.`);
       return json.data.map((r: any) => ({
         source: r.source,
         destination: r.destination,
       }));
     }
   } catch (err) {
-    console.warn("[next.config] Could not fetch rewrites from API — using fallback.", err);
+    console.warn("[next.config] Could not reach backend for rewrites — using fallback.", err);
   }
 
-  // Hardcoded fallback in case backend is unreachable at startup
-  return [{ source: "/_api/v1/:path*", destination: "/:path*" }];
+  return fallback;
 }
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    const rules = await fetchRewrites();
-    console.log("[next.config] Loaded rewrite rules:", rules);
-    return rules;
-  },
+  // Use a relative path if building locally for XAMPP, otherwise use root
+  basePath: process.env.LOCAL_BUILD === 'true' ? '/update-codeaxewebsite/fornt/out' : '',
+  output: "export",
+  trailingSlash: true,
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

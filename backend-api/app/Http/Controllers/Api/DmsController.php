@@ -62,16 +62,23 @@ class DmsController extends Controller
         return $setting ? $setting->setting_value : url('/api/dms/media');
     }
 
+    private function isProxyEnabled()
+    {
+        $setting = DB::table('site_settings')->where('setting_key', 'image_proxy_enabled')->first();
+        return $setting ? ($setting->setting_value === '1' || $setting->setting_value === 'true') : true;
+    }
+
     // ─── GET /api/dms/media – list active media ───────────
     public function index()
     {
         $baseUrl = $this->getMediaBaseUrl();
+        $proxyEnabled = $this->isProxyEnabled();
         $images = Media::where('status', 1)
             ->orderByDesc('uploaded_at')
             ->get();
 
         foreach ($images as $img) {
-            $img->path = $baseUrl . "/{$img->slug}/{$img->id}";
+            $img->path = $proxyEnabled ? $baseUrl . "/{$img->slug}/{$img->id}" : $img->url;
         }
 
         return response()->json(['success' => true, 'data' => $images]);
@@ -81,10 +88,11 @@ class DmsController extends Controller
     public function all()
     {
         $baseUrl = $this->getMediaBaseUrl();
+        $proxyEnabled = $this->isProxyEnabled();
         $images = Media::orderByDesc('uploaded_at')->get();
         
         foreach ($images as $img) {
-            $img->path = $baseUrl . "/{$img->slug}/{$img->id}";
+            $img->path = $proxyEnabled ? $baseUrl . "/{$img->slug}/{$img->id}" : $img->url;
         }
 
         return response()->json(['success' => true, 'data' => $images]);
@@ -154,8 +162,10 @@ class DmsController extends Controller
                 'uploaded_at'      => now(),
             ]);
 
-            // Generate local proxy URL (served from our own API)
-            $proxyUrl = $this->getMediaBaseUrl() . '/' . $media->slug . '/' . $media->id;
+            // Generate local proxy URL (served from our own API) or raw
+            $proxyUrl = $this->isProxyEnabled() 
+                ? $this->getMediaBaseUrl() . '/' . $media->slug . '/' . $media->id 
+                : $finalUrl;
             $media->update(['path' => $proxyUrl]);
 
             return response()->json([

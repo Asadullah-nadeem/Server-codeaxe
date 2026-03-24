@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
                 $settings = \Illuminate\Support\Facades\DB::table('smtp_settings')->where('is_active', 1)->first();
                 if ($settings) {
                     config([
+                        'mail.default'                 => 'smtp',
                         'mail.mailers.smtp.host'       => $settings->mail_host,
                         'mail.mailers.smtp.port'       => $settings->mail_port,
                         'mail.mailers.smtp.username'   => $settings->mail_username,

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, InputGroup } from 'react-bootstrap';
+import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
 
 const HomeCMS = () => {
@@ -59,7 +60,7 @@ const HomeCMS = () => {
         setShowMediaModal(true);
     };
 
-    const fetchHomeData = async () => {
+    const fetchHomeData = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetchApi('/admin/home');
@@ -84,9 +85,9 @@ const HomeCMS = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    useEffect(() => { fetchHomeData(); }, []);
+    useEffect(() => { fetchHomeData(); }, [fetchHomeData]);
 
     const handleHeroSubmit = async (e) => {
         e.preventDefault();
@@ -551,7 +552,14 @@ const HomeCMS = () => {
                                         style={{transition: 'transform 0.2s'}}
                                     >
                                         <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                            <img src={m.path} alt={m.file_name} className="mw-100 mh-100 object-fit-contain" />
+                                            <Image 
+                                                src={m.path} 
+                                                alt={m.file_name} 
+                                                width={100}
+                                                height={100}
+                                                className="mw-100 mh-100 object-fit-contain" 
+                                                unoptimized
+                                            />
                                         </div>
                                         <Card.Body className="p-2 text-center">
                                             <div className="text-truncate x-small fw-bold">{m.file_name}</div>
