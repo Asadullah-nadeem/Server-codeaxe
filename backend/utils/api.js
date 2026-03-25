@@ -27,7 +27,7 @@ export const fetchApi = async (url, options = {}) => {
         'admin_token', 'admin_role', 'admin_name', 'admin_email',
         'admin_username', 'admin_login_type', 'admin_session_at'
       ].forEach(k => localStorage.removeItem(k));
-      if (window.location.pathname !== '/v1/auth/sign-in') {
+      if (window.location.pathname !== '/v1/auth/sign-in' && window.location.pathname !== '/v1/auth/sign_in') {
         window.location.href = '/v1/auth/sign-in';
       }
     }

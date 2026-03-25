@@ -38,7 +38,14 @@ class HomeController extends Controller
 
             $settingsRaw = DB::table('site_settings')
                 ->where('setting_key', 'LIKE', 'home_%')
+                ->orWhere('setting_key', 'LIKE', 'site_name_%')
+                ->orWhere('setting_key', 'LIKE', 'site_logo_%')
+                ->orWhere('setting_key', 'LIKE', 'site_footer_%')
+                ->orWhere('setting_key', 'LIKE', 'site_favicon_%')
+                ->orWhere('setting_key', 'LIKE', 'site_apple_%')
+                ->orWhere('setting_key', 'LIKE', 'seo_%')
                 ->orWhere('setting_key', 'LIKE', 'site_founder_%')
+                ->orWhere('setting_key', 'LIKE', 'social_%')
                 ->get();
             $settings = [];
             foreach ($settingsRaw as $setting) {

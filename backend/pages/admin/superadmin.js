@@ -512,6 +512,7 @@ const SuperAdminPage = () => {
     const [form, setForm]                   = useState(EMPTY_FORM);
     const [showPass, setShowPass]           = useState(false);
     const [saving, setSaving]               = useState(false);
+    const [processingRow, setProcessingRow] = useState(null); // id of admin being updated
     const [selectedIds, setSelectedIds]     = useState([]);
     const [detailAdmin, setDetailAdmin]     = useState(null);
     const [search, setSearch]               = useState('');
@@ -651,17 +652,55 @@ const SuperAdminPage = () => {
 
     const handleToggleStatus = async (admin) => {
         const newStatus = admin.is_active ? 0 : 1;
+        setProcessingRow(admin.id);
+        
+        // Optimistic update
+        const originalStatus = admin.is_active;
+        setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, is_active: newStatus } : a));
+
         try {
             await fetchApi(`/admin/update/${admin.id}`, {
                 method: 'PUT',
                 body: JSON.stringify({ name: admin.name, role: admin.role, is_active: newStatus })
             });
             setSuccess(`"${admin.name}" ${newStatus ? 'activated' : 'disabled'}.`);
-            fetchAdmins();
         } catch (err) {
-            setError(`Failed to update status.`);
+            setError(`Failed to update status. ${err.message || ''}`);
+            // Rollback
+            setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, is_active: originalStatus } : a));
         } finally {
+            setProcessingRow(null);
             setTimeout(() => setSuccess(null), 4000);
+        }
+    };
+
+    const handleRoleChange = async (admin, newRole) => {
+        if (admin.role === newRole) return;
+        if (!confirm(`Are you sure you want to change "${admin.name}" to ${roleLabel(newRole)}?`)) return;
+
+        setProcessingRow(admin.id);
+        const oldRole = admin.role;
+        
+        // Optimistic update
+        setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, role: newRole } : a));
+
+        try {
+            const res = await fetchApi(`/admin/update/${admin.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ name: admin.name, role: newRole, is_active: admin.is_active })
+            });
+            if (res.success) {
+                setSuccess(`Role updated for ${admin.name}.`);
+            } else {
+                throw new Error(res.message);
+            }
+        } catch (err) {
+            setError(err.message || 'Role update failed.');
+            // Rollback
+            setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, role: oldRole } : a));
+        } finally {
+            setProcessingRow(null);
+            setTimeout(() => setSuccess(null), 3000);
         }
     };
 
@@ -850,35 +889,27 @@ const SuperAdminPage = () => {
                                             <td className="small"><code>@{admin.username}</code></td>
                                             <td className="small text-muted">{admin.email}</td>
 
-                                            {/* Role radio buttons */}
                                             <td onClick={e => e.stopPropagation()}>
-                                                <div className="d-flex flex-column gap-1">
+                                                <div className="d-flex flex-column gap-1 position-relative">
+                                                    {processingRow === admin.id && (
+                                                        <div className="position-absolute start-0 top-0 w-100 h-100 bg-white bg-opacity-75 d-flex align-items-center justify-content-center" style={{ zIndex: 5, borderRadius: 4 }}>
+                                                            <Spinner animation="border" size="sm" variant="primary" style={{ borderSize: '1px' }} />
+                                                        </div>
+                                                    )}
                                                     {ROLES.map(r => (
                                                         <Form.Check
                                                             key={r.value}
                                                             type="radio"
                                                             id={`role-${admin.id}-${r.value}`}
                                                             name={`role-${admin.id}`}
+                                                            disabled={processingRow === admin.id}
                                                             label={
-                                                                <span style={{ fontSize: '0.75rem' }}>
+                                                                <span style={{ fontSize: '0.75rem', cursor: processingRow === admin.id ? 'default' : 'pointer' }}>
                                                                     <Badge bg={r.color} style={{ fontSize: '0.65rem' }}>{r.label}</Badge>
                                                                 </span>
                                                             }
                                                             checked={admin.role === r.value}
-                                                            onChange={() => {
-                                                                if (admin.role !== r.value) {
-                                                                    if (confirm(`Change "${admin.name}" role to ${r.label}?`)) {
-                                                                        fetchApi(`/admin/update/${admin.id}`, {
-                                                                            method: 'PUT',
-                                                                            body: JSON.stringify({ name: admin.name, role: r.value, is_active: admin.is_active })
-                                                                        }).then(() => {
-                                                                            setSuccess(`Role updated.`);
-                                                                            fetchAdmins();
-                                                                            setTimeout(() => setSuccess(null), 3000);
-                                                                        }).catch(() => setError('Role update failed.'));
-                                                                    }
-                                                                }
-                                                            }}
+                                                            onChange={() => handleRoleChange(admin, r.value)}
                                                         />
                                                     ))}
                                                 </div>
@@ -889,6 +920,7 @@ const SuperAdminPage = () => {
                                                 <Form.Check
                                                     type="switch"
                                                     id={`status-${admin.id}`}
+                                                    disabled={processingRow === admin.id}
                                                     label={
                                                         <Badge bg={admin.is_active ? 'success' : 'secondary'} style={{ fontSize: '0.7rem' }}>
                                                             {admin.is_active ? 'Active' : 'Disabled'}

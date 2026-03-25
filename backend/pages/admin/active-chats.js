@@ -5,7 +5,8 @@ import { fetchApi } from '../../utils/api';
 
 const ActiveChats = () => {
   const [chats, setChats] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const selectedChat = chats.find(c => c.id === selectedChatId);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,18 +25,13 @@ const ActiveChats = () => {
       const res = await fetchApi('/admin/chat/overview');
       if (res.success) {
         setChats(res.data);
-        // Update selected chat status locally if it exists
-        if (selectedChat) {
-          const current = res.data.find(c => c.id === selectedChat.id);
-          if (current) setSelectedChat(current);
-        }
       }
     } catch (err) {
       console.error('Failed to load chats', err);
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [selectedChat]);
+  }, []);
 
   const loadMessages = useCallback(async (requestId, silent = false) => {
     if (!silent) setFetchingMessages(true);
@@ -87,16 +83,15 @@ const ActiveChats = () => {
     loadChats();
     const chatInterval = setInterval(() => loadChats(true), 10000);
     return () => clearInterval(chatInterval);
-  }, [loadChats]);
+  }, []);
 
   useEffect(() => {
-    let msgInterval;
-    if (selectedChat) {
-      loadMessages(selectedChat.id);
-      msgInterval = setInterval(() => loadMessages(selectedChat.id, true), 3000);
+    if (selectedChatId) {
+      loadMessages(selectedChatId);
+      const msgInterval = setInterval(() => loadMessages(selectedChatId, true), 3000);
+      return () => clearInterval(msgInterval);
     }
-    return () => clearInterval(msgInterval);
-  }, [selectedChat, loadMessages]);
+  }, [selectedChatId, loadMessages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -197,12 +192,12 @@ const ActiveChats = () => {
                 <ListGroup.Item
                   key={chat.id}
                   action
-                  active={selectedChat?.id === chat.id}
-                  onClick={() => setSelectedChat(chat)}
-                  className={`p-3 border-bottom border-light d-flex align-items-start gap-3 ${selectedChat?.id === chat.id ? 'bg-light' : ''}`}
+                  active={selectedChatId === chat.id}
+                  onClick={() => setSelectedChatId(chat.id)}
+                  className={`p-3 border-bottom border-light d-flex align-items-start gap-3 ${selectedChatId === chat.id ? 'bg-light' : ''}`}
                 >
                   <div className="position-relative">
-                    <div className={`bg-light-${selectedChat?.id === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'secondary')} text-${selectedChat?.id === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'muted')} rounded-circle p-2`}>
+                    <div className={`bg-light-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'secondary')} text-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'muted')} rounded-circle p-2`}>
                       <User size={20} />
                     </div>
                     {chat.unread_count > 0 && (
@@ -213,7 +208,7 @@ const ActiveChats = () => {
                   </div>
                   <div className="flex-grow-1 min-width-0">
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                      <h6 className={`mb-0 text-truncate fw-bold ${selectedChat?.id === chat.id ? 'text-primary' : 'text-dark'}`}>{chat.username}</h6>
+                      <h6 className={`mb-0 text-truncate fw-bold ${selectedChatId === chat.id ? 'text-primary' : 'text-dark'}`}>{chat.username}</h6>
                       <small className="text-muted opacity-75" style={{ fontSize: '10px' }}>
                         {chat.latest_message ? new Date(chat.latest_message.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
                       </small>

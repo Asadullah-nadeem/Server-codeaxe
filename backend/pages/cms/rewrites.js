@@ -37,9 +37,10 @@ const RewritesCMS = () => {
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [settingsForm, setSettingsForm] = useState({
         seo_title: '', seo_description: '', seo_google_analytics_id: '',
-        seo_google_search_console_id: '', site_founder_name: '',
-        site_founder_message: '', site_logo_url: '', site_name_prefix: '', site_name_accent: '',
-        site_favicon_url: '', site_apple_icon_url: '', site_footer_logo_url: ''
+        seo_google_search_console_id: '', site_founder_name: '', site_founder_message: '',
+        site_logo_url: '', site_name_prefix: '', site_name_accent: '',
+        site_favicon_url: '', site_apple_icon_url: '', site_footer_logo_url: '', seo_keywords: '',
+        social_facebook: '', social_instagram: '', social_linkedin: '', social_twitter: ''
     });
 
     // ── Section Visibility ──
@@ -151,6 +152,11 @@ const RewritesCMS = () => {
             site_favicon_url: settings.site_favicon_url || '',
             site_apple_icon_url: settings.site_apple_icon_url || '',
             site_footer_logo_url: settings.site_footer_logo_url || '',
+            seo_keywords: settings.seo_keywords || '',
+            social_facebook: settings.social_facebook || '',
+            social_instagram: settings.social_instagram || '',
+            social_linkedin: settings.social_linkedin || '',
+            social_twitter: settings.social_twitter || '',
         });
         setShowSettingsModal(true);
     };
@@ -201,20 +207,23 @@ const RewritesCMS = () => {
             <Row className="mb-4">
                 <Col md={12}>
                     <Card>
-                        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0 text-white">Global SEO &amp; Founder Settings</h5>
-                            <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit SEO Settings</Button>
+                        <Card.Header className="bg-primary text-white py-3">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                <h5 className="mb-0 text-white">Global SEO &amp; Brand Settings</h5>
+                                <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit SEO Settings</Button>
+                            </div>
+                            <small className="text-white-50">Changes here update the platform icons and metadata across all devices.</small>
                         </Card.Header>
                         <Card.Body>
                             <Row>
                                 <Col md={4} className="mb-3">
-                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Search Optimization</h6>
+                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Global Meta &amp; Analytics</h6>
                                     <div className="bg-light p-3 rounded border">
                                         <p className="mb-1 fw-bold">{settings.seo_title || 'No Title Set'}</p>
-                                        <p className="mb-1 text-muted small text-truncate">{settings.seo_description || 'No Meta Description'}</p>
-                                        <div className="d-flex gap-2">
-                                            {settings.seo_google_analytics_id && <Badge bg="info">GA Active</Badge>}
-                                            {settings.seo_google_search_console_id && <Badge bg="success">GSC Active</Badge>}
+                                        <p className="mb-2 text-muted small text-truncate">{settings.seo_description || 'No Meta Description'}</p>
+                                        <div className="d-flex gap-2 mb-2">
+                                            {settings.seo_google_analytics_id ? <Badge bg="info">GA ID: {settings.seo_google_analytics_id}</Badge> : <Badge bg="secondary">GA Not Set</Badge>}
+                                            {settings.seo_google_search_console_id ? <Badge bg="success">GSC Active</Badge> : <Badge bg="secondary">GSC Not Set</Badge>}
                                         </div>
                                     </div>
                                 </Col>
@@ -389,6 +398,28 @@ const RewritesCMS = () => {
                             <Form.Label className="small fw-bold">Global SEO Description</Form.Label>
                             <Form.Control as="textarea" rows={2} value={settingsForm.seo_description} onChange={e => setSettingsForm({ ...settingsForm, seo_description: e.target.value })} />
                         </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label className="small fw-bold">Global SEO Keywords (comma separated)</Form.Label>
+                            <Form.Control type="text" value={settingsForm.seo_keywords} onChange={e => setSettingsForm({ ...settingsForm, seo_keywords: e.target.value })} placeholder="e.g. web design, app development, agency" />
+                        </Form.Group>
+
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Search &amp; Analytics</h6>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Google Analytics Tracking ID</Form.Label>
+                                    <Form.Control type="text" value={settingsForm.seo_google_analytics_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_analytics_id: e.target.value })} placeholder="G-XXXXXXXXXX" />
+                                    <Form.Text className="x-small text-muted">Used for traffic tracking via Gtag.</Form.Text>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3 text-start">
+                                    <Form.Label className="small fw-bold">Google Search Console Verification</Form.Label>
+                                    <Form.Control type="text" value={settingsForm.seo_google_search_console_id} onChange={e => setSettingsForm({ ...settingsForm, seo_google_search_console_id: e.target.value })} placeholder="Verification code" />
+                                    <Form.Text className="x-small text-muted">HTML-tag based site ownership verification.</Form.Text>
+                                </Form.Group>
+                            </Col>
+                        </Row>
 
                         <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Visual Branding Assets</h6>
                         <Row>
@@ -447,7 +478,7 @@ const RewritesCMS = () => {
                             <Col md={6}>
                                 <Form.Group className="mb-3 text-start">
                                     <Form.Label className="small fw-bold">Site Name Accent</Form.Label>
-                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({ ...settingsForm, site_name_accent: e.target.value })} placeholder="Axe" />
+                                    <Form.Control type="text" value={settingsForm.site_name_accent} onChange={e => setSettingsForm({ ...settingsForm, site_name_accent: e.target.value })} placeholder="Technologies" />
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -457,10 +488,40 @@ const RewritesCMS = () => {
                             <Form.Label className="small fw-bold">Founder Display Name</Form.Label>
                             <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({ ...settingsForm, site_founder_name: e.target.value })} placeholder="Asadullah Nadeem" />
                         </Form.Group>
-                        <Form.Group className="mb-0">
+                        <Form.Group className="mb-4">
                             <Form.Label className="small fw-bold">Leadership Message</Form.Label>
                             <Form.Control as="textarea" rows={2} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({ ...settingsForm, site_founder_message: e.target.value })} />
                         </Form.Group>
+
+                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Social Media Connect</h6>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">Facebook URL</Form.Label>
+                                    <Form.Control type="url" value={settingsForm.social_facebook} onChange={e => setSettingsForm({ ...settingsForm, social_facebook: e.target.value })} placeholder="https://facebook.com/..." />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">Instagram URL</Form.Label>
+                                    <Form.Control type="url" value={settingsForm.social_instagram} onChange={e => setSettingsForm({ ...settingsForm, social_instagram: e.target.value })} placeholder="https://instagram.com/..." />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">LinkedIn URL</Form.Label>
+                                    <Form.Control type="url" value={settingsForm.social_linkedin} onChange={e => setSettingsForm({ ...settingsForm, social_linkedin: e.target.value })} placeholder="https://linkedin.com/..." />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">Twitter / X URL</Form.Label>
+                                    <Form.Control type="url" value={settingsForm.social_twitter} onChange={e => setSettingsForm({ ...settingsForm, social_twitter: e.target.value })} placeholder="https://x.com/..." />
+                                </Form.Group>
+                            </Col>
+                        </Row>
                     </Modal.Body>
                     <Modal.Footer className="bg-light">
                         <Button variant="secondary" onClick={() => setShowSettingsModal(false)}>Cancel</Button>

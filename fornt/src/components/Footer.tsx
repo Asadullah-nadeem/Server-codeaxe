@@ -86,20 +86,44 @@ const Footer = () => {
           ))}
         </div>
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <Link href="/" className="flex items-center">
-            {(settings.site_footer_logo_url || settings.site_logo_url) && !logoError ? (
-              <img
-                src={settings.site_footer_logo_url || settings.site_logo_url}
-                alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
-                className="h-8 w-auto object-contain"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <span className="font-display text-lg tracking-tighter">
-                {settings.site_name_prefix || 'Code'} <span className="text-accent">{settings.site_name_accent || 'Axe'}</span>
-              </span>
-            )}
-          </Link>
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <Link href="/" className="flex items-center">
+              {(settings.site_footer_logo_url || settings.site_logo_url) && !logoError ? (
+                <img
+                  src={settings.site_footer_logo_url || settings.site_logo_url}
+                  alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
+                  className="h-8 w-auto object-contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <span className="font-display text-lg tracking-tighter">
+                  {settings.site_name_prefix || 'Code'} <span className="text-accent">{settings.site_name_accent || 'Axe'}</span>
+                </span>
+              )}
+            </Link>
+            <div className="flex items-center gap-4 mt-2">
+              {settings.social_facebook && (
+                <a href={settings.social_facebook} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Icons.Facebook className="w-4 h-4" />
+                </a>
+              )}
+              {settings.social_twitter && (
+                <a href={settings.social_twitter} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Icons.Twitter className="w-4 h-4" />
+                </a>
+              )}
+              {settings.social_instagram && (
+                <a href={settings.social_instagram} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Icons.Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {settings.social_linkedin && (
+                <a href={settings.social_linkedin} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Icons.Linkedin className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          </div>
           <span className="font-mono-label text-xs text-muted-foreground text-center md:text-right" dangerouslySetInnerHTML={{ __html: settings.footer_copyright }}></span>
         </div>
       </div>

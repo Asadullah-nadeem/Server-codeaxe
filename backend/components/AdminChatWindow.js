@@ -58,7 +58,7 @@ const AdminChatWindow = ({ requestId, title, onClose }) => {
     };
 
     return (
-        <Card className="fixed-bottom mb-4 me-4 ms-auto shadow-lg border-0" style={{ width: '400px', height: '550px', zIndex: 1060, right: '20px', borderRadius: '12px', overflow: 'hidden' }}>
+        <Card className="fixed-bottom mb-4 me-4 ms-auto shadow-lg border-0" style={{ width: '400px', height: '550px', zIndex: 2500, right: '20px', borderRadius: '12px', overflow: 'hidden' }}>
             <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center py-3 border-0">
                 <div className="d-flex align-items-center gap-2">
                     <div className="bg-white bg-opacity-20 rounded-circle p-1">

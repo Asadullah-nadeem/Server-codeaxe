@@ -22,7 +22,11 @@ class NavController extends Controller
             ->orWhere('setting_key', 'LIKE', 'seo_%')
             ->orWhere('setting_key', 'LIKE', 'site_name_%')
             ->orWhere('setting_key', 'LIKE', 'site_logo_%')
+            ->orWhere('setting_key', 'LIKE', 'site_footer_%')
+            ->orWhere('setting_key', 'LIKE', 'site_favicon_%')
+            ->orWhere('setting_key', 'LIKE', 'site_apple_%')
             ->orWhere('setting_key', 'LIKE', 'site_founder_%')
+            ->orWhere('setting_key', 'LIKE', 'social_%')
             ->get();
         $settings = [];
         foreach ($settingsRaw as $setting) {
@@ -138,7 +142,12 @@ class NavController extends Controller
             'site_apple_icon_url',
             'site_footer_logo_url',
             'site_founder_name',
-            'site_founder_message'
+            'site_founder_message',
+            'seo_keywords',
+            'social_facebook',
+            'social_instagram',
+            'social_linkedin',
+            'social_twitter'
         ]);
 
         foreach ($settings as $key => $value) {

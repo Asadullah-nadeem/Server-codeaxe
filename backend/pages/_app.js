@@ -98,15 +98,20 @@ function MyApp({ Component, pageProps }) {
     }
 
     const isAuthPage = router.pathname.startsWith('/v1/auth/');
-    const token = localStorage.getItem('admin_token');
-    const sessionAt = parseInt(localStorage.getItem('admin_session_at') || '0', 10);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    const sessionAt = parseInt(typeof window !== 'undefined' ? localStorage.getItem('admin_session_at') || '0' : '0', 10);
     const tokenValid = token && token.length > 10;
     const sessionExpired = sessionAt && Date.now() - sessionAt > SESSION_MAX_AGE_MS;
 
+    if (isAuthPage) {
+      setAppReady(true);
+    }
+
     if (!isAuthPage && (!tokenValid || sessionExpired)) {
       clearSession();
-      if (router.pathname !== '/v1/auth/sign-in') {
-        router.replace('/v1/auth/sign-in').then(() => setAppReady(true));
+      const authPath = '/v1/auth/sign-in';
+      if (router.pathname !== authPath && router.pathname !== '/v1/auth/sign_in') {
+        router.replace(authPath).then(() => setAppReady(true));
       } else {
         setAppReady(true);
       }

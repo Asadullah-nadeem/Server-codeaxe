@@ -228,7 +228,7 @@ const RegisteredUsers = () => {
             </Row>
 
             {/* Profile Modal */}
-            <Modal show={!!selectedUser} onHide={() => setSelectedUser(null)} size="lg" centered>
+            <Modal show={!!selectedUser} onHide={() => setSelectedUser(null)} size="lg" centered enforceFocus={false}>
                 {selectedUser && (
                     <>
                         <Modal.Header closeButton className="border-0 bg-light">
