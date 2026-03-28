@@ -1,28 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Row, Col, Card, Table, Button, Form, Modal, Container,
-    Badge, Spinner, Alert, Tabs, Tab, InputGroup
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Container,
+  Form,
+  InputGroup,
+  Modal,
+  Row,
+  Spinner,
+  Tab,
+  Table,
+  Tabs
 } from 'react-bootstrap';
 import {
-    Shield, UserPlus, Edit2, Trash2, RefreshCw, CheckCircle,
-    XCircle, Eye, EyeOff, Search, User, Lock, Mail, AtSign
+  AtSign,
+  CheckCircle,
+  Edit2,
+  Eye, EyeOff,
+  Lock, Mail,
+  RefreshCw,
+  Search,
+  Shield,
+  Trash2,
+  User,
+  UserPlus,
+  XCircle
 } from 'react-feather';
 import { fetchApi } from '../../utils/api';
 
-// ─── Role config ─────────────────────────────────────────────────────────────
-const ROLES = [
-    { value: 'superadmin', label: 'Super Admin',  color: 'danger',  desc: 'Full system access including user management' },
-    { value: 'admin',      label: 'Admin',         color: 'primary', desc: 'Full CMS access, cannot manage admin accounts' },
-    { value: 'demo',       label: 'Demo Mode',     color: 'warning', desc: 'Read-only access — cannot make changes' },
-];
-
-const roleColor = (role) => ROLES.find(r => r.value === role)?.color || 'secondary';
-const roleLabel = (role) => ROLES.find(r => r.value === role)?.label || role;
-
-const EMPTY_FORM = { id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 };
-
 // ─── Permission Matrix Section Definitions ─────────────────────────────────────────
-// Purely UI structure. Actual values come from the API.
 const PERM_GROUPS = [
     {
         group: 'CMS Content', color: '#0d6efd',
@@ -67,17 +76,91 @@ const PERM_GROUPS = [
 
 const OPS = ['view', 'create', 'edit', 'delete'];
 
-// Build default permission map (used as fallback before API loads)
-const buildDefaultPerms = () => {
-    const out = { admin: {}, demo: {} };
-    for (const g of PERM_GROUPS) {
-        for (const item of g.items) {
-            const isLocked = !!g.locked;
-            out.admin[item.key] = { view: !isLocked, create: !isLocked, edit: !isLocked, delete: !isLocked };
-            out.demo[item.key]  = { view: !isLocked, create: false,      edit: false,      delete: false };
-        }
-    }
-    return out;
+// ── Role Manager Component ──────────────────────────────────────────────────
+const RoleManager = ({ roles, onUpdate }) => {
+    const [show, setShow] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [form, setForm] = useState({ id: null, name: '', label: '', color: 'primary', description: '' });
+
+    const openCreate = () => { setForm({ id: null, name: '', label: '', color: 'primary', description: '' }); setShow(true); };
+    const openEdit = (r) => { setForm({ ...r }); setShow(true); };
+
+    const save = async () => {
+        setSaving(true);
+        try {
+            await fetchApi('/admin/roles', { method: 'POST', body: JSON.stringify(form) });
+            setShow(false);
+            onUpdate();
+        } catch (e) { alert(e.message); }
+        finally { setSaving(false); }
+    };
+
+    const drop = async (id) => {
+        if (!confirm('Delete this role? All permissions and user assignments will be removed.')) return;
+        try {
+            await fetchApi(`/admin/roles/${id}`, { method: 'DELETE' });
+            onUpdate();
+        } catch (e) { alert(e.message); }
+    };
+
+    return (
+        <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="fw-bold"><Shield size={16} className="me-2" />Role Management</div>
+                <Button size="sm" variant="primary" onClick={openCreate}><UserPlus size={14} className="me-1" /> New Role</Button>
+            </div>
+            <Row className="g-3">
+                {roles.map(r => (
+                    <Col key={r.id} lg={4} md={6}>
+                        <Card className="border-0 shadow-sm h-100" style={{ borderLeft: `4px solid var(--bs-${r.color})` }}>
+                            <Card.Body className="p-3">
+                                <div className="d-flex justify-content-between">
+                                    <Badge bg={r.color}>{r.label}</Badge>
+                                    <div className="d-flex gap-1">
+                                        <Button variant="link" className="p-0 text-muted" onClick={() => openEdit(r)}><Edit2 size={12} /></Button>
+                                        {!['superadmin', 'admin', 'demo'].includes(r.name) && (
+                                            <Button variant="link" className="p-0 text-danger" onClick={() => drop(r.id)}><Trash2 size={12} /></Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="small text-muted mt-2">{r.description || 'No description.'}</div>
+                                <div className="mt-1" style={{ fontSize: '0.65rem', opacity: 0.6 }}>Slug: {r.name}</div>
+                            </Card.Body>
+                        </Card>
+                    </Col>
+                ))}
+            </Row>
+
+            <Modal show={show} onHide={() => setShow(false)} centered size="sm">
+                <Modal.Header closeButton className="bg-light">
+                    <Modal.Title style={{ fontSize: '1rem' }}>{form.id ? 'Edit Role' : 'Create Role'}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form.Group className="mb-2">
+                        <Form.Label className="small fw-bold">Display Label</Form.Label>
+                        <Form.Control size="sm" value={form.label} onChange={e => setForm({...form, label: e.target.value, name: e.target.value.toLowerCase().replace(/\s+/g, '_')})} placeholder="Managing Editor" />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                        <Form.Label className="small fw-bold">System Name (Slug)</Form.Label>
+                        <Form.Control size="sm" value={form.name} readOnly={!!form.id} onChange={e => setForm({...form, name: e.target.value})} placeholder="editor" />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                        <Form.Label className="small fw-bold">Color Theme</Form.Label>
+                        <Form.Select size="sm" value={form.color} onChange={e => setForm({...form, color: e.target.value})}>
+                            {['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'dark'].map(c => <option key={c} value={c}>{c}</option>)}
+                        </Form.Select>
+                    </Form.Group>
+                    <Form.Group>
+                        <Form.Label className="small fw-bold">Description</Form.Label>
+                        <Form.Control as="textarea" rows={2} size="sm" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer className="border-0">
+                    <Button variant="primary" size="sm" className="w-100" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Role'}</Button>
+                </Modal.Footer>
+            </Modal>
+        </div>
+    );
 };
 
 // ── Editable Permission Cell ─────────────────────────────────────────────────
@@ -98,297 +181,138 @@ const EditPermCell = ({ checked, locked, onChange }) => (
 );
 
 // ── Editable Permissions Panel ──────────────────────────────────────────────
-const PermissionsPanel = () => {
+const PermissionsPanel = ({ roles, setRoles }) => {
     const [open, setOpen]       = React.useState(true);
-    const [perms, setPerms]     = React.useState(buildDefaultPerms());
+    const [perms, setPerms]     = React.useState({});
     const [loading, setLoading] = React.useState(true);
-    const [saving, setSaving]   = React.useState(null); // 'admin' | 'demo' | null
+    const [saving, setSaving]   = React.useState(null);
     const [success, setSuccess] = React.useState(null);
     const [error, setError]     = React.useState(null);
-    const [dirty, setDirty]     = React.useState({ admin: false, demo: false });
+    const [dirty, setDirty]     = React.useState({});
     const [activeRole, setActiveRole] = React.useState('admin');
 
-    // Load permissions from API on mount
-    React.useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            try {
-                const res = await fetchApi('/admin/permissions');
-                if (res?.success && res.data) {
-                    setPerms(prev => ({
-                        admin: { ...prev.admin, ...res.data.admin },
-                        demo:  { ...prev.demo,  ...res.data.demo  },
-                    }));
-                }
-            } catch (e) {
-                setError('Could not load permissions. Showing defaults.');
-            } finally {
-                setLoading(false);
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const res = await fetchApi('/admin/permissions');
+            if (res?.success) {
+                setPerms(res.data);
+                if (res.roles) setRoles(res.roles);
+            } else if (res) {
+                setError(res.message || 'Permissions pull gave no success.');
             }
-        };
-        load();
-    }, []);
+        } catch (e) { 
+            console.error('Permissions load failed', e);
+            setError(`Could not load permissions matrix: ${e.message}`); 
+        } finally { setLoading(false); }
+    };
 
-    // Toggle a single cell
+    React.useEffect(() => { loadData(); }, []);
+
+    React.useEffect(() => {
+        if (!activeRole && roles.length > 0) setActiveRole(roles[0].name);
+        else if (roles.length > 0 && !roles.find(r => r.name === activeRole)) setActiveRole(roles[0].name);
+    }, [roles, activeRole]);
+
     const togglePerm = (role, sectionKey, op, value) => {
-        setPerms(prev => ({
-            ...prev,
-            [role]: {
-                ...prev[role],
-                [sectionKey]: {
-                    ...prev[role][sectionKey],
-                    [op]: value,
+        setPerms(prev => {
+            const rolePerms = prev[role] || {};
+            const section = rolePerms[sectionKey] || {};
+            return {
+                ...prev,
+                [role]: {
+                    ...rolePerms,
+                    [sectionKey]: { ...section, [op]: value }
                 }
-            }
-        }));
+            };
+        });
         setDirty(prev => ({ ...prev, [role]: true }));
     };
 
-    // Toggle entire row ON/OFF
     const toggleRow = (role, sectionKey, allOn) => {
         const newVal = { view: allOn, create: allOn, edit: allOn, delete: allOn };
         setPerms(prev => ({
             ...prev,
-            [role]: { ...prev[role], [sectionKey]: newVal }
+            [role]: { ...(prev[role] || {}), [sectionKey]: newVal }
         }));
         setDirty(prev => ({ ...prev, [role]: true }));
     };
 
-    // Save role's full permissions
     const saveRole = async (role) => {
         setSaving(role);
-        setError(null);
         try {
-            await fetchApi('/admin/permissions/bulk', {
-                method: 'POST',
-                body: JSON.stringify({ role, permissions: perms[role] })
-            });
-            setSuccess(`${role === 'admin' ? 'Admin' : 'Demo'} permissions saved successfully.`);
+            await fetchApi('/admin/permissions/bulk', { method: 'POST', body: JSON.stringify({ role, permissions: perms[role] }) });
+            setSuccess(`Permissions for ${role} saved.`);
             setDirty(prev => ({ ...prev, [role]: false }));
-        } catch (e) {
-            setError(`Failed to save ${role} permissions.`);
-        } finally {
-            setSaving(null);
-            setTimeout(() => setSuccess(null), 4000);
-        }
+        } catch (e) { setError(`Failed to save ${role} permissions.`); }
+        finally { setSaving(null); setTimeout(() => setSuccess(null), 3000); }
     };
 
-    // Reset role to defaults
     const resetRole = async (role) => {
-        if (!confirm(`Reset all ${role} permissions to system defaults?`)) return;
+        if (!confirm(`Reset all ${role} permissions?`)) return;
         setSaving(role);
         try {
-            await fetchApi('/admin/permissions/reset', {
-                method: 'POST',
-                body: JSON.stringify({ role })
-            });
-            // Reload from API
-            const res = await fetchApi('/admin/permissions');
-            if (res?.success && res.data) {
-                setPerms(prev => ({
-                    ...prev,
-                    [role]: res.data[role] || prev[role]
-                }));
-            }
-            setSuccess(`${role} permissions reset to defaults.`);
+            await fetchApi('/admin/permissions/reset', { method: 'POST', body: JSON.stringify({ role }) });
+            loadData();
+            setSuccess(`${role} reset successfully.`);
             setDirty(prev => ({ ...prev, [role]: false }));
-        } catch (e) {
-            setError(`Failed to reset ${role} permissions.`);
-        } finally {
-            setSaving(null);
-            setTimeout(() => setSuccess(null), 4000);
-        }
-    };
-
-    const roleMeta = {
-        admin: { label: 'Admin', color: 'primary', bg: '#0d6efd' },
-        demo:  { label: 'Demo',  color: 'warning', bg: '#f59e0b' },
+        } catch (e) { setError(`Failed to reset ${role}.`); }
+        finally { setSaving(null); setTimeout(() => setSuccess(null), 3000); }
     };
 
     return (
         <Card className="border-0 shadow-sm mt-4" style={{ borderRadius: 14 }}>
-            {/* Panel Header */}
-            <Card.Header
-                className="bg-white d-flex justify-content-between align-items-center py-3"
-                style={{ cursor: 'pointer', borderRadius: open ? '14px 14px 0 0' : 14 }}
-                onClick={() => setOpen(o => !o)}
-            >
+            <Card.Header className="bg-white d-flex justify-content-between align-items-center py-3" style={{ cursor: 'pointer' }} onClick={() => setOpen(o => !o)}>
                 <div className="d-flex align-items-center gap-2">
-                    <div style={{
-                        width: 34, height: 34, borderRadius: '50%',
-                        background: '#6f42c115', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Lock size={16} style={{ color: '#6f42c1' }} />
-                    </div>
-                    <div>
-                        <div className="fw-bold small mb-0">Section Access Control
-                            {(dirty.admin || dirty.demo) && (
-                                <Badge bg="warning" text="dark" className="ms-2" style={{ fontSize: '0.6rem' }}>Unsaved changes</Badge>
-                            )}
-                        </div>
-                        <div className="text-muted" style={{ fontSize: '0.72rem' }}>
-                            Edit exactly what Admin &amp; Demo accounts can do — per section, per operation
-                        </div>
-                    </div>
+                    <Lock size={16} style={{ color: '#6f42c1' }} />
+                    <div className="fw-bold small mb-0">Role Access Control [{roles.find(r=>r.name===activeRole)?.label}]</div>
                 </div>
                 <div className="d-flex align-items-center gap-2" onClick={e => e.stopPropagation()}>
-                    {/* Role tabs */}
-                    {['admin', 'demo'].map(r => (
-                        <Button
-                            key={r}
-                            size="sm"
-                            variant={activeRole === r ? roleMeta[r].color : 'outline-secondary'}
-                            onClick={() => setActiveRole(r)}
-                            style={{ borderRadius: 20, fontSize: '0.7rem', position: 'relative' }}
-                        >
-                            {roleMeta[r].label}
-                            {dirty[r] && <span style={{
-                                position: 'absolute', top: -4, right: -4,
-                                width: 8, height: 8, borderRadius: '50%',
-                                background: '#f59e0b', border: '1.5px solid #fff'
-                            }} />}
-                        </Button>
-                    ))}
-                    <span className="text-muted ms-1" style={{ fontSize: 16 }}>{open ? '▲' : '▼'}</span>
+                    <Button size="sm" variant={dirty[activeRole] ? 'primary' : 'outline-primary'} onClick={()=>saveRole(activeRole)} disabled={saving || !dirty[activeRole]} style={{fontSize:'0.7rem'}}>{saving===activeRole ? 'Saving...' : 'Save Changes'}</Button>
+                    <span className="text-muted ms-1 small">{open ? '▲' : '▼'}</span>
                 </div>
             </Card.Header>
 
             {open && (
                 <Card.Body className="p-0">
-                    {/* Role selector + action bar */}
-                    <div className="d-flex align-items-center justify-content-between px-4 py-2 border-bottom" style={{ background: '#f8f9fa' }}>
-                        <div className="d-flex align-items-center gap-3">
-                            <div className="d-flex align-items-center gap-1">
-                                {['admin', 'demo'].map(r => (
-                                    <button
-                                        key={r}
-                                        onClick={() => setActiveRole(r)}
-                                        style={{
-                                            padding: '4px 14px', borderRadius: 20,
-                                            border: `2px solid ${activeRole === r ? roleMeta[r].bg : '#dee2e6'}`,
-                                            background: activeRole === r ? roleMeta[r].bg + '18' : 'transparent',
-                                            color: activeRole === r ? roleMeta[r].bg : '#6c757d',
-                                            fontWeight: activeRole === r ? 700 : 400,
-                                            fontSize: '0.78rem', cursor: 'pointer'
-                                        }}
-                                    >
-                                        {roleMeta[r].label} permissions
-                                        {dirty[r] && ' ●'}
-                                    </button>
-                                ))}
-                            </div>
-                            <span className="text-muted" style={{ fontSize: '0.72rem' }}>
-                                ☑ Click checkboxes to grant/deny specific operations. Super Admin always has full access.
-                            </span>
-                        </div>
-                        <div className="d-flex align-items-center gap-2">
-                            <Button
-                                size="sm" variant="outline-secondary"
-                                onClick={() => resetRole(activeRole)}
-                                disabled={saving === activeRole}
-                                style={{ fontSize: '0.72rem', borderRadius: 8 }}
-                            >
-                                Reset to defaults
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant={dirty[activeRole] ? roleMeta[activeRole].color : 'outline-secondary'}
-                                onClick={() => saveRole(activeRole)}
-                                disabled={saving === activeRole || !dirty[activeRole]}
-                                style={{ fontSize: '0.72rem', borderRadius: 8, minWidth: 80 }}
-                            >
-                                {saving === activeRole
-                                    ? <><Spinner animation="border" size="sm" className="me-1" />Saving...</>
-                                    : <><CheckCircle size={12} className="me-1" />Save {roleMeta[activeRole].label}</>}
-                            </Button>
-                        </div>
+                    <div className="d-flex border-bottom overflow-auto" style={{ background: '#f8f9fa' }}>
+                        {roles.map(r => (
+                            <button key={r.name} onClick={() => setActiveRole(r.name)} className={`px-4 py-2 border-0 ${activeRole === r.name ? 'bg-white fw-bold' : 'text-muted'}`} style={{ fontSize: '0.75rem', borderBottom: activeRole === r.name ? `2px solid var(--bs-${r.color})` : 'none', minWidth: 100 }}>
+                                {r.label} {dirty[r.name] && '●'}
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Alerts */}
-                    {error   && <Alert variant="danger"  dismissible className="m-3 mb-0 py-2" onClose={() => setError(null)}>{error}</Alert>}
-                    {success && <Alert variant="success" dismissible className="m-3 mb-0 py-2" onClose={() => setSuccess(null)}>{success}</Alert>}
-
-                    {loading ? (
-                        <div className="text-center py-4">
-                            <Spinner animation="border" size="sm" /> <span className="text-muted ms-2 small">Loading permissions...</span>
-                        </div>
-                    ) : (
+                    {loading ? <div className="p-4 text-center small text-muted"><Spinner size="sm" /> Loading Permissions...</div> : (
                         <div className="table-responsive">
-                            <table className="table table-sm mb-0" style={{ minWidth: 560 }}>
-                                <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
-                                    <tr>
-                                        <th className="ps-4" style={{ width: '36%', fontSize: '0.72rem', color: '#888', fontWeight: 600 }}>Section / Feature</th>
-                                        {OPS.map(op => (
-                                            <th key={op} className="text-center" style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, textTransform: 'capitalize', width: '10%' }}>
-                                                {op}
-                                            </th>
-                                        ))}
-                                        <th className="text-center" style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, width: '14%' }}>All On/Off</th>
-                                        <th className="text-center" style={{ fontSize: '0.7rem', color: '#888', fontWeight: 600, width: '16%' }}>Super Admin</th>
+                            <table className="table table-sm mb-0">
+                                <thead>
+                                    <tr style={{background:'#fafafa'}}>
+                                        <th className="ps-4 small py-2" style={{width:'30%'}}>Section</th>
+                                        {OPS.map(op => <th key={op} className="text-center small py-2">{op}</th>)}
+                                        <th className="text-center small py-2">Quick Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {PERM_GROUPS.map((group, gi) => (
-                                        <React.Fragment key={gi}>
-                                            {/* Group row */}
-                                            <tr style={{ background: group.color + '0c' }}>
-                                                <td colSpan={7} className="ps-4 py-1" style={{ fontSize: '0.68rem', color: group.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: group.color, marginRight: 6, verticalAlign: 'middle' }} />
-                                                    {group.group}
-                                                    {group.locked && <Badge bg="light" text="dark" className="ms-2 border" style={{ fontSize: '0.6rem' }}>Super Admin only</Badge>}
-                                                </td>
+                                    {PERM_GROUPS.map(group => (
+                                        <React.Fragment key={group.group}>
+                                            <tr style={{background: group.color + '05'}}>
+                                                <td colSpan={6} className="ps-4 small fw-bold py-1" style={{color: group.color, fontSize:'0.7rem'}}>{group.group.toUpperCase()}</td>
                                             </tr>
-                                            {/* Section rows */}
-                                            {group.items.map((item, ii) => {
-                                                const sec = perms[activeRole]?.[item.key] || {};
-                                                const allOn = OPS.every(op => sec[op]);
-                                                const isLocked = !!group.locked;
+                                            {group.items.map(item => {
+                                                const row = perms[activeRole]?.[item.key] || {};
+                                                const allOn = OPS.every(op => row[op]);
+                                                const isLocked = !!group.locked || activeRole === 'superadmin';
                                                 return (
-                                                    <tr
-                                                        key={ii}
-                                                        style={{
-                                                            fontSize: '0.8rem',
-                                                            borderBottom: '1px solid #f1f3f5',
-                                                            opacity: isLocked ? 0.55 : 1,
-                                                            background: isLocked ? '#f8f9fa' : 'white',
-                                                        }}
-                                                    >
-                                                        {/* Section label */}
-                                                        <td className="ps-4 py-2" style={{ verticalAlign: 'middle' }}>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <i className={`fe fe-${item.icon}`} style={{ color: group.color, fontSize: 13 }} />
-                                                                <span className="fw-semibold">{item.label}</span>
-                                                                {isLocked && <small className="text-danger" style={{ fontSize: '0.65rem' }}>locked</small>}
-                                                            </div>
-                                                        </td>
-                                                        {/* Editable op cells */}
+                                                    <tr key={item.key} style={{fontSize:'0.8rem', opacity: isLocked ? 0.6 : 1}}>
+                                                        <td className="ps-4 py-1">{item.label}</td>
                                                         {OPS.map(op => (
-                                                            <EditPermCell
-                                                                key={op}
-                                                                checked={sec[op]}
-                                                                locked={isLocked}
-                                                                onChange={val => togglePerm(activeRole, item.key, op, val)}
-                                                            />
+                                                            <EditPermCell key={op} checked={row[op]} locked={isLocked} onChange={v => togglePerm(activeRole, item.key, op, v)} />
                                                         ))}
-                                                        {/* All On/Off toggle */}
-                                                        <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                            {isLocked ? (
-                                                                <span style={{ color: '#dc3545', fontSize: 12, opacity: 0.5 }}>✗ all</span>
-                                                            ) : (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant={allOn ? 'outline-danger' : 'outline-success'}
-                                                                    onClick={() => toggleRow(activeRole, item.key, !allOn)}
-                                                                    style={{ fontSize: '0.65rem', padding: '1px 8px', borderRadius: 20 }}
-                                                                >
-                                                                    {allOn ? 'Deny All' : 'Allow All'}
-                                                                </Button>
-                                                            )}
-                                                        </td>
-                                                        {/* Super Admin always full */}
-                                                        <td className="text-center" style={{ verticalAlign: 'middle', background: '#19875408' }}>
-                                                            <span style={{ color: '#198754', fontSize: 12 }}>✓ Always full</span>
+                                                        <td className="text-center">
+                                                            <Button size="sm" variant={allOn ? 'outline-danger' : 'outline-success'} onClick={() => toggleRow(activeRole, item.key, !allOn)} disabled={isLocked} style={{fontSize:'0.6rem', padding:'1px 5px'}}>
+                                                                {allOn ? 'Deny All' : 'Grant All'}
+                                                            </Button>
                                                         </td>
                                                     </tr>
                                                 );
@@ -399,34 +323,19 @@ const PermissionsPanel = () => {
                             </table>
                         </div>
                     )}
-
-                    {/* Footer */}
-                    <div className="px-4 py-3 border-top d-flex align-items-center gap-4 flex-wrap" style={{ background: '#fafafa', borderRadius: '0 0 14px 14px' }}>
-                        <span className="d-flex align-items-center gap-1 small">
-                            <Form.Check type="checkbox" checked readOnly style={{ margin: 0, pointerEvents: 'none' }} />
-                            <span className="text-muted">= Allowed</span>
-                        </span>
-                        <span className="d-flex align-items-center gap-1 small">
-                            <Form.Check type="checkbox" checked={false} readOnly style={{ margin: 0, pointerEvents: 'none' }} />
-                            <span className="text-muted">= Denied</span>
-                        </span>
-                        <Badge bg="danger" className="px-2" style={{ fontSize: '0.65rem' }}>Locked</Badge>
-                        <span className="text-muted" style={{ fontSize: '0.7rem' }}>= Super Admin only, cannot be granted</span>
-                        <span className="text-muted small ms-auto">
-                            <i className="fe fe-info me-1" />
-                            Demo write-block is also enforced server-side (DemoModeMiddleware).
-                            These settings control UI visibility &amp; additional reference.
-                        </span>
+                    <div className="p-2 border-top bg-light text-center">
+                        <Button size="sm" variant="link" className="text-danger small p-0" onClick={()=>resetRole(activeRole)} disabled={saving}>Reset {activeRole} to Defaults</Button>
                     </div>
                 </Card.Body>
             )}
         </Card>
     );
 };
-
 // ─── Detail Slide-over Panel ─────────────────────────────────────────────────
-const AdminDetailPanel = ({ admin, onClose, onEdit, onDelete }) => {
+const AdminDetailPanel = ({ admin, roles, onClose, onEdit, onDelete }) => {
     if (!admin) return null;
+    const r = roles.find(x => x.name === admin.role) || { label: admin.role, color: 'secondary' };
+
     return (
         <div style={{
             position: 'fixed', right: 0, top: 0, bottom: 0, width: 360,
@@ -435,8 +344,8 @@ const AdminDetailPanel = ({ admin, onClose, onEdit, onDelete }) => {
             animation: 'slideInRight 0.25s ease'
         }}>
             <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
-            {/* Header */}
-            <div style={{ background: `var(--bs-${roleColor(admin.role)})`, padding: '24px 20px 20px' }}>
+
+            <div style={{ background: `var(--bs-${r.color})`, padding: '24px 20px 20px' }}>
                 <div className="d-flex justify-content-between align-items-start">
                     <div className="d-flex align-items-center gap-3">
                         <div style={{
@@ -456,12 +365,11 @@ const AdminDetailPanel = ({ admin, onClose, onEdit, onDelete }) => {
                 </div>
             </div>
 
-            {/* Body */}
             <div className="flex-grow-1 p-3 overflow-auto">
                 <div className="mb-3">
                     <small className="text-muted text-uppercase fw-semibold">Role</small>
                     <div className="mt-1">
-                        <Badge bg={roleColor(admin.role)} className="px-3 py-2">{roleLabel(admin.role)}</Badge>
+                        <Badge bg={r.color} className="px-3 py-2">{r.label}</Badge>
                     </div>
                 </div>
                 <div className="mb-3">
@@ -483,13 +391,10 @@ const AdminDetailPanel = ({ admin, onClose, onEdit, onDelete }) => {
                 <hr />
                 <div className="mb-2">
                     <small className="text-muted text-uppercase fw-semibold">Role Description</small>
-                    <p className="small mt-1 text-muted">
-                        {ROLES.find(r => r.value === admin.role)?.desc}
-                    </p>
+                    <p className="small mt-1 text-muted">{r.description || 'Custom administrative role.'}</p>
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="p-3 border-top d-flex gap-2">
                 <Button variant="primary" size="sm" className="flex-grow-1" onClick={() => { onEdit(admin); onClose(); }}>
                     <Edit2 size={13} className="me-1" /> Edit Account
@@ -504,12 +409,15 @@ const AdminDetailPanel = ({ admin, onClose, onEdit, onDelete }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const SuperAdminPage = () => {
+    const [roles, setRoles]                 = useState([]);
     const [admins, setAdmins]               = useState([]);
     const [loading, setLoading]             = useState(true);
     const [error, setError]                 = useState(null);
     const [success, setSuccess]             = useState(null);
     const [showModal, setShowModal]         = useState(false);
+    const EMPTY_FORM = { id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 };
     const [form, setForm]                   = useState(EMPTY_FORM);
+
     const [showPass, setShowPass]           = useState(false);
     const [saving, setSaving]               = useState(false);
     const [processingRow, setProcessingRow] = useState(null); // id of admin being updated
@@ -521,41 +429,66 @@ const SuperAdminPage = () => {
     const [showBulkModal, setShowBulkModal] = useState(false);
 
     // ── fetch ──────────────────────────────────────────────────────────────
-    const fetchAdmins = useCallback(async () => {
+    const fetchEverything = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetchApi('/admin/list');
-            if (res?.success) setAdmins(res.data);
-            else setError('Failed to load admin accounts.');
-        } catch {
-            setError('Access Denied: Only Super Admins can manage accounts.');
+            // Simultaneous wait with individual catches to pinpoint service failure
+            const [roleRes, adminRes] = await Promise.all([
+                fetchApi('/admin/roles').catch(e => ({ success: false, error: e.message || 'Roles pull failed' })),
+                fetchApi('/admin/list').catch(e => ({ success: false, error: e.message || 'Admins pull failed' }))
+            ]);
+            
+            if (roleRes?.success) {
+                setRoles(roleRes.data || []);
+            } else {
+                console.warn('Roles fetch partial failure:', roleRes.error);
+                // Fallback roles if fetch fails entirely so UI doesn't break
+                if (roles.length === 0) {
+                    setRoles([
+                        { id: 101, name: 'superadmin', label: 'Super Admin', color: 'danger',  description: 'Full system access (Fallback)' },
+                        { id: 102, name: 'admin',      label: 'Admin',       color: 'primary', description: 'CMS management (Fallback)' },
+                        { id: 103, name: 'demo',       label: 'Demo Mode',   color: 'warning', description: 'View-only access (Fallback)' }
+                    ]);
+                }
+            }
+            
+            if (adminRes?.success) {
+                setAdmins(adminRes.data || []);
+            } else {
+                setError(adminRes.error || 'Access Denied or System Offline: Could not load some management data.');
+            }
+        } catch (err) {
+            console.error('Fetch everything CRITICAL error:', err);
+            setError(`Critical Load Error: ${err.message || 'Network unreachable'}. Please check your connection or login again.`);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [roles.length]);
 
-    useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
+
+    useEffect(() => { 
+        fetchEverything(); 
+    }, [fetchEverything]);
+
 
     // ── derived lists ──────────────────────────────────────────────────────
     const q = search.toLowerCase();
+    const getRole = (name) => roles.find(r => r.name === name) || { label: name, color: 'secondary' };
+
     const filtered = admins.filter(a => {
         const matchSearch = !q || a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q) || a.email.toLowerCase().includes(q);
         if (activeTab === 'all')       return matchSearch;
-        if (activeTab === 'superadmin') return matchSearch && a.role === 'superadmin';
-        if (activeTab === 'admin')     return matchSearch && a.role === 'admin';
-        if (activeTab === 'demo')      return matchSearch && a.role === 'demo';
         if (activeTab === 'disabled')  return matchSearch && !a.is_active;
-        return matchSearch;
+        return matchSearch && a.role === activeTab;
     });
 
     const counts = {
-        all:       admins.length,
-        superadmin: admins.filter(a => a.role === 'superadmin').length,
-        admin:     admins.filter(a => a.role === 'admin').length,
-        demo:      admins.filter(a => a.role === 'demo').length,
-        disabled:  admins.filter(a => !a.is_active).length,
+        all: admins.length,
+        disabled: admins.filter(a => !a.is_active).length,
     };
+    roles.forEach(r => { counts[r.name] = admins.filter(a => a.role === r.name).length; });
+
 
     // ── selection helpers ──────────────────────────────────────────────────
     const toggleSelect = (id) =>
@@ -595,7 +528,7 @@ const SuperAdminPage = () => {
                 setSuccess(`Account for "${form.name}" created.`);
             }
             setShowModal(false);
-            fetchAdmins();
+            fetchEverything();
         } catch (err) {
             setError(`Failed to save. ${err.message || ''}`);
         } finally {
@@ -610,7 +543,7 @@ const SuperAdminPage = () => {
             await fetchApi(`/admin/delete/${id}`, { method: 'DELETE' });
             setSuccess('Account removed.');
             setSelectedIds(prev => prev.filter(x => x !== id));
-            fetchAdmins();
+            fetchEverything();
         } catch (err) {
             setError(`Delete failed. ${err.message || ''}`);
         } finally {
@@ -625,7 +558,7 @@ const SuperAdminPage = () => {
         }
         setSuccess(`${selectedIds.length} account(s) removed.`);
         clearSelection();
-        fetchAdmins();
+        fetchEverything();
         setTimeout(() => setSuccess(null), 4000);
     };
 
@@ -641,11 +574,12 @@ const SuperAdminPage = () => {
                 });
             } catch {}
         }
-        setSuccess(`Role changed to "${roleLabel(bulkRole)}" for ${selectedIds.length} account(s).`);
+        setSuccess(`Role changed to "${getRole(bulkRole).label}" for ${selectedIds.length} account(s).`);
+
         clearSelection();
         setBulkRole('');
         setShowBulkModal(false);
-        fetchAdmins();
+        fetchEverything();
         setSaving(false);
         setTimeout(() => setSuccess(null), 4000);
     };
@@ -653,7 +587,7 @@ const SuperAdminPage = () => {
     const handleToggleStatus = async (admin) => {
         const newStatus = admin.is_active ? 0 : 1;
         setProcessingRow(admin.id);
-        
+
         // Optimistic update
         const originalStatus = admin.is_active;
         setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, is_active: newStatus } : a));
@@ -676,11 +610,12 @@ const SuperAdminPage = () => {
 
     const handleRoleChange = async (admin, newRole) => {
         if (admin.role === newRole) return;
-        if (!confirm(`Are you sure you want to change "${admin.name}" to ${roleLabel(newRole)}?`)) return;
+        if (!confirm(`Are you sure you want to change "${admin.name}" to ${getRole(newRole).label}?`)) return;
+
 
         setProcessingRow(admin.id);
         const oldRole = admin.role;
-        
+
         // Optimistic update
         setAdmins(prev => prev.map(a => a.id === admin.id ? { ...a, role: newRole } : a));
 
@@ -721,7 +656,8 @@ const SuperAdminPage = () => {
                     </p>
                 </div>
                 <div className="d-flex gap-2">
-                    <Button variant="outline-secondary" size="sm" onClick={fetchAdmins} className="d-flex align-items-center gap-1">
+                    <Button variant="outline-secondary" size="sm" onClick={fetchEverything} className="d-flex align-items-center gap-1">
+
                         <RefreshCw size={13} /> Refresh
                     </Button>
                     <Button variant="primary" size="sm" onClick={openCreate} className="d-flex align-items-center gap-1">
@@ -737,12 +673,11 @@ const SuperAdminPage = () => {
             {/* Summary Cards */}
             <Row className="mb-4 g-3">
                 {[
-                    { label: 'Total Admins',   count: counts.all,        color: '#6366f1', icon: <Shield size={18}/> },
-                    { label: 'Super Admins',   count: counts.superadmin, color: '#dc3545', icon: <Shield size={18}/> },
-                    { label: 'Admins',         count: counts.admin,      color: '#0d6efd', icon: <User size={18}/> },
-                    { label: 'Demo Accounts',  count: counts.demo,       color: '#f59e0b', icon: <EyeOff size={18}/> },
-                    { label: 'Disabled',       count: counts.disabled,   color: '#6c757d', icon: <XCircle size={18}/> },
-                ].map((s, i) => (
+                        { icon: <Shield size={18}/>, label: 'Total Admins', count: counts.all, color: '#6366f1' },
+                        ...roles.map(r => ({ icon: <Shield size={18}/>, label: r.label, count: counts[r.name] || 0, color: `var(--bs-${r.color})` })),
+                        { icon: <XCircle size={18}/>, label: 'Disabled', count: counts.disabled, color: '#6c757d' },
+                    ].map((s, i) => (
+
                     <Col key={i} xl={true} md={4} sm={6}>
                         <Card className="border-0 shadow-sm h-100" style={{ borderLeft: `4px solid ${s.color}`, borderRadius: 12 }}>
                             <Card.Body className="d-flex align-items-center gap-3 py-3">
@@ -760,6 +695,19 @@ const SuperAdminPage = () => {
                     </Col>
                 ))}
             </Row>
+
+            {/* Quick Management Section */}
+            <Row className="mb-4">
+                <Col lg={12}>
+                    <RoleManager roles={roles} onUpdate={() => { fetchEverything(); }} />
+
+                </Col>
+            </Row>
+
+
+            <div className="mb-4">
+                <PermissionsPanel roles={roles} setRoles={setRoles} />
+            </div>
 
             {/* Main Table Card */}
             <Card className="border-0 shadow-sm" style={{ borderRadius: 14 }}>
@@ -803,16 +751,15 @@ const SuperAdminPage = () => {
                 <Tabs activeKey={activeTab} onSelect={k => { setActiveTab(k); clearSelection(); }} className="px-3 pt-2 border-0" style={{ borderBottom: '1px solid #dee2e6' }}>
                     {[
                         { k: 'all',        label: 'All' },
-                        { k: 'superadmin', label: 'Super Admin' },
-                        { k: 'admin',      label: 'Admin' },
-                        { k: 'demo',       label: 'Demo' },
+                        ...roles.map(r => ({ k: r.name, label: r.label })),
                         { k: 'disabled',   label: 'Disabled' },
                     ].map(t => (
                         <Tab key={t.k} eventKey={t.k} title={
-                            <span>{t.label} <Badge bg="secondary" className="ms-1 small">{counts[t.k]}</Badge></span>
+                            <span>{t.label} <Badge bg="secondary" className="ms-1 small">{counts[t.k] || 0}</Badge></span>
                         } />
                     ))}
                 </Tabs>
+
 
                 <Card.Body className="p-0">
                     {loading ? (
@@ -870,7 +817,8 @@ const SuperAdminPage = () => {
                                                 <div className="d-flex align-items-center gap-2">
                                                     <div style={{
                                                         width: 34, height: 34, borderRadius: '50%',
-                                                        background: `var(--bs-${roleColor(admin.role)})`,
+                                                        background: `var(--bs-${getRole(admin.role).color})`,
+
                                                         color: '#fff', display: 'flex', alignItems: 'center',
                                                         justifyContent: 'center', fontSize: 13, fontWeight: 700,
                                                         flexShrink: 0
@@ -896,11 +844,11 @@ const SuperAdminPage = () => {
                                                             <Spinner animation="border" size="sm" variant="primary" style={{ borderSize: '1px' }} />
                                                         </div>
                                                     )}
-                                                    {ROLES.map(r => (
+                                                    {roles.map(r => (
                                                         <Form.Check
-                                                            key={r.value}
+                                                            key={r.name}
                                                             type="radio"
-                                                            id={`role-${admin.id}-${r.value}`}
+                                                            id={`role-${admin.id}-${r.name}`}
                                                             name={`role-${admin.id}`}
                                                             disabled={processingRow === admin.id}
                                                             label={
@@ -908,8 +856,8 @@ const SuperAdminPage = () => {
                                                                     <Badge bg={r.color} style={{ fontSize: '0.65rem' }}>{r.label}</Badge>
                                                                 </span>
                                                             }
-                                                            checked={admin.role === r.value}
-                                                            onChange={() => handleRoleChange(admin, r.value)}
+                                                            checked={admin.role === r.name}
+                                                            onChange={() => handleRoleChange(admin, r.name)}
                                                         />
                                                     ))}
                                                 </div>
@@ -1050,37 +998,25 @@ const SuperAdminPage = () => {
                         {/* Role — Radio Buttons */}
                         <Form.Group className="mb-3">
                             <Form.Label className="small fw-semibold mb-2">
-                                <Shield size={13} className="me-1" />Role
+                                <Shield size={13} className="me-1" />Access Role
                             </Form.Label>
-                            <div className="d-flex flex-column gap-2">
-                                {ROLES.map(r => (
-                                    <label
-                                        key={r.value}
-                                        htmlFor={`modal-role-${r.value}`}
-                                        style={{
-                                            display: 'flex', alignItems: 'flex-start', gap: 10,
-                                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-                                            border: `2px solid ${form.role === r.value ? `var(--bs-${r.color})` : '#dee2e6'}`,
-                                            background: form.role === r.value ? `var(--bs-${r.color})15` : '#fff',
-                                            transition: 'all 0.15s'
-                                        }}
-                                    >
+                            <div className="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 border">
+                                {roles.map(r => (
+                                    <div key={r.id} className="cursor-pointer" onClick={() => setForm({ ...form, role: r.name })}>
                                         <Form.Check
                                             type="radio"
-                                            id={`modal-role-${r.value}`}
-                                            name="modal-role"
-                                            value={r.value}
-                                            checked={form.role === r.value}
-                                            onChange={() => setForm({ ...form, role: r.value })}
-                                            className="mt-1"
+                                            name="role"
+                                            id={`form-role-${r.name}`}
+                                            label={
+                                                <div className="ms-1">
+                                                    <Badge bg={r.color} className="d-block mb-1">{r.label}</Badge>
+                                                    <div className="text-muted" style={{ fontSize: '0.65rem', maxWidth: 140 }}>{r.description || 'Custom role.'}</div>
+                                                </div>
+                                            }
+                                            checked={form.role === r.name}
+                                            onChange={() => setForm({ ...form, role: r.name })}
                                         />
-                                        <div>
-                                            <div>
-                                                <Badge bg={r.color} className="me-1">{r.label}</Badge>
-                                            </div>
-                                            <small className="text-muted">{r.desc}</small>
-                                        </div>
-                                    </label>
+                                    </div>
                                 ))}
                             </div>
                         </Form.Group>
@@ -1117,15 +1053,15 @@ const SuperAdminPage = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="d-flex flex-column gap-2">
-                        {ROLES.map(r => (
+                        {roles.map(r => (
                             <Form.Check
-                                key={r.value}
+                                key={r.name}
                                 type="radio"
-                                id={`bulk-role-${r.value}`}
+                                id={`bulk-role-${r.name}`}
                                 name="bulk-role"
                                 label={<Badge bg={r.color}>{r.label}</Badge>}
-                                onChange={() => setBulkRole(r.value)}
-                                checked={bulkRole === r.value}
+                                onChange={() => setBulkRole(r.name)}
+                                checked={bulkRole === r.name}
                             />
                         ))}
                     </div>
@@ -1147,14 +1083,14 @@ const SuperAdminPage = () => {
                     />
                     <AdminDetailPanel
                         admin={detailAdmin}
+                        roles={roles}
                         onClose={() => setDetailAdmin(null)}
                         onEdit={openEdit}
                         onDelete={handleDelete}
                     />
                 </>
             )}
-            {/* ── Permissions Matrix ─────────────────────────────────────── */}
-            <PermissionsPanel />
+
 
             <style jsx global>{`
                 .permission-row:hover { background: #f8f9fa; }

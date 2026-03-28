@@ -101,28 +101,50 @@ const Footer = () => {
                 </span>
               )}
             </Link>
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center flex-wrap gap-4 mt-2">
               {settings.social_facebook && (
-                <a href={settings.social_facebook} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href={settings.social_facebook} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="Facebook">
                   <Icons.Facebook className="w-4 h-4" />
                 </a>
               )}
               {settings.social_twitter && (
-                <a href={settings.social_twitter} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href={settings.social_twitter} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="Twitter/X">
                   <Icons.Twitter className="w-4 h-4" />
                 </a>
               )}
               {settings.social_instagram && (
-                <a href={settings.social_instagram} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href={settings.social_instagram} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="Instagram">
                   <Icons.Instagram className="w-4 h-4" />
                 </a>
               )}
               {settings.social_linkedin && (
-                <a href={settings.social_linkedin} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href={settings.social_linkedin} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="LinkedIn">
                   <Icons.Linkedin className="w-4 h-4" />
                 </a>
               )}
+              {settings.social_whatsapp && (
+                <a href={settings.social_whatsapp} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="WhatsApp">
+                  <Icons.MessageCircle className="w-4 h-4" />
+                </a>
+              )}
+              {settings.social_youtube && (
+                <a href={settings.social_youtube} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="YouTube">
+                  <Icons.Youtube className="w-4 h-4" />
+                </a>
+              )}
+              {(() => {
+                try {
+                  const extra = settings.social_custom_links ? (typeof settings.social_custom_links === 'string' ? JSON.parse(settings.social_custom_links) : settings.social_custom_links) : [];
+                  return Array.isArray(extra) ? extra.map((link: any, idx: number) => (
+                    <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1" title={link.label}>
+                      <Icons.Link className="w-3.5 h-3.5" />
+                      <span className="text-[10px] uppercase tracking-tighter font-mono-label">{link.label}</span>
+                    </a>
+                  )) : null;
+                } catch { return null; }
+              })()}
             </div>
+
           </div>
           <span className="font-mono-label text-xs text-muted-foreground text-center md:text-right" dangerouslySetInnerHTML={{ __html: settings.footer_copyright }}></span>
         </div>

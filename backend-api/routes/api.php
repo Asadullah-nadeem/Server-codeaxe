@@ -255,9 +255,13 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
 
     // ─── Role Permissions (Admin/Demo access matrix) ───
     Route::get('/admin/permissions',          [PermissionController::class, 'index']);
-    Route::post('/admin/permissions',         [PermissionController::class, 'upsert']);
     Route::post('/admin/permissions/bulk',    [PermissionController::class, 'bulkUpsert']);
     Route::post('/admin/permissions/reset',   [PermissionController::class, 'reset']);
+
+    // ─── Custom Role Management ───
+    Route::get('/admin/roles',                [PermissionController::class, 'listRoles']);
+    Route::post('/admin/roles',               [PermissionController::class, 'upsertRole']);
+    Route::delete('/admin/roles/{id}',        [PermissionController::class, 'deleteRole']);
 
     // ─── System Connection Settings ───
     Route::get('/admin/system/connections', [SystemSettingsController::class, 'index']);

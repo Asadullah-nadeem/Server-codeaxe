@@ -40,7 +40,9 @@ const RewritesCMS = () => {
         seo_google_search_console_id: '', site_founder_name: '', site_founder_message: '',
         site_logo_url: '', site_name_prefix: '', site_name_accent: '',
         site_favicon_url: '', site_apple_icon_url: '', site_footer_logo_url: '', seo_keywords: '',
-        social_facebook: '', social_instagram: '', social_linkedin: '', social_twitter: ''
+        social_facebook: '', social_instagram: '', social_linkedin: '', social_twitter: '',
+        social_whatsapp: '', social_youtube: '', 
+        social_custom_links: [] // Handled as array locally
     });
 
     // ── Section Visibility ──
@@ -136,10 +138,14 @@ const RewritesCMS = () => {
             fetchAll();
         } catch { alert('Failed to delete rule.'); }
     };
-
     // ── Settings handlers ──────────────────────────────────────────────────
     const handleSettingsShow = () => {
+        const safeParse = (str) => {
+            try { return str ? JSON.parse(str) : []; } catch { return []; }
+        };
+
         setSettingsForm({
+            ...settingsForm, // preservation
             seo_title: settings.seo_title || '',
             seo_description: settings.seo_description || '',
             seo_google_analytics_id: settings.seo_google_analytics_id || '',
@@ -157,6 +163,9 @@ const RewritesCMS = () => {
             social_instagram: settings.social_instagram || '',
             social_linkedin: settings.social_linkedin || '',
             social_twitter: settings.social_twitter || '',
+            social_whatsapp: settings.social_whatsapp || '',
+            social_youtube: settings.social_youtube || '',
+            social_custom_links: Array.isArray(safeParse(settings.social_custom_links)) ? safeParse(settings.social_custom_links) : [],
         });
         setShowSettingsModal(true);
     };
@@ -164,7 +173,11 @@ const RewritesCMS = () => {
     const handleSettingsSubmit = async (e) => {
         e.preventDefault();
         try {
-            await fetchApi('/admin/nav/settings', { method: 'PUT', body: JSON.stringify(settingsForm) });
+            const payload = { 
+                ...settingsForm, 
+                social_custom_links: JSON.stringify(settingsForm.social_custom_links || []) 
+            };
+            await fetchApi('/admin/nav/settings', { method: 'PUT', body: JSON.stringify(payload) });
             setShowSettingsModal(false);
             fetchAll();
         } catch { alert('Failed to save SEO settings.'); }
@@ -239,10 +252,27 @@ const RewritesCMS = () => {
                                     </div>
                                 </Col>
                                 <Col md={4} className="mb-3">
-                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Founder Hub</h6>
+                                    <h6 className="text-muted text-uppercase mb-2" style={{ fontSize: '0.75rem' }}>Social Media Connect</h6>
                                     <div className="bg-light p-3 rounded border">
-                                        <p className="mb-1 fw-bold">{settings.site_founder_name || 'No Founder Name'}</p>
-                                        <p className="mb-0 text-muted small italic" style={{ fontSize: '0.7rem' }}>&quot;{settings.site_founder_message || 'No quote set.'}&quot;</p>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {settings.social_facebook && <Badge bg="primary" style={{ fontSize: '0.65rem' }}>Facebook</Badge>}
+                                            {settings.social_instagram && <Badge bg="danger" style={{ fontSize: '0.65rem' }}>Instagram</Badge>}
+                                            {settings.social_linkedin && <Badge bg="info" style={{ fontSize: '0.65rem' }}>LinkedIn</Badge>}
+                                            {settings.social_twitter && <Badge bg="dark" style={{ fontSize: '0.65rem' }}>Twitter/X</Badge>}
+                                            {settings.social_whatsapp && <Badge bg="success" style={{ fontSize: '0.65rem' }}>WhatsApp</Badge>}
+                                            {settings.social_youtube && <Badge bg="danger" style={{ fontSize: '0.65rem' }}>YouTube</Badge>}
+                                            {(() => {
+                                                try {
+                                                    const extra = settings.social_custom_links ? JSON.parse(settings.social_custom_links) : [];
+                                                    return Array.isArray(extra) ? extra.map((link, idx) => (
+                                                        <Badge key={idx} bg="secondary" style={{ fontSize: '0.65rem' }}>{link.label}</Badge>
+                                                    )) : null;
+                                                } catch { return null; }
+                                            })()}
+                                            {(!settings.social_facebook && !settings.social_instagram && !settings.social_linkedin && !settings.social_twitter && !settings.social_whatsapp && !settings.social_youtube && !settings.social_custom_links) && 
+                                                <span className="text-muted small italic" style={{ fontSize: '0.7rem' }}>No social links connected.</span>
+                                            }
+                                        </div>
                                     </div>
                                 </Col>
                             </Row>
@@ -483,15 +513,7 @@ const RewritesCMS = () => {
                             </Col>
                         </Row>
 
-                        <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Founder Insight</h6>
-                        <Form.Group className="mb-3">
-                            <Form.Label className="small fw-bold">Founder Display Name</Form.Label>
-                            <Form.Control type="text" value={settingsForm.site_founder_name} onChange={e => setSettingsForm({ ...settingsForm, site_founder_name: e.target.value })} placeholder="Asadullah Nadeem" />
-                        </Form.Group>
-                        <Form.Group className="mb-4">
-                            <Form.Label className="small fw-bold">Leadership Message</Form.Label>
-                            <Form.Control as="textarea" rows={2} value={settingsForm.site_founder_message} onChange={e => setSettingsForm({ ...settingsForm, site_founder_message: e.target.value })} />
-                        </Form.Group>
+
 
                         <h6 className="mt-4 mb-3 text-primary border-bottom pb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.1em' }}>Social Media Connect</h6>
                         <Row>
@@ -522,6 +544,76 @@ const RewritesCMS = () => {
                                 </Form.Group>
                             </Col>
                         </Row>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">WhatsApp URL/Number</Form.Label>
+                                    <Form.Control type="text" value={settingsForm.social_whatsapp} onChange={e => setSettingsForm({ ...settingsForm, social_whatsapp: e.target.value })} placeholder="https://wa.me/..." />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label className="small fw-bold">YouTube Channel URL</Form.Label>
+                                    <Form.Control type="url" value={settingsForm.social_youtube} onChange={e => setSettingsForm({ ...settingsForm, social_youtube: e.target.value })} placeholder="https://youtube.com/..." />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <div className="mt-3 p-3 bg-light rounded border">
+                            <h6 className="small fw-bold mb-3 d-flex justify-content-between align-items-center">
+                                CUSTOM SOCIAL / EXTRA LINKS
+                                <Button 
+                                    size="sm" 
+                                    variant="outline-primary" 
+                                    onClick={() => setSettingsForm({ 
+                                        ...settingsForm, 
+                                        social_custom_links: [...(settingsForm.social_custom_links || []), { label: '', url: '' }] 
+                                    })}
+                                >+ Add Link</Button>
+                            </h6>
+                            {(settingsForm.social_custom_links || []).map((link, idx) => (
+                                <Row key={idx} className="mb-2 g-2 align-items-end">
+                                    <Col md={4}>
+                                        <Form.Group>
+                                            <Form.Label className="x-small text-muted mb-1">Label (e.g. GitHub)</Form.Label>
+                                            <Form.Control 
+                                                size="sm" type="text" value={link.label} 
+                                                onChange={e => {
+                                                    const newList = (settingsForm.social_custom_links || []).map((item, i) => 
+                                                        i === idx ? { ...item, label: e.target.value } : item
+                                                    );
+                                                    setSettingsForm({ ...settingsForm, social_custom_links: newList });
+                                                }}
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={6}>
+                                        <Form.Group>
+                                            <Form.Label className="x-small text-muted mb-1">URL</Form.Label>
+                                            <Form.Control 
+                                                size="sm" type="url" value={link.url} 
+                                                onChange={e => {
+                                                    const newList = (settingsForm.social_custom_links || []).map((item, i) => 
+                                                        i === idx ? { ...item, url: e.target.value } : item
+                                                    );
+                                                    setSettingsForm({ ...settingsForm, social_custom_links: newList });
+                                                }}
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={2}>
+                                        <Button 
+                                            size="sm" variant="outline-danger" className="w-100"
+                                            onClick={() => {
+                                                const newList = settingsForm.social_custom_links.filter((_, i) => i !== idx);
+                                                setSettingsForm({ ...settingsForm, social_custom_links: newList });
+                                            }}
+                                        >Remove</Button>
+                                    </Col>
+                                </Row>
+                            ))}
+                            {(settingsForm.social_custom_links || []).length === 0 && <p className="text-muted text-center py-2 small mb-0">No custom links added yet.</p>}
+                        </div>
                     </Modal.Body>
                     <Modal.Footer className="bg-light">
                         <Button variant="secondary" onClick={() => setShowSettingsModal(false)}>Cancel</Button>
@@ -599,15 +691,31 @@ const RewritesCMS = () => {
                                                 style={{transition: 'transform 0.2s', border: settingsForm[activeField] === m.path ? '2px solid #0d6efd !important' : 'none'}}
                                             >
                                                 <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                                    <Image 
-                                                        src={m.path} 
-                                                        alt={m.file_name} 
-                                                        width={100} 
-                                                        height={100}
-                                                        className="mw-100 mh-100 object-fit-contain" 
-                                                        unoptimized
-                                                    />
+                                                    {['mp4', 'mov', 'avi', 'wmv', 'webm', 'mpeg'].includes(m.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                        <video 
+                                                            src={m.path} 
+                                                            className="mw-100 mh-100 object-fit-contain"
+                                                            muted
+                                                            onMouseOver={e => e.target.play()}
+                                                            onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                        />
+                                                    ) : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(m.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                        <Image 
+                                                            src={m.path} 
+                                                            alt={m.file_name} 
+                                                            width={100} 
+                                                            height={100}
+                                                            className="mw-100 mh-100 object-fit-contain" 
+                                                            unoptimized
+                                                        />
+                                                    ) : (
+                                                        <div className="text-center p-3 text-muted">
+                                                            <i className="fe fe-file fs-4 opacity-50 d-block mb-1"></i>
+                                                            <div className="fw-bold text-uppercase" style={{fontSize: 9}}>{m.file_name?.split('.').pop()}</div>
+                                                        </div>
+                                                    )}
                                                 </div>
+
                                                 <Card.Body className="p-2 text-center">
                                                     <div className="text-truncate x-small fw-bold">{m.file_name}</div>
                                                 </Card.Body>

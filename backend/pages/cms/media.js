@@ -62,7 +62,7 @@ const MediaCMS = () => {
                 setPreviewUrl(null);
                 setSelectedFile(null);
             } else { alert(data?.message || 'Upload failed.'); }
-        } catch (error) { alert('Upload error occurred. Check your cloud credentials.'); }
+        } catch (error) { alert(`Upload error: ${error.message}`); }
         finally { setUploading(false); }
     };
 
@@ -163,14 +163,29 @@ const MediaCMS = () => {
                                 <Card className={`h-100 border shadow-sm ${item.status === 0 ? 'bg-light border-danger border-opacity-25' : ''}`}>
                                     <div className="p-1">
                                         <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border position-relative">
-                                            <Image 
-                                                src={item.path} 
-                                                alt={item.file_name} 
-                                                width={200}
-                                                height={140}
-                                                className="mw-100 mh-100 object-fit-contain" 
-                                                unoptimized
-                                            />
+                                            {['mp4', 'mov', 'avi', 'wmv', 'webm'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                <video 
+                                                    src={item.path} 
+                                                    className="mw-100 mh-100 object-fit-contain"
+                                                    muted
+                                                    onMouseOver={e => e.target.play()}
+                                                    onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                />
+                                            ) : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                <Image 
+                                                    src={item.path} 
+                                                    alt={item.file_name} 
+                                                    width={200}
+                                                    height={140}
+                                                    className="mw-100 mh-100 object-fit-contain" 
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <div className="text-center p-3 text-muted">
+                                                    <Files size={40} className="mb-2 opacity-25" />
+                                                    <div className="x-small fw-bold text-uppercase">{item.file_name?.split('.').pop()} FILE</div>
+                                                </div>
+                                            )}
                                             {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)', zIndex: 1}}><Badge bg="danger">IN TRASH</Badge></div>}
                                         </div>
                                     </div>
@@ -220,22 +235,39 @@ const MediaCMS = () => {
                     <Modal.Body className="p-4">
                         <div className="border border-dashed p-5 text-center mb-3 bg-light cursor-pointer rounded-3" onClick={() => !uploading && document.getElementById('fileInput').click()}>
                             {previewUrl ? (
-                                <Image 
-                                    src={previewUrl} 
-                                    className="rounded shadow-sm mw-100 mb-2" 
-                                    style={{maxHeight: '200px', width: 'auto'}} 
-                                    alt="Preview" 
-                                    width={300}
-                                    height={200}
-                                    unoptimized
-                                />
+                                <div>
+                                    {selectedFile?.type?.startsWith('video/') ? (
+                                        <video 
+                                            src={previewUrl} 
+                                            className="rounded shadow-sm mw-100 mb-2" 
+                                            style={{maxHeight: '200px', width: 'auto'}} 
+                                            controls
+                                        />
+                                    ) : selectedFile?.type?.startsWith('image/') ? (
+                                        <Image 
+                                            src={previewUrl} 
+                                            className="rounded shadow-sm mw-100 mb-2" 
+                                            style={{maxHeight: '200px', width: 'auto'}} 
+                                            alt="Preview" 
+                                            width={300}
+                                            height={200}
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <div className="text-center p-3">
+                                             <Files size={40} className="text-primary mb-2 opacity-50" />
+                                             <p className="mb-0 small fw-bold text-muted">{selectedFile?.name}</p>
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <div>
                                     <CloudUpload size={40} className="text-primary mb-2 opacity-50" />
                                     <p className="mb-0 small fw-bold text-muted">Click to browse your device</p>
+                                    <small className="text-muted d-block mt-1 x-small">(Supports Image, Video, PDF, ZIP up to 50MB)</small>
                                 </div>
                             )}
-                            <input type="file" id="fileInput" hidden onChange={handleFileChange} accept="image/*" />
+                            <input type="file" id="fileInput" hidden onChange={handleFileChange} accept="image/*,video/*,.pdf,.zip" />
                         </div>
 
                         <Form.Group className="mb-3">

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PermissionController extends Controller
+
 {
     // ─── All known section keys ──────────────────────────────────────────────
     private const SECTION_KEYS = [
@@ -17,150 +19,150 @@ class PermissionController extends Controller
         'registered_users', 'admin_accounts', 'superadmin',
     ];
 
-    // ─── GET /admin/permissions ──────────────────────────────────────────────
-    // Returns a structured map: { admin: { section_key: {view,create,edit,delete} }, demo: {...} }
+    // ─── GET /api/admin/permissions ───────────────────────────────────────────
     public function index()
     {
         try {
-            $rows = DB::table('role_permissions')
-                ->whereIn('role', ['admin', 'demo'])
-                ->get();
+            $roles = DB::table('admin_roles')->get();
+            $perms = DB::table('role_permissions')->get();
 
-            $map = ['admin' => [], 'demo' => []];
-
-            foreach ($rows as $row) {
-                $map[$row->role][$row->section_key] = [
-                    'view'   => (bool) $row->can_view,
-                    'create' => (bool) $row->can_create,
-                    'edit'   => (bool) $row->can_edit,
-                    'delete' => (bool) $row->can_delete,
-                ];
+            $map = [];
+            foreach ($roles as $role) {
+                $map[$role->name] = [];
             }
 
-            // Fill in defaults for any missing keys (view=true for admin/demo, rest=false)
-            foreach (['admin', 'demo'] as $role) {
+            foreach ($perms as $p) {
+                if (isset($map[$p->role])) {
+                    $map[$p->role][$p->section_key] = [
+                        'view'   => (bool) $p->can_view,
+                        'create' => (bool) $p->can_create,
+                        'edit'   => (bool) $p->can_edit,
+                        'delete' => (bool) $p->can_delete,
+                    ];
+                }
+            }
+
+            // Fill empty sections with defaults
+            foreach ($roles as $role) {
+                $rName = $role->name;
                 foreach (self::SECTION_KEYS as $key) {
-                    if (!isset($map[$role][$key])) {
-                        // Determine sensible defaults: user_management sections default to 0
-                        $isUmSection = in_array($key, ['registered_users', 'admin_accounts', 'superadmin']);
-                        $map[$role][$key] = [
-                            'view'   => !$isUmSection,
-                            'create' => $role === 'admin' && !$isUmSection,
-                            'edit'   => $role === 'admin' && !$isUmSection,
-                            'delete' => $role === 'admin' && !$isUmSection,
+                    if (!isset($map[$rName][$key])) {
+                        $isUm = in_array($key, ['registered_users', 'admin_accounts', 'superadmin']);
+                        // Super admin always has full defaults, Admin has full non-UM, others (demo) have view-only
+                        $full = ($rName === 'superadmin' || ($rName === 'admin' && !$isUm));
+                        $map[$rName][$key] = [
+                            'view'   => $rName === 'superadmin' ? true : !$isUm,
+                            'create' => $full,
+                            'edit'   => $full,
+                            'delete' => $full,
                         ];
                     }
                 }
             }
 
-            return response()->json(['success' => true, 'data' => $map]);
+            return response()->json(['success' => true, 'data' => $map, 'roles' => $roles]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    // ─── POST /admin/permissions ─────────────────────────────────────────────
-    // Upsert a single section permission for a role.
-    // Body: { role, section_key, can_view, can_create, can_edit, can_delete }
-    public function upsert(Request $request)
-    {
-        $request->validate([
-            'role'        => 'required|in:admin,demo',
-            'section_key' => 'required|string|max:100',
-            'can_view'    => 'required|boolean',
-            'can_create'  => 'required|boolean',
-            'can_edit'    => 'required|boolean',
-            'can_delete'  => 'required|boolean',
-        ]);
-
-        try {
-            $existing = DB::table('role_permissions')
-                ->where('role', $request->role)
-                ->where('section_key', $request->section_key)
-                ->first();
-
-            $payload = [
-                'can_view'   => $request->can_view   ? 1 : 0,
-                'can_create' => $request->can_create ? 1 : 0,
-                'can_edit'   => $request->can_edit   ? 1 : 0,
-                'can_delete' => $request->can_delete ? 1 : 0,
-                'updated_at' => now(),
-            ];
-
-            if ($existing) {
-                DB::table('role_permissions')
-                    ->where('id', $existing->id)
-                    ->update($payload);
-            } else {
-                DB::table('role_permissions')->insert(array_merge([
-                    'role'        => $request->role,
-                    'section_key' => $request->section_key,
-                    'created_at'  => now(),
-                ], $payload));
-            }
-
-            return response()->json(['success' => true, 'message' => 'Permission updated.']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    // ─── POST /admin/permissions/bulk ────────────────────────────────────────
-    // Save all permissions for a role at once.
-    // Body: { role, permissions: { section_key: { view, create, edit, delete }, ... } }
+    // ─── POST /api/admin/permissions/bulk ────────────────────────────────────
     public function bulkUpsert(Request $request)
     {
         $request->validate([
-            'role'        => 'required|in:admin,demo',
+            'role'        => 'required|string|exists:admin_roles,name',
             'permissions' => 'required|array',
         ]);
 
         try {
             foreach ($request->permissions as $sectionKey => $perm) {
-                $payload = [
-                    'can_view'   => !empty($perm['view'])   ? 1 : 0,
-                    'can_create' => !empty($perm['create']) ? 1 : 0,
-                    'can_edit'   => !empty($perm['edit'])   ? 1 : 0,
-                    'can_delete' => !empty($perm['delete']) ? 1 : 0,
-                    'updated_at' => now(),
-                ];
-
-                $exists = DB::table('role_permissions')
-                    ->where('role', $request->role)
-                    ->where('section_key', $sectionKey)
-                    ->exists();
-
-                if ($exists) {
-                    DB::table('role_permissions')
-                        ->where('role', $request->role)
-                        ->where('section_key', $sectionKey)
-                        ->update($payload);
-                } else {
-                    DB::table('role_permissions')->insert(array_merge([
-                        'role'        => $request->role,
-                        'section_key' => $sectionKey,
-                        'created_at'  => now(),
-                    ], $payload));
-                }
+                DB::table('role_permissions')->updateOrInsert(
+                    ['role' => $request->role, 'section_key' => $sectionKey],
+                    [
+                        'can_view'   => !empty($perm['view'])   ? 1 : 0,
+                        'can_create' => !empty($perm['create']) ? 1 : 0,
+                        'can_edit'   => !empty($perm['edit'])   ? 1 : 0,
+                        'can_delete' => !empty($perm['delete']) ? 1 : 0,
+                        'updated_at' => now(),
+                    ]
+                );
             }
-
-            return response()->json(['success' => true, 'message' => 'All permissions saved.']);
+            return response()->json(['success' => true, 'message' => "Permissions for '{$request->role}' updated."]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    // ─── POST /admin/permissions/reset ──────────────────────────────────────
-    // Resets a role's permissions back to system defaults.
+    // ─── POST /api/admin/permissions/reset ───────────────────────────────────
     public function reset(Request $request)
     {
-        $request->validate(['role' => 'required|in:admin,demo']);
-
+        $request->validate(['role' => 'required|string|exists:admin_roles,name']);
         try {
             DB::table('role_permissions')->where('role', $request->role)->delete();
             return response()->json(['success' => true, 'message' => "Permissions for '{$request->role}' reset to defaults."]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    // ─── Custom Role Management ──────────────────────────────────────────────
+
+    public function listRoles()
+    {
+        $roles = DB::table('admin_roles')->orderBy('id')->get();
+        return response()->json(['success' => true, 'data' => $roles]);
+    }
+
+    public function upsertRole(Request $request)
+    {
+        $request->validate([
+            'id'          => 'sometimes|nullable|integer',
+            'name'        => 'required|string|max:50|unique:admin_roles,name,' . ($request->id ?? 'NULL'),
+            'label'       => 'required|string|max:100',
+            'color'       => 'required|string|max:20',
+            'description' => 'nullable|string',
+        ]);
+
+        $payload = [
+            'name'        => Str::slug($request->name),
+            'label'       => $request->label,
+            'color'       => $request->color,
+            'description' => $request->description,
+            'updated_at'  => now(),
+        ];
+
+        if ($request->id) {
+            DB::table('admin_roles')->where('id', $request->id)->update($payload);
+            $msg = "Role '{$request->label}' updated.";
+        } else {
+            $payload['created_at'] = now();
+            DB::table('admin_roles')->insert($payload);
+            $msg = "New role '{$request->label}' created.";
+        }
+
+        return response()->json(['success' => true, 'message' => $msg]);
+    }
+
+    public function deleteRole($id)
+    {
+        $role = DB::table('admin_roles')->where('id', $id)->first();
+        if (!$role) return response()->json(['success' => false, 'message' => 'Role not found.'], 404);
+        
+        if (in_array($role->name, ['superadmin', 'admin', 'demo'])) {
+            return response()->json(['success' => false, 'message' => 'System roles cannot be deleted.'], 403);
+        }
+
+        DB::transaction(function() use ($id, $role) {
+            DB::table('role_permissions')->where('role', $role->name)->delete();
+            DB::table('admin_roles')->where('id', $id)->delete();
+            // Optional: Re-assign admins with this role to 'admin'? 
+            // Or just let it break/handle manually. Better to block if users exist.
+            $count = DB::table('admins')->where('role', $role->name)->count();
+            if ($count > 0) {
+                throw new \Exception("Cannot delete role: It is assigned to {$count} admin(s).");
+            }
+        });
+
+        return response()->json(['success' => true, 'message' => "Role '{$role->label}' removed."]);
     }
 }

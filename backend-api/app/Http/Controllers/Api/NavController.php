@@ -147,7 +147,10 @@ class NavController extends Controller
             'social_facebook',
             'social_instagram',
             'social_linkedin',
-            'social_twitter'
+            'social_twitter',
+            'social_whatsapp',
+            'social_youtube',
+            'social_custom_links'
         ]);
 
         foreach ($settings as $key => $value) {

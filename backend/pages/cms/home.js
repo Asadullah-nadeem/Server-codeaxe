@@ -552,15 +552,31 @@ const HomeCMS = () => {
                                         style={{transition: 'transform 0.2s'}}
                                     >
                                         <div style={{height:'100px'}} className="bg-light d-flex align-items-center justify-content-center overflow-hidden rounded-3 border">
-                                            <Image 
-                                                src={m.path} 
-                                                alt={m.file_name} 
-                                                width={100}
-                                                height={100}
-                                                className="mw-100 mh-100 object-fit-contain" 
-                                                unoptimized
-                                            />
+                                            {['mp4', 'mov', 'avi', 'wmv', 'webm', 'mpeg'].includes(m.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                <video 
+                                                    src={m.path} 
+                                                    className="mw-100 mh-100 object-fit-contain"
+                                                    muted
+                                                    onMouseOver={e => e.target.play()}
+                                                    onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                />
+                                            ) : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(m.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                <Image 
+                                                    src={m.path} 
+                                                    alt={m.file_name} 
+                                                    width={100} 
+                                                    height={100}
+                                                    className="mw-100 mh-100 object-fit-contain" 
+                                                    unoptimized
+                                                />
+                                            ) : (
+                                                <div className="text-center p-3 text-muted">
+                                                    <i className="fe fe-file fs-4 opacity-50 d-block mb-1"></i>
+                                                    <div className="fw-bold text-uppercase" style={{fontSize: 9}}>{m.file_name?.split('.').pop()}</div>
+                                                </div>
+                                            )}
                                         </div>
+
                                         <Card.Body className="p-2 text-center">
                                             <div className="text-truncate x-small fw-bold">{m.file_name}</div>
                                         </Card.Body>

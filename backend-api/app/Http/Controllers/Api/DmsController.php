@@ -7,6 +7,7 @@ use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -90,7 +91,7 @@ class DmsController extends Controller
         $baseUrl = $this->getMediaBaseUrl();
         $proxyEnabled = $this->isProxyEnabled();
         $images = Media::orderByDesc('uploaded_at')->get();
-        
+
         foreach ($images as $img) {
             $img->path = $proxyEnabled ? $baseUrl . "/{$img->slug}/{$img->id}" : $img->url;
         }
@@ -101,11 +102,24 @@ class DmsController extends Controller
     // ─── POST /api/dms/media – upload new file ────────────
     public function store(Request $request)
     {
+        // Debugging logs for the "Failed to upload" error
+        if (!$request->hasFile('photo')) {
+            $errCode = $_FILES['photo']['error'] ?? 'NONE_IN_FILES';
+            Log::error("Media Upload Debug: 'photo' field missing or has error. Error Code: " . $errCode);
+            if ($errCode == 1 || $errCode == 2) {
+                return response()->json(['success' => false, 'message' => 'The file is too LARGE for your PHP settings. Increase upload_max_filesize in php.ini.'], 422);
+            }
+        }
+
         $request->validate([
-            'photo'            => 'required|image|max:5120', // 5 MB max
+            'photo'            => 'required|file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv,webp,pdf,zip,ico,mpeg,webm,avif|max:51200', // 50 MB max
             'storage_provider' => 'required|in:imagekit,s3',
             'username'         => 'required|string|max:50',
+        ], [
+            'photo.mimes' => 'The file type you selected is not supported. Please use images, videos (MP4, MOV, etc), PDF, or ZIP.',
+            'photo.max'   => 'The file is too large! Maximum allowed size is 50MB.',
         ]);
+
 
         $provider   = $request->input('storage_provider') ?? $request->attributes->get('dms_key_provider') ?? 's3';
         $file       = $request->file('photo');
@@ -127,27 +141,46 @@ class DmsController extends Controller
                     return response()->json(['success' => false, 'message' => 'ImageKit credentials not configured in DB or .env.'], 500);
                 }
 
-                // Native Upload using HTTP instead of the missing SDK library
                 $response = Http::withBasicAuth($privKey, '')
                     ->attach('file', file_get_contents($file->getRealPath()), $randomName)
                     ->post('https://upload.imagekit.io/api/v1/files/upload', [
-                        'fileName'           => $randomName,
-                        'folder'             => $folder,
-                        'useUniqueFileName'  => 'false',
+                        'fileName'          => $randomName,
+                        'folder'            => $folder,
+                        'useUniqueFileName' => 'false',
                     ]);
 
                 if ($response->failed()) {
                     return response()->json(['success' => false, 'message' => 'ImageKit Upload failed: ' . $response->body()], 500);
                 }
 
-                $finalUrl = $response->json()['url'];
+                $finalUrl   = $response->json()['url'];
                 $provFileId = $response->json()['fileId'];
 
             } else { // s3
-                // For S3, we really need the flysystem-aws-s3-v3 package installed via composer.
-                // If it's missing, this will fail.
+                // Load S3 credentials from DB if available, otherwise fallback to .env
+                $s3Key    = $this->getProviderKey('s3', 'access_key_id')     ?? env('AWS_ACCESS_KEY_ID');
+                $s3Secret = $this->getProviderKey('s3', 'secret_access_key') ?? env('AWS_SECRET_ACCESS_KEY');
+                $s3Region = $this->getProviderKey('s3', 'default_region')    ?? env('AWS_DEFAULT_REGION');
+                $s3Bucket = $this->getProviderKey('s3', 'bucket')            ?? env('AWS_BUCKET');
+
+                if (!$s3Key || !$s3Secret || !$s3Region || !$s3Bucket) {
+                    return response()->json(['success' => false, 'message' => 'S3 credentials not fully configured in DB or .env.'], 500);
+                }
+
+                // Dynamically reconfigure the S3 disk
+                config([
+                    'filesystems.disks.s3.key'    => $s3Key,
+                    'filesystems.disks.s3.secret' => $s3Secret,
+                    'filesystems.disks.s3.region' => $s3Region,
+                    'filesystems.disks.s3.bucket' => $s3Bucket,
+                    'filesystems.disks.s3.url'    => $this->getProviderKey('s3', 'url')      ?? env('AWS_URL'),
+                    'filesystems.disks.s3.endpoint' => $this->getProviderKey('s3', 'endpoint') ?? env('AWS_ENDPOINT'),
+                    'filesystems.disks.s3.use_path_style_endpoint' => ($this->getProviderKey('s3', 'use_path_style_endpoint') === '1'),
+                    'filesystems.disks.s3.throw'  => true, 
+                ]);
+
                 Storage::disk('s3')->putFileAs($folder, $file, $randomName, 'private');
-                $finalUrl = $folder . '/' . $randomName;
+                $finalUrl   = $folder . '/' . $randomName;
                 $provFileId = $finalUrl;
             }
 
@@ -163,8 +196,8 @@ class DmsController extends Controller
             ]);
 
             // Generate local proxy URL (served from our own API) or raw
-            $proxyUrl = $this->isProxyEnabled() 
-                ? $this->getMediaBaseUrl() . '/' . $media->slug . '/' . $media->id 
+            $proxyUrl = $this->isProxyEnabled()
+                ? $this->getMediaBaseUrl() . '/' . $media->slug . '/' . $media->id
                 : $finalUrl;
             $media->update(['path' => $proxyUrl]);
 
@@ -248,7 +281,7 @@ class DmsController extends Controller
         try {
             if ($provider === 'imagekit') {
                 $privKey = $this->getProviderKey('imagekit', 'private_key') ?? env('IMAGEKIT_PRIVATE_KEY');
-                
+
                 // If we don't have fileId, try to find it by searching files with same name
                 if (!$fileId) {
                     $search = Http::withBasicAuth($privKey, '')
@@ -271,12 +304,6 @@ class DmsController extends Controller
 
             // Also delete from DB
             $media->delete();
-
-            // Note: media_logs might be deleted due to cascade, but if we want a record we should create one before delete
-            // However, after record is gone, the log might persist if no FK or if we handle it differently.
-            // In schema, it says: FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
-            // So logs will be gone. That's fine for permanent delete.
-
             return response()->json(['success' => true, 'message' => 'Media permanently deleted from storage and database.']);
 
         } catch (\Exception $e) {
@@ -406,9 +433,12 @@ class DmsController extends Controller
                 'AWS_SECRET_ACCESS_KEY' => env('AWS_SECRET_ACCESS_KEY'),
                 'AWS_DEFAULT_REGION'    => env('AWS_DEFAULT_REGION'),
                 'AWS_BUCKET'            => env('AWS_BUCKET'),
+                'AWS_BUCKET_RUNTIME'    => env('AWS_BUCKET_RUNTIME'),
+                'AWS_REGION_RUNTIME'    => env('AWS_REGION_RUNTIME'),
                 'IMAGEKIT_PUBLIC_KEY'   => env('IMAGEKIT_PUBLIC_KEY'),
                 'IMAGEKIT_PRIVATE_KEY'  => env('IMAGEKIT_PRIVATE_KEY'),
                 'IMAGEKIT_URL_ENDPOINT' => env('IMAGEKIT_URL_ENDPOINT'),
+                'MAX_UPLOAD_SIZE_MB'    => env('MAX_UPLOAD_SIZE_MB', 50),
             ]
         ]);
     }
