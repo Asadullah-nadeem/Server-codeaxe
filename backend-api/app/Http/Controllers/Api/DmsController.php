@@ -23,14 +23,35 @@ class DmsController extends Controller
         return $row ? $row->key_value : null;
     }
 
+    // ─── Helper: dynamically reconfigure S3 disk from DB ─────
+    private function configureS3Disk(): void
+    {
+        $s3Key    = $this->getProviderKey('s3', 'access_key_id')     ?? env('AWS_ACCESS_KEY_ID');
+        $s3Secret = $this->getProviderKey('s3', 'secret_access_key') ?? env('AWS_SECRET_ACCESS_KEY');
+        $s3Region = $this->getProviderKey('s3', 'default_region')    ?? env('AWS_DEFAULT_REGION');
+        $s3Bucket = $this->getProviderKey('s3', 'bucket')            ?? env('AWS_BUCKET');
+
+        config([
+            'filesystems.disks.s3.key'    => $s3Key,
+            'filesystems.disks.s3.secret' => $s3Secret,
+            'filesystems.disks.s3.region' => $s3Region,
+            'filesystems.disks.s3.bucket' => $s3Bucket,
+            'filesystems.disks.s3.url'    => $this->getProviderKey('s3', 'url')      ?? env('AWS_URL'),
+            'filesystems.disks.s3.endpoint' => $this->getProviderKey('s3', 'endpoint') ?? env('AWS_ENDPOINT'),
+            'filesystems.disks.s3.use_path_style_endpoint' => ($this->getProviderKey('s3', 'use_path_style_endpoint') === '1'),
+            'filesystems.disks.s3.throw'  => true, 
+        ]);
+    }
+
     // ─── Helper: stream a media file back to browser ──────
     private function streamMedia(Media $media): \Illuminate\Http\Response
     {
         if ($media->provider === 's3') {
             try {
+                $this->configureS3Disk();
                 $url = Storage::disk('s3')->temporaryUrl($media->url, now()->addMinutes(30));
             } catch (\Exception $e) {
-                abort(404, 'S3 URL generation failed.');
+                abort(404, 'S3 URL generation failed: ' . $e->getMessage());
             }
         } else {
             $url = $media->url; // ImageKit public URL
@@ -38,7 +59,7 @@ class DmsController extends Controller
 
         $response = Http::get($url);
         if ($response->failed()) {
-            abort(404, 'Media not found at provider.');
+            abort(404, 'Media not found at provider. Source: ' . $url);
         }
 
         return response($response->body())
@@ -157,28 +178,7 @@ class DmsController extends Controller
                 $provFileId = $response->json()['fileId'];
 
             } else { // s3
-                // Load S3 credentials from DB if available, otherwise fallback to .env
-                $s3Key    = $this->getProviderKey('s3', 'access_key_id')     ?? env('AWS_ACCESS_KEY_ID');
-                $s3Secret = $this->getProviderKey('s3', 'secret_access_key') ?? env('AWS_SECRET_ACCESS_KEY');
-                $s3Region = $this->getProviderKey('s3', 'default_region')    ?? env('AWS_DEFAULT_REGION');
-                $s3Bucket = $this->getProviderKey('s3', 'bucket')            ?? env('AWS_BUCKET');
-
-                if (!$s3Key || !$s3Secret || !$s3Region || !$s3Bucket) {
-                    return response()->json(['success' => false, 'message' => 'S3 credentials not fully configured in DB or .env.'], 500);
-                }
-
-                // Dynamically reconfigure the S3 disk
-                config([
-                    'filesystems.disks.s3.key'    => $s3Key,
-                    'filesystems.disks.s3.secret' => $s3Secret,
-                    'filesystems.disks.s3.region' => $s3Region,
-                    'filesystems.disks.s3.bucket' => $s3Bucket,
-                    'filesystems.disks.s3.url'    => $this->getProviderKey('s3', 'url')      ?? env('AWS_URL'),
-                    'filesystems.disks.s3.endpoint' => $this->getProviderKey('s3', 'endpoint') ?? env('AWS_ENDPOINT'),
-                    'filesystems.disks.s3.use_path_style_endpoint' => ($this->getProviderKey('s3', 'use_path_style_endpoint') === '1'),
-                    'filesystems.disks.s3.throw'  => true, 
-                ]);
-
+                $this->configureS3Disk();
                 Storage::disk('s3')->putFileAs($folder, $file, $randomName, 'private');
                 $finalUrl   = $folder . '/' . $randomName;
                 $provFileId = $finalUrl;

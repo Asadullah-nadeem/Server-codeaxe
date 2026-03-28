@@ -83,9 +83,6 @@ Route::middleware([DmsApiKeyMiddleware::class . ':upload'])->group(function () {
 // Public Admin Login
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
-// Public Media Proxy (No middleware required for image display)
-Route::get('/dms/media/{slug}/{id}', [DmsController::class, 'showImage']);
-
 // General Admin Protected Routes (Basic Admin session)
 Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
     Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
@@ -258,7 +255,7 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     Route::post('/admin/permissions/bulk',    [PermissionController::class, 'bulkUpsert']);
     Route::post('/admin/permissions/reset',   [PermissionController::class, 'reset']);
 
-    // ─── Custom Role Management ───
+    // ─── Custom Role Management (Super Admin ONLY) ───
     Route::get('/admin/roles',                [PermissionController::class, 'listRoles']);
     Route::post('/admin/roles',               [PermissionController::class, 'upsertRole']);
     Route::delete('/admin/roles/{id}',        [PermissionController::class, 'deleteRole']);
