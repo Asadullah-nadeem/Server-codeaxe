@@ -1,11 +1,1 @@
-{
-  "version": 4,
-  "routes": {},
-  "dynamicRoutes": {},
-  "notFoundRoutes": [],
-  "preview": {
-    "previewModeId": "fa45eba9c4360e41129fb1d1e09ebbab",
-    "previewModeSigningKey": "e3835736e684cbdb10c72733a44c3aa41ee0c2fef2a9adb7212c6c9db08aa231",
-    "previewModeEncryptionKey": "646ec1d1a0edba2c111258e072cdaef73944e44dae1158b8b2dace717f170905"
-  }
-}
+{"version":4,"routes":{"/portfolio/chrome-extensions":{},"/portfolio/web-tools":{},"/portfolio/play-store":{},"/portfolio/client-projects":{},"/portfolio/web-platforms":{},"/portfolio/backend-systems":{},"/portfolio/automation-tools":{},"/portfolio/api-integrations":{},"/portfolio/software-solutions":{}},"dynamicRoutes":{"/portfolio/[category]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/portfolio/[category]","routeRegex":"^\\/portfolio\\/([^/]+?)(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"fa45eba9c4360e41129fb1d1e09ebbab","previewModeSigningKey":"e3835736e684cbdb10c72733a44c3aa41ee0c2fef2a9adb7212c6c9db08aa231","previewModeEncryptionKey":"646ec1d1a0edba2c111258e072cdaef73944e44dae1158b8b2dace717f170905"}}

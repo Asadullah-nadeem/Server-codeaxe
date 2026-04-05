@@ -56,6 +56,12 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
+		title: 'Work',
+		icon: 'layers',
+		link: '/cms/work'
+	},
+	{
+		id: uuid(),
 		title: 'Footer',
 		icon: 'corner-left-down',
 		link: '/cms/footer'

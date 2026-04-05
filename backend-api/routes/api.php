@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\VerifyDmsKeyMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\NavController;
@@ -156,13 +157,25 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->grou
     Route::put('/admin/portfolio/items/{id}', [PortfolioController::class, 'updateItem']);
     Route::delete('/admin/portfolio/items/{id}', [PortfolioController::class, 'destroyItem']);
 
+    // Work / Projects Management (completely independent from Portfolio)
+    Route::get('/admin/work/header',                [WorkController::class, 'getHeader']);
+    Route::put('/admin/work/header',                [WorkController::class, 'updateHeader']);
+    Route::get('/admin/work/categories',            [WorkController::class, 'indexCategories']);
+    Route::post('/admin/work/categories',           [WorkController::class, 'storeCategory']);
+    Route::put('/admin/work/categories/{id}',       [WorkController::class, 'updateCategory']);
+    Route::delete('/admin/work/categories/{id}',    [WorkController::class, 'destroyCategory']);
+    Route::get('/admin/work/projects',              [WorkController::class, 'indexProjects']);
+    Route::post('/admin/work/projects',             [WorkController::class, 'storeProject']);
+    Route::put('/admin/work/projects/{id}',         [WorkController::class, 'updateProject']);
+    Route::delete('/admin/work/projects/{id}',      [WorkController::class, 'destroyProject']);
+
     // Pages Management — About
     Route::get('/admin/pages/about', [PagesController::class, 'about']); // Admin can view about page
     Route::put('/admin/pages/about/header', [PagesController::class, 'updateAboutHeader']);
     Route::post('/admin/pages/about/sections', [PagesController::class, 'storeAboutSection']);
     Route::put('/admin/pages/about/sections/{id}', [PagesController::class, 'updateAboutSection']);
     Route::delete('/admin/pages/about/sections/{id}', [PagesController::class, 'destroyAboutSection']);
-    
+
     // Pages Management — Legal
     Route::get('/admin/pages/legal', [PagesController::class, 'legalIndex']); // Admin can view legal pages
     Route::get('/admin/pages/legal/{type}', [PagesController::class, 'legal']); // Admin can view specific legal page
@@ -189,7 +202,7 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->grou
     Route::delete('/admin/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
 
 // ─── External Uploads (Requires dms_ key)
-Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Http\Middleware\VerifyDmsKeyMiddleware::class);
+Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(VerifyDmsKeyMiddleware::class);
     Route::get('/admin/contact/submissions', [ContactController::class, 'submissions']);
     Route::get('/admin/contact/template', [ContactController::class, 'getTemplate']);
     Route::put('/admin/contact/submissions/{id}/status', [ContactController::class, 'updateStatus']);
@@ -220,7 +233,7 @@ Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(\App\Ht
     Route::put('/admin/email/sections/{id}',       [EmailTemplateController::class, 'updateSection']);
     Route::delete('/admin/email/sections/{id}',    [EmailTemplateController::class, 'destroySection']);
     Route::get('/admin/email/templates/preview/{id}', [EmailTemplateController::class, 'preview']);
-    
+
     // SMTP SETTINGS
     Route::get('/admin/smtp/settings', [SmtpController::class, 'getSettings']);
     Route::put('/admin/smtp/settings', [SmtpController::class, 'updateSettings']);
@@ -238,7 +251,7 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, AdminR
     Route::post('/admin/create',    [AdminAuthController::class, 'createAdmin']);
     Route::put('/admin/update/{id}', [AdminAuthController::class, 'updateAdmin']);
     Route::delete('/admin/delete/{id}', [AdminAuthController::class, 'deleteAdmin']);
-    
+
     // Management of registered frontend users
     Route::get('/admin/users/registered', [AdminAuthController::class, 'registeredUsers']);
     Route::post('/admin/users/verify/{id}', [AdminAuthController::class, 'verifyUser']);

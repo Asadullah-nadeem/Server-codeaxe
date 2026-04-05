@@ -1,0 +1,18 @@
+Table: portfolio_categories
+  - id: int
+  - slug: varchar(100)
+  - label: varchar(255)
+  - description: text
+  - is_active: tinyint(1)
+  - sort_order: int
+Table: portfolio_items
+  - id: int
+  - category_id: int
+  - title: varchar(255)
+  - description: text
+  - tags: json
+  - project_year: varchar(10)
+  - image_url: varchar(500)
+  - project_url: varchar(500)
+  - is_active: tinyint(1)
+  - sort_order: int
