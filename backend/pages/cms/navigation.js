@@ -4,6 +4,7 @@ import { NextSeo } from 'next-seo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const NavigationCMS = () => {
     const [navItems, setNavItems] = useState([]);
@@ -142,7 +143,7 @@ const NavigationCMS = () => {
                             <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit Settings</Button>
                         </Card.Header>
                         <Card.Body>
-                            {loading ? <p>Loading...</p> : (
+                            {loading ? <LoadingSpinner text="Loading nav settings..." fluid={false} /> : (
                                 <Row>
                                     <Col md={6} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>SEO Tags</h6>
@@ -196,7 +197,7 @@ const NavigationCMS = () => {
                     <Card>
                         <Card.Body>
                             {loading ? (
-                                <p>Loading navigation items...</p>
+                                <LoadingSpinner text="Loading navigation items..." fluid={false} />
                             ) : (
                                 <Table responsive hover>
                                     <thead className="table-light">

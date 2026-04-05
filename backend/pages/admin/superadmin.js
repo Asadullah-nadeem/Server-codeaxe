@@ -30,6 +30,7 @@ import {
   XCircle
 } from 'react-feather';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // ─── Permission Matrix Section Definitions ─────────────────────────────────────────
 const PERM_GROUPS = [
@@ -283,7 +284,7 @@ const PermissionsPanel = ({ roles, setRoles }) => {
                         ))}
                     </div>
 
-                    {loading ? <div className="p-4 text-center small text-muted"><Spinner size="sm" /> Loading Permissions...</div> : (
+                    {loading ? <LoadingSpinner text="Loading Permissions..." className="p-4 small" fluid={false} /> : (
                         <div className="table-responsive">
                             <table className="table table-sm mb-0">
                                 <thead>
@@ -763,10 +764,7 @@ const SuperAdminPage = () => {
 
                 <Card.Body className="p-0">
                     {loading ? (
-                        <div className="text-center py-5">
-                            <Spinner animation="border" variant="primary" />
-                            <p className="mt-2 text-muted small">Loading accounts...</p>
-                        </div>
+                        <LoadingSpinner text="Loading accounts..." />
                     ) : filtered.length === 0 ? (
                         <div className="text-center py-5 text-muted">
                             <User size={40} strokeWidth={1} className="mb-2" />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ServicesCMS = () => {
     const [services, setServices] = useState([]);
@@ -90,7 +91,7 @@ const ServicesCMS = () => {
                     <Card>
                         <Card.Body>
                             {loading ? (
-                                <p>Loading services...</p>
+                                <LoadingSpinner text="Loading services..." fluid={false} />
                             ) : (
                                 <Table responsive hover>
                                     <thead className="table-light">

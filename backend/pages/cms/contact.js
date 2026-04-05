@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Tab, Nav } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import MediaGallery from '../../components/MediaGallery';
 import useMounted from 'hooks/useMounted';
 
@@ -94,7 +95,7 @@ const ContactCMS = () => {
         } catch (error) { alert("Delete failed."); }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading contact data...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading contact data..." />;
 
     return (
         <Container fluid className="px-6 py-4">

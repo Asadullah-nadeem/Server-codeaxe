@@ -4,6 +4,7 @@ import {
 } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { Eye, EyeOff, CheckCircle, XCircle, Settings, Layout, RefreshCw } from 'react-feather';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // Default section definitions (frontend page sections)
 const DEFAULT_SECTIONS = [
@@ -142,14 +143,7 @@ const SectionsCMS = () => {
     const enabledCount  = sections.filter(s => s.is_enabled).length;
     const disabledCount = sections.length - enabledCount;
 
-    if (loading) {
-        return (
-            <Container fluid className="p-6 text-center mt-10">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Loading section settings...</p>
-            </Container>
-        );
-    }
+    if (loading) return <LoadingSpinner text="Loading section settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">

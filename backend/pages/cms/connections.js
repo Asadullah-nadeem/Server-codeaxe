@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Badge, Alert, Spinner, Container, InputGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ConnectionsCMS = () => {
     const [data, setData] = useState({
@@ -66,7 +67,7 @@ const ConnectionsCMS = () => {
         }
     };
 
-    if (loading) return <Container className="p-5 text-center"><Spinner animation="border" /></Container>;
+    if (loading) return <LoadingSpinner text="Checking system connectivity..." />;
 
     return (
         <Container fluid className="px-6 py-4">

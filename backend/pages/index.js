@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Container, Col, Row, Card, Table, Badge, Spinner } from 'react-bootstrap';
 import { fetchApi } from '../utils/api';
 import { Users, MessageSquare, Image as ImageIcon, CheckCircle, Shield } from 'react-feather';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Home = () => {
     const [messages, setMessages] = useState([]);
@@ -75,12 +76,7 @@ const Home = () => {
     ];
 
     if (loading) {
-        return (
-            <Container fluid className="p-6 text-center mt-10">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Loading Dashboard...</p>
-            </Container>
-        );
+        return <LoadingSpinner text="Loading Dashboard..." />;
     }
 
     return (

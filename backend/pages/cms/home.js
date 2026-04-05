@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, InputGroup } from 'react-bootstrap';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const HomeCMS = () => {
     const [data, setData] = useState({ hero: {}, services: [], projects: [], stats: [], headers: [], cta: {}, principles: [], technologies: [], system_status: [], partners: [] });
@@ -174,7 +175,7 @@ const HomeCMS = () => {
         fetchHomeData();
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading home settings...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading home settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">

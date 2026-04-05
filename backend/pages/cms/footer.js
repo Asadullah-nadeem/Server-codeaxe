@@ -4,6 +4,7 @@ import { NextSeo } from 'next-seo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const FooterCMS = () => {
     const [sections, setSections] = useState([]);
@@ -130,7 +131,7 @@ const FooterCMS = () => {
                             <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit Settings</Button>
                         </Card.Header>
                         <Card.Body>
-                            {loading ? <p>Loading...</p> : (
+                            {loading ? <LoadingSpinner text="Loading footer settings..." fluid={false} /> : (
                                 <Row>
                                     <Col md={3} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Branding</h6>

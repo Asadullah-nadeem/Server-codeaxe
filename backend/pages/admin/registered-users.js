@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Modal, Spinner, Form } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { User, Mail, Calendar, MessageSquare, Info, Shield, MessageCircle } from 'react-feather';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import AdminChatWindow from '../../components/AdminChatWindow';
 
 const RegisteredUsers = () => {
@@ -83,12 +84,7 @@ const RegisteredUsers = () => {
     };
 
     if (loading && users.length === 0) {
-        return (
-            <Container fluid className="p-6 text-center mt-10">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Loading Registered Users...</p>
-            </Container>
-        );
+        return <LoadingSpinner text="Loading Registered Users..." />;
     }
 
     return (

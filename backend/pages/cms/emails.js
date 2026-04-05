@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Tab, Nav, Accordion, ListGroup } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import MediaGallery from '../../components/MediaGallery';
 import useMounted from 'hooks/useMounted';
 
@@ -90,7 +91,6 @@ const EmailTemplatesCMS = () => {
         } catch (error) { alert("Delete failed."); }
     };
 
-    if (loading && !templates.length) return <Container fluid className="p-4"><p>Loading email templates...</p></Container>;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -100,91 +100,99 @@ const EmailTemplatesCMS = () => {
             </div>
 
             <Row>
-                <Col lg={4}>
-                    <Card className="mb-4">
-                        <Card.Header className="bg-dark text-white"><h5 className="mb-0 text-white">Templates</h5></Card.Header>
-                        <ListGroup variant="flush">
-                            {templates.map(t => (
-                                <ListGroup.Item 
-                                    key={t.id} 
-                                    action 
-                                    active={selectedTemplate?.id === t.id}
-                                    onClick={() => handleSelectTemplate(t)}
-                                    className="d-flex justify-content-between align-items-center"
-                                >
-                                    <div>
-                                        <strong>{t.template_key}</strong>
-                                        <div className="small text-muted">{t.subject}</div>
-                                    </div>
-                                    <Badge bg={t.is_active ? 'success' : 'secondary'}>{t.is_active ? 'Active' : 'Inactive'}</Badge>
-                                </ListGroup.Item>
-                            ))}
-                        </ListGroup>
-                    </Card>
-                </Col>
-
-                <Col lg={8}>
-                    {selectedTemplate ? (
-                        <>
+                {loading ? (
+                    <Col xs={12}>
+                        <LoadingSpinner text="Fetching email templates..." />
+                    </Col>
+                ) : (
+                    <>
+                        <Col lg={4}>
                             <Card className="mb-4">
-                                <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                                    <h5 className="mb-0">Configuration: {selectedTemplate.template_key}</h5>
-                                    <div>
-                                        <Button variant="light" size="sm" className="me-2" onClick={() => { setTemplateForm(selectedTemplate); setShowTemplateModal(true); }}>Edit Settings</Button>
-                                        <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}?admin_token=${hasMounted ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Row>
-                                        <Col md={6}>
-                                            <p><strong>Subject:</strong> {selectedTemplate.subject}</p>
-                                            <p><strong>Headline:</strong> {selectedTemplate.headline}</p>
-                                        </Col>
-                                        <Col md={6}>
-                                            <div className="d-flex gap-2 mb-2">
-                                                <strong>Colors:</strong>
-                                                <div style={{width: 20, height: 20, background: selectedTemplate.brand_color, border: '1px solid #ccc'}} title="Brand"></div>
-                                                <div style={{width: 20, height: 20, background: selectedTemplate.accent_color, border: '1px solid #ccc'}} title="Accent"></div>
+                                <Card.Header className="bg-dark text-white"><h5 className="mb-0 text-white">Templates</h5></Card.Header>
+                                <ListGroup variant="flush">
+                                    {templates.map(t => (
+                                        <ListGroup.Item 
+                                            key={t.id} 
+                                            action 
+                                            active={selectedTemplate?.id === t.id}
+                                            onClick={() => handleSelectTemplate(t)}
+                                            className="d-flex justify-content-between align-items-center"
+                                        >
+                                            <div>
+                                                <strong>{t.template_key}</strong>
+                                                <div className="small text-muted">{t.subject}</div>
                                             </div>
-                                            <p><strong>Active:</strong> <Badge bg={selectedTemplate.is_active ? 'success' : 'danger'}>{selectedTemplate.is_active ? 'Yes' : 'No'}</Badge></p>
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
+                                            <Badge bg={t.is_active ? 'success' : 'secondary'}>{t.is_active ? 'Active' : 'Inactive'}</Badge>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
                             </Card>
+                        </Col>
 
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <h4>Email Template Sections</h4>
-                                <Button variant="success" size="sm" onClick={() => { setSectionForm({ id: null, template_id: selectedTemplate.id, section_name: '', content: '', sort_order: sections.length, is_active: 1 }); setShowSectionModal(true); }}>Add Section</Button>
-                            </div>
+                        <Col lg={8}>
+                            {selectedTemplate ? (
+                                <>
+                                    <Card className="mb-4">
+                                        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+                                            <h5 className="mb-0">Configuration: {selectedTemplate.template_key}</h5>
+                                            <div>
+                                                <Button variant="light" size="sm" className="me-2" onClick={() => { setTemplateForm(selectedTemplate); setShowTemplateModal(true); }}>Edit Settings</Button>
+                                                <a href={`${process.env.NEXT_PUBLIC_API_URL}/admin/email/templates/preview/${selectedTemplate.id}?admin_token=${hasMounted ? localStorage.getItem('admin_token') : ''}`} target="_blank" rel="noreferrer" className="btn btn-warning btn-sm">Preview Layout</a>
+                                            </div>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            <Row>
+                                                <Col md={6}>
+                                                    <p><strong>Subject:</strong> {selectedTemplate.subject}</p>
+                                                    <p><strong>Headline:</strong> {selectedTemplate.headline}</p>
+                                                </Col>
+                                                <Col md={6}>
+                                                    <div className="d-flex gap-2 mb-2">
+                                                        <strong>Colors:</strong>
+                                                        <div style={{width: 20, height: 20, background: selectedTemplate.brand_color, border: '1px solid #ccc'}} title="Brand"></div>
+                                                        <div style={{width: 20, height: 20, background: selectedTemplate.accent_color, border: '1px solid #ccc'}} title="Accent"></div>
+                                                    </div>
+                                                    <p><strong>Active:</strong> <Badge bg={selectedTemplate.is_active ? 'success' : 'danger'}>{selectedTemplate.is_active ? 'Yes' : 'No'}</Badge></p>
+                                                </Col>
+                                            </Row>
+                                        </Card.Body>
+                                    </Card>
 
-                            <Accordion defaultActiveKey="0">
-                                {sections.length > 0 ? sections.map((section, idx) => (
-                                    <Accordion.Item eventKey={idx.toString()} key={section.id}>
-                                        <Accordion.Header>
-                                            <div className="d-flex justify-content-between w-100 pe-3">
-                                                <span>{section.section_name}</span>
-                                                <Badge bg={section.is_active ? 'info' : 'secondary'}>Order: {section.sort_order}</Badge>
-                                            </div>
-                                        </Accordion.Header>
-                                        <Accordion.Body>
-                                            <div className="mb-3 p-3 bg-light border rounded" style={{whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto'}}>
-                                                {section.content}
-                                            </div>
-                                            <div className="d-flex justify-content-end">
-                                                <Button variant="outline-primary" size="sm" className="me-2" onClick={() => { setSectionForm(section); setShowSectionModal(true); }}>Edit Section</Button>
-                                                <Button variant="outline-danger" size="sm" onClick={() => handleSectionDelete(section.id)}>Delete</Button>
-                                            </div>
-                                        </Accordion.Body>
-                                    </Accordion.Item>
-                                )) : (
-                                    <Card><Card.Body className="text-center py-4 text-muted">No sections found for this template. Use the &quot;Add Section&quot; button to create one.</Card.Body></Card>
-                                )}
-                            </Accordion>
-                        </>
-                    ) : (
-                        <Card><Card.Body className="text-center py-5">Select a template from the left to manage its sections.</Card.Body></Card>
-                    )}
-                </Col>
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h4>Email Template Sections</h4>
+                                        <Button variant="success" size="sm" onClick={() => { setSectionForm({ id: null, template_id: selectedTemplate.id, section_name: '', content: '', sort_order: sections.length, is_active: 1 }); setShowSectionModal(true); }}>Add Section</Button>
+                                    </div>
+
+                                    <Accordion defaultActiveKey="0">
+                                        {sections.length > 0 ? sections.map((section, idx) => (
+                                            <Accordion.Item eventKey={idx.toString()} key={section.id}>
+                                                <Accordion.Header>
+                                                    <div className="d-flex justify-content-between w-100 pe-3">
+                                                        <span>{section.section_name}</span>
+                                                        <Badge bg={section.is_active ? 'info' : 'secondary'}>Order: {section.sort_order}</Badge>
+                                                    </div>
+                                                </Accordion.Header>
+                                                <Accordion.Body>
+                                                    <div className="mb-3 p-3 bg-light border rounded" style={{whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto'}}>
+                                                        {section.content}
+                                                    </div>
+                                                    <div className="d-flex justify-content-end">
+                                                        <Button variant="outline-primary" size="sm" className="me-2" onClick={() => { setSectionForm(section); setShowSectionModal(true); }}>Edit Section</Button>
+                                                        <Button variant="outline-danger" size="sm" onClick={() => handleSectionDelete(section.id)}>Delete</Button>
+                                                    </div>
+                                                </Accordion.Body>
+                                            </Accordion.Item>
+                                        )) : (
+                                            <Card><Card.Body className="text-center py-4 text-muted">No sections found for this template. Use the &quot;Add Section&quot; button to create one.</Card.Body></Card>
+                                        )}
+                                    </Accordion>
+                                </>
+                            ) : (
+                                <Card><Card.Body className="text-center py-5">Select a template from the left to manage its sections.</Card.Body></Card>
+                            )}
+                        </Col>
+                    </>
+                )}
             </Row>
 
             {/* Template Settings Modal */}

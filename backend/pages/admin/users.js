@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const UsersCMS = () => {
     const [admins, setAdmins] = useState([]);
@@ -50,7 +51,7 @@ const UsersCMS = () => {
         } catch (error) { alert("Failed to remove admin."); }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading admin accounts...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading admin accounts..." />;
 
     return (
         <Container fluid className="px-6 py-4">

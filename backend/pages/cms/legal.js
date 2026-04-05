@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Tab, Nav } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const LegalCMS = () => {
     const router = useRouter();
@@ -97,7 +98,7 @@ const LegalCMS = () => {
         } catch (error) { alert("Failed to delete legal section."); }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading legal settings...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading legal settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Alert, Spinner, InputGroup } from 'react-bootstrap';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // ─── Default Section Definitions ───────────────────────────────────────────
 const SECTION_DEFS = [
@@ -206,7 +207,7 @@ const RewritesCMS = () => {
 
     const filteredSections = SECTION_DEFS.filter(s => pageFilter === 'All' || s.page === pageFilter);
 
-    if (loading) return <Container fluid className="p-4"><p>Loading...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading SEO & Rewrites..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -678,7 +679,7 @@ const RewritesCMS = () => {
                                 </Button>
                             </div>
                             {mediaLoading ? (
-                                <div className="text-center py-5"><Spinner animation="border" size="sm" variant="primary" /></div>
+                                <LoadingSpinner text="Loading services..." fluid={false} />
                             ) : (
                                 <Row className="g-3">
                                     {mediaItems.length === 0 ? (

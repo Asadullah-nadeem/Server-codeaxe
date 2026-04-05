@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Pagination, InputGroup } from 'react-bootstrap';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const PortfolioCMS = () => {
     const [categories, setCategories] = useState([]);
@@ -195,7 +196,7 @@ const PortfolioCMS = () => {
                         </Row>
                         <Card>
                             <Card.Body>
-                                {loading ? <p>Loading...</p> : (
+                                {loading ? <LoadingSpinner text="Loading portfolio data..." fluid={false} /> : (
                                     <>
                                         <Table hover responsive>
                                             <thead className="table-light">
@@ -266,7 +267,7 @@ const PortfolioCMS = () => {
                         </Row>
                         <Card>
                             <Card.Body>
-                                {loading ? <p>Loading...</p> : (
+                                {loading ? <LoadingSpinner text="Loading portfolio data..." fluid={false} /> : (
                                     <>
                                         <Table hover responsive>
                                             <thead className="table-light">

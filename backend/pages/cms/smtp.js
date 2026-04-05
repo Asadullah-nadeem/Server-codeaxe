@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { Server, Send, Mail, Shield, CheckCircle } from 'react-feather';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const SmtpSettingsCMS = () => {
     const [settings, setSettings] = useState({
@@ -82,7 +83,7 @@ const SmtpSettingsCMS = () => {
         }
     };
 
-    if (loading) return <Container className="p-4 text-center"><Spinner animation="border" /></Container>;
+    if (loading) return <LoadingSpinner text="Loading SMTP Settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Row, Col, Card, Button, Form, Modal, Container, Badge, ProgressBar, InputGroup, OverlayTrigger, Tooltip, Alert, Dropdown, Table } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { CloudUpload, Trash, ArrowClockwise, Eye, Search, CheckCircle, ThreeDotsVertical, Database, Filter, ClockHistory, Files } from 'react-bootstrap-icons';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const MediaCMS = () => {
     const [media, setMedia] = useState([]);
@@ -106,7 +107,7 @@ const MediaCMS = () => {
                (item.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    if (loading) return <Container fluid className="p-4"><p className="text-muted"><ArrowClockwise size={14} className="animate-spin me-2"/> Loading Media Library...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading Media Library..." />;
 
     return (
         <Container fluid className="px-6 py-4">

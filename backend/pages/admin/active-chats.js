@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Badge, Button, Container, Dropdown, Form, ListGroup, Spinner, Offcanvas } from 'react-bootstrap';
 import { Check, CheckCircle, Clock, Info, MessageCircle, MoreVertical, RotateCcw, Search, Send, Trash2, User } from 'react-feather';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ActiveChats = () => {
   const [chats, setChats] = useState([]);
@@ -154,12 +155,7 @@ const ActiveChats = () => {
   );
 
   if (loading) {
-    return (
-      <Container fluid className="p-6 text-center mt-10">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-3 text-muted">Loading Messaging Center...</p>
-      </Container>
-    );
+    return <LoadingSpinner text="Loading Messaging Center..." />;
   }
 
   return (

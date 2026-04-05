@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Badge, Modal, Form, Alert, Nav, Tab } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import { Server, Globe, Eye, EyeOff, Shield, Info, Database } from 'react-feather';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const DMSSettings = () => {
     const [providers, setProviders] = useState([]);
@@ -59,7 +60,7 @@ const DMSSettings = () => {
         } catch (error) { alert("Delete failed."); }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading infrastructure settings...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading infrastructure settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">

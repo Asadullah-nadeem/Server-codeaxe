@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Button, Form, Modal, Container } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const AboutCMS = () => {
     const [data, setData] = useState({ header: {}, sections: [] });
@@ -66,7 +67,7 @@ const AboutCMS = () => {
         } catch (error) { alert("Failed to delete section."); }
     };
 
-    if (loading) return <Container fluid className="p-4"><p>Loading about settings...</p></Container>;
+    if (loading) return <LoadingSpinner text="Loading about settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
