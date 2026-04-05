@@ -154,13 +154,15 @@ const ActiveChats = () => {
     c.request_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
-    return <LoadingSpinner text="Loading Messaging Center..." />;
-  }
 
   return (
     <Container fluid className="p-0">
-      <div className="d-flex" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+      {loading ? (
+        <div className="d-flex align-items-center justify-content-center" style={{ height: 'calc(100vh - 64px)' }}>
+          <LoadingSpinner text="Connecting to Secure Chat..." />
+        </div>
+      ) : (
+        <div className="d-flex" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
         {/* Sidebar: Chat List */}
         <div className="bg-white border-end d-flex flex-column" style={{ width: '350px', minWidth: '350px' }}>
           <div className="p-4 border-bottom bg-light bg-opacity-50">
@@ -353,7 +355,7 @@ const ActiveChats = () => {
             </div>
           )}
         </div>
-      </div>
+      )}
 
       <Offcanvas show={showDetails} onHide={() => setShowDetails(false)} placement="end">
         <Offcanvas.Header closeButton className="border-bottom pb-3">

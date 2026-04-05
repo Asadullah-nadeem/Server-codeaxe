@@ -51,7 +51,6 @@ const UsersCMS = () => {
         } catch (error) { alert("Failed to remove admin."); }
     };
 
-    if (loading) return <LoadingSpinner text="Loading admin accounts..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -64,26 +63,32 @@ const UsersCMS = () => {
                     <Button variant="light" size="sm" onClick={() => handleShow()}>Create New Admin</Button>
                 </Card.Header>
                 <Card.Body>
-                    <Table hover responsive className="text-nowrap">
-                        <thead className="table-light">
-                            <tr><th>Name</th><th>Username</th><th>Email / Role</th><th>Account Status</th><th>Created</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody>
-                            {admins.map(a => (
-                                <tr key={a.id}>
-                                    <td><strong>{a.name}</strong></td>
-                                    <td><code>{a.username}</code></td>
-                                    <td>{a.email}<br/><small className="text-muted text-uppercase">{a.role}</small></td>
-                                    <td><Badge bg={a.is_active == 1 ? 'success' : 'secondary'}>{a.is_active == 1 ? 'Active' : 'Disabled'}</Badge></td>
-                                    <td>{new Date(a.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleShow(a)}>Edit</Button>
-                                        <Button size="sm" variant="danger" onClick={() => handleDelete(a.id)}>Delete</Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                    {loading ? (
+                        <div className="py-5">
+                            <LoadingSpinner text="Fetching administrative access..." />
+                        </div>
+                    ) : (
+                        <Table hover responsive className="text-nowrap">
+                            <thead className="table-light">
+                                <tr><th>Name</th><th>Username</th><th>Email / Role</th><th>Account Status</th><th>Created</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {admins.map(a => (
+                                    <tr key={a.id}>
+                                        <td><strong>{a.name}</strong></td>
+                                        <td><code>{a.username}</code></td>
+                                        <td>{a.email}<br/><small className="text-muted text-uppercase">{a.role}</small></td>
+                                        <td><Badge bg={a.is_active == 1 ? 'success' : 'secondary'}>{a.is_active == 1 ? 'Active' : 'Disabled'}</Badge></td>
+                                        <td>{new Date(a.created_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleShow(a)}>Edit</Button>
+                                            <Button size="sm" variant="danger" onClick={() => handleDelete(a.id)}>Delete</Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    )}
                 </Card.Body>
             </Card>
 

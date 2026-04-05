@@ -60,7 +60,6 @@ const DMSSettings = () => {
         } catch (error) { alert("Delete failed."); }
     };
 
-    if (loading) return <LoadingSpinner text="Loading infrastructure settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -83,74 +82,82 @@ const DMSSettings = () => {
 
                 <Tab.Content>
                     <Tab.Pane eventKey="storage">
-                        <Row className="g-4">
-                            <Col lg={7}>
-                                <Card className="border-0 shadow-sm border-top border-5 border-info h-100">
-                                    <Card.Header className="bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                                        <h5 className="mb-0 fw-bold"><Database size={18} className="me-2 text-info"/> Database Secrets Override</h5>
-                                        <Button variant="info" size="sm" className="text-white" onClick={() => setShowProvModal(true)}>Add Key</Button>
-                                    </Card.Header>
-                                    <Card.Body className="p-0">
-                                        <Table hover responsive className="mb-0">
-                                            <thead className="table-light">
-                                                <tr><th>Provider</th><th>Config Name</th><th>Value</th><th>Actions</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                {providers.length === 0 ? (
-                                                    <tr><td colSpan="4" className="text-center py-5 text-muted small">No overrides active. Using .env defaults.</td></tr>
-                                                ) : providers.map(p => (
-                                                    <tr key={p.id}>
-                                                        <td><Badge bg={p.provider === 'imagekit' ? 'info' : 'warning'} className="text-white px-3 py-1">{p.provider?.toUpperCase()}</Badge></td>
-                                                        <td><code className="fw-bold">{p.key_name}</code></td>
-                                                        <td>
-                                                            <div className="d-flex align-items-center">
-                                                                <code className="text-muted me-2">
-                                                                    {showSecrets[p.id] ? p.key_value : '••••••••••••••••••••'}
-                                                                </code>
-                                                                <Button variant="link" size="sm" className="p-0" onClick={() => toggleSecret(p.id)}>
-                                                                    {showSecrets[p.id] ? <EyeOff size={14}/> : <Eye size={14}/>}
-                                                                </Button>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <Button size="sm" variant="outline-danger" className="border-0" onClick={() => handleDeleteProv(p.id)}><Eye size={14} /></Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                            <Col lg={5}>
-                                <Card className="border-0 shadow-sm border-top border-5 border-secondary h-100">
-                                    <Card.Header className="bg-white py-3 border-0">
-                                        <h5 className="mb-0 fw-bold"><Shield size={18} className="me-2 text-secondary"/> Live .env Config</h5>
-                                    </Card.Header>
-                                    <Card.Body className="p-0">
-                                        <Table hover responsive className="mb-0 overflow-hidden">
-                                            <thead className="table-light"><tr><th>Environment Key</th><th>Active Value</th></tr></thead>
-                                            <tbody>
-                                                {Object.entries(envKeys || {}).map(([k, v]) => (
-                                                    <tr key={k}>
-                                                        <td className="small font-monospace">{k}</td>
-                                                        <td className="small font-monospace text-primary fw-bold" style={{wordBreak: 'break-all'}}>{v || 'Not Set'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        </Row>
-                        
-                        <Alert variant="info" className="mt-4 border-0 shadow-sm d-flex align-items-center p-4">
-                            <div className="bg-white p-2 rounded-circle me-4 shadow-sm"><Info size={24} className="text-info"/></div>
-                            <div>
-                                <h6 className="mb-1 fw-bold">Cloud Priority Sync</h6>
-                                <p className="mb-0 small text-muted">The system checks the <strong>Database Master Override</strong> first. If no key is found there, it falls back to the <strong>Live .env Config</strong>. This allows you to hot-swap cloud keys without reloading the server.</p>
+                        {loading ? (
+                            <div className="py-5">
+                                <LoadingSpinner text="Fetching storage credentials..." />
                             </div>
-                        </Alert>
+                        ) : (
+                            <Row className="g-4">
+                                <Col lg={7}>
+                                    <Card className="border-0 shadow-sm border-top border-5 border-info h-100">
+                                        <Card.Header className="bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                                            <h5 className="mb-0 fw-bold"><Database size={18} className="me-2 text-info"/> Database Secrets Override</h5>
+                                            <Button variant="info" size="sm" className="text-white" onClick={() => setShowProvModal(true)}>Add Key</Button>
+                                        </Card.Header>
+                                        <Card.Body className="p-0">
+                                            <Table hover responsive className="mb-0">
+                                                <thead className="table-light">
+                                                    <tr><th>Provider</th><th>Config Name</th><th>Value</th><th>Actions</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {providers.length === 0 ? (
+                                                        <tr><td colSpan="4" className="text-center py-5 text-muted small">No overrides active. Using .env defaults.</td></tr>
+                                                    ) : providers.map(p => (
+                                                        <tr key={p.id}>
+                                                            <td><Badge bg={p.provider === 'imagekit' ? 'info' : 'warning'} className="text-white px-3 py-1">{p.provider?.toUpperCase()}</Badge></td>
+                                                            <td><code className="fw-bold">{p.key_name}</code></td>
+                                                            <td>
+                                                                <div className="d-flex align-items-center">
+                                                                    <code className="text-muted me-2">
+                                                                        {showSecrets[p.id] ? p.key_value : '••••••••••••••••••••'}
+                                                                    </code>
+                                                                    <Button variant="link" size="sm" className="p-0" onClick={() => toggleSecret(p.id)}>
+                                                                        {showSecrets[p.id] ? <EyeOff size={14}/> : <Eye size={14}/>}
+                                                                    </Button>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <Button size="sm" variant="outline-danger" className="border-0" onClick={() => handleDeleteProv(p.id)}><Eye size={14} /></Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </Table>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                                <Col lg={5}>
+                                    <Card className="border-0 shadow-sm border-top border-5 border-secondary h-100">
+                                        <Card.Header className="bg-white py-3 border-0">
+                                            <h5 className="mb-0 fw-bold"><Shield size={18} className="me-2 text-secondary"/> Live .env Config</h5>
+                                        </Card.Header>
+                                        <Card.Body className="p-0">
+                                            <Table hover responsive className="mb-0 overflow-hidden">
+                                                <thead className="table-light"><tr><th>Environment Key</th><th>Active Value</th></tr></thead>
+                                                <tbody>
+                                                    {Object.entries(envKeys || {}).map(([k, v]) => (
+                                                        <tr key={k}>
+                                                            <td className="small font-monospace">{k}</td>
+                                                            <td className="small font-monospace text-primary fw-bold" style={{wordBreak: 'break-all'}}>{v || 'Not Set'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </Table>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            </Row>
+                        )}
+                        
+                        {!loading && (
+                            <Alert variant="info" className="mt-4 border-0 shadow-sm d-flex align-items-center p-4">
+                                <div className="bg-white p-2 rounded-circle me-4 shadow-sm"><Info size={24} className="text-info"/></div>
+                                <div>
+                                    <h6 className="mb-1 fw-bold">Cloud Priority Sync</h6>
+                                    <p className="mb-0 small text-muted">The system checks the <strong>Database Master Override</strong> first. If no key is found there, it falls back to the <strong>Live .env Config</strong>. This allows you to hot-swap cloud keys without reloading the server.</p>
+                                </div>
+                            </Alert>
+                        )}
                     </Tab.Pane>
 
                     <Tab.Pane eventKey="proxy">

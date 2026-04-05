@@ -107,7 +107,6 @@ const MediaCMS = () => {
                (item.slug || '').toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    if (loading) return <LoadingSpinner text="Loading Media Library..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -154,79 +153,85 @@ const MediaCMS = () => {
                         </div>
                     </div>
 
-                    <Row className="g-4">
-                        {filteredMedia.length === 0 ? (
-                            <Col xs={12} className="text-center py-5 text-muted">
-                                {activeTab === 'active' ? 'No active assets found.' : 'Trash is empty.'}
-                            </Col>
-                        ) : filteredMedia.map(item => (
-                            <Col key={item.id} xs={12} sm={6} md={4} lg={3} xl={2}>
-                                <Card className={`h-100 border shadow-sm ${item.status === 0 ? 'bg-light border-danger border-opacity-25' : ''}`}>
-                                    <div className="p-1">
-                                        <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border position-relative">
-                                            {['mp4', 'mov', 'avi', 'wmv', 'webm'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
-                                                <video 
-                                                    src={item.path} 
-                                                    className="mw-100 mh-100 object-fit-contain"
-                                                    muted
-                                                    onMouseOver={e => e.target.play()}
-                                                    onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
-                                                />
-                                            ) : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
-                                                <Image 
-                                                    src={item.path} 
-                                                    alt={item.file_name} 
-                                                    width={200}
-                                                    height={140}
-                                                    className="mw-100 mh-100 object-fit-contain" 
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <div className="text-center p-3 text-muted">
-                                                    <Files size={40} className="mb-2 opacity-25" />
-                                                    <div className="x-small fw-bold text-uppercase">{item.file_name?.split('.').pop()} FILE</div>
+                    {loading ? (
+                        <div className="py-5">
+                            <LoadingSpinner text="Fetching cloud assets..." />
+                        </div>
+                    ) : (
+                        <Row className="g-4">
+                            {filteredMedia.length === 0 ? (
+                                <Col xs={12} className="text-center py-5 text-muted">
+                                    {activeTab === 'active' ? 'No active assets found.' : 'Trash is empty.'}
+                                </Col>
+                            ) : filteredMedia.map(item => (
+                                <Col key={item.id} xs={12} sm={6} md={4} lg={3} xl={2}>
+                                    <Card className={`h-100 border shadow-sm ${item.status === 0 ? 'bg-light border-danger border-opacity-25' : ''}`}>
+                                        <div className="p-1">
+                                            <div style={{ height: '140px', background: '#f8f9fa' }} className="rounded overflow-hidden d-flex align-items-center justify-content-center border position-relative">
+                                                {['mp4', 'mov', 'avi', 'wmv', 'webm'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                    <video 
+                                                        src={item.path} 
+                                                        className="mw-100 mh-100 object-fit-contain"
+                                                        muted
+                                                        onMouseOver={e => e.target.play()}
+                                                        onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                    />
+                                                ) : ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(item.file_name?.split('.').pop()?.toLowerCase()) ? (
+                                                    <Image 
+                                                        src={item.path} 
+                                                        alt={item.file_name} 
+                                                        width={200}
+                                                        height={140}
+                                                        className="mw-100 mh-100 object-fit-contain" 
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    <div className="text-center p-3 text-muted">
+                                                        <Files size={40} className="mb-2 opacity-25" />
+                                                        <div className="x-small fw-bold text-uppercase">{item.file_name?.split('.').pop()} FILE</div>
+                                                    </div>
+                                                )}
+                                                {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)', zIndex: 1}}><Badge bg="danger">IN TRASH</Badge></div>}
+                                            </div>
+                                        </div>
+                                        <Card.Body className="p-3 pt-2">
+                                            <div className="d-flex justify-content-between align-items-start mb-2">
+                                                <div className="text-truncate small fw-bold" style={{maxWidth: '120px'}} title={item.file_name}>
+                                                    {item.file_name}
                                                 </div>
-                                            )}
-                                            {item.status === 0 && <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{background: 'rgba(255,255,255,0.4)', zIndex: 1}}><Badge bg="danger">IN TRASH</Badge></div>}
-                                        </div>
-                                    </div>
-                                    <Card.Body className="p-3 pt-2">
-                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                            <div className="text-truncate small fw-bold" style={{maxWidth: '120px'}} title={item.file_name}>
-                                                {item.file_name}
+                                                <Dropdown align="end">
+                                                    <Dropdown.Toggle variant="link" className="p-0 border-0 shadow-none text-muted hide-caret">
+                                                         <ThreeDotsVertical size={14}/>
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu className="shadow-lg border">
+                                                        <Dropdown.Item onClick={() => window.open(item.path, '_blank')}><Eye size={14} className="me-2 text-info"/> View Large</Dropdown.Item>
+                                                        <Dropdown.Item onClick={() => copyToClipboard(item.path)}><Files size={14} className="me-2 text-success"/> Copy Link</Dropdown.Item>
+                                                        <Dropdown.Item onClick={() => fetchLogs(item)}><ClockHistory size={14} className="me-2 text-primary"/> History</Dropdown.Item>
+                                                        <Dropdown.Divider />
+                                                        {item.status === 1 ? (
+                                                            <Dropdown.Item className="text-danger" onClick={() => handleDelete(item.id)}><Trash size={14} className="me-2"/> Move to Trash</Dropdown.Item>
+                                                        ) : (
+                                                            <>
+                                                                <Dropdown.Item className="text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={14} className="me-2"/> Restore Asset</Dropdown.Item>
+                                                                <Dropdown.Item className="text-danger fw-bold" onClick={() => handlePermanentDelete(item.id)}><Trash size={14} className="me-2"/> Permanent Delete</Dropdown.Item>
+                                                            </>
+                                                        )}
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
                                             </div>
-                                            <Dropdown align="end">
-                                                <Dropdown.Toggle variant="link" className="p-0 border-0 shadow-none text-muted hide-caret">
-                                                     <ThreeDotsVertical size={14}/>
-                                                </Dropdown.Toggle>
-                                                <Dropdown.Menu className="shadow-lg border">
-                                                    <Dropdown.Item onClick={() => window.open(item.path, '_blank')}><Eye size={14} className="me-2 text-info"/> View Large</Dropdown.Item>
-                                                    <Dropdown.Item onClick={() => copyToClipboard(item.path)}><Files size={14} className="me-2 text-success"/> Copy Link</Dropdown.Item>
-                                                    <Dropdown.Item onClick={() => fetchLogs(item)}><ClockHistory size={14} className="me-2 text-primary"/> History</Dropdown.Item>
-                                                    <Dropdown.Divider />
-                                                    {item.status === 1 ? (
-                                                        <Dropdown.Item className="text-danger" onClick={() => handleDelete(item.id)}><Trash size={14} className="me-2"/> Move to Trash</Dropdown.Item>
-                                                    ) : (
-                                                        <>
-                                                            <Dropdown.Item className="text-success" onClick={() => handleRestore(item.id)}><CheckCircle size={14} className="me-2"/> Restore Asset</Dropdown.Item>
-                                                            <Dropdown.Item className="text-danger fw-bold" onClick={() => handlePermanentDelete(item.id)}><Trash size={14} className="me-2"/> Permanent Delete</Dropdown.Item>
-                                                        </>
-                                                    )}
-                                                </Dropdown.Menu>
-                                            </Dropdown>
-                                        </div>
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <div className="d-flex gap-1">
-                                                <Badge bg={item.provider === 'imagekit' ? 'info' : 'warning'} className="x-small px-2 py-1 text-uppercase">{item.provider}</Badge>
-                                                <Badge bg="secondary" className="x-small px-2 py-1 text-uppercase">{item.file_name?.split('.').pop() || 'IMG'}</Badge>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <div className="d-flex gap-1">
+                                                    <Badge bg={item.provider === 'imagekit' ? 'info' : 'warning'} className="x-small px-2 py-1 text-uppercase">{item.provider}</Badge>
+                                                    <Badge bg="secondary" className="x-small px-2 py-1 text-uppercase">{item.file_name?.split('.').pop() || 'IMG'}</Badge>
+                                                </div>
+                                                <span className="text-muted x-small fw-bold">{(item.size ? (item.size / 1024).toFixed(1) : '0.0')} KB</span>
                                             </div>
-                                            <span className="text-muted x-small fw-bold">{(item.size ? (item.size / 1024).toFixed(1) : '0.0')} KB</span>
-                                        </div>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
                 </Card.Body>
             </Card>
 

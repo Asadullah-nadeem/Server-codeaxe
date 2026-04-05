@@ -98,7 +98,6 @@ const LegalCMS = () => {
         } catch (error) { alert("Failed to delete legal section."); }
     };
 
-    if (loading) return <LoadingSpinner text="Loading legal settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -113,58 +112,64 @@ const LegalCMS = () => {
                 </Nav>
 
                 <Tab.Content>
-                    <Tab.Pane eventKey={activeTab}>
-                        {selectedPage && (
-                            <>
-                                <Card className="mb-4">
-                                    <Card.Header className="bg-primary text-white">
-                                        <h5 className="mb-0">Settings for {selectedPage.title}</h5>
-                                    </Card.Header>
-                                    <Card.Body>
-                                        <Form onSubmit={handlePageSubmit}>
-                                            <Row>
-                                                <Col md={4}><Form.Group className="mb-3"><Form.Label>Badge Label</Form.Label><Form.Control type="text" value={pageForm.label} onChange={e => setPageForm({...pageForm, label: e.target.value})} /></Form.Group></Col>
-                                                <Col md={4}><Form.Group className="mb-3"><Form.Label>Main Page Title</Form.Label><Form.Control type="text" value={pageForm.title} onChange={e => setPageForm({...pageForm, title: e.target.value})} /></Form.Group></Col>
-                                                <Col md={4}><Form.Group className="mb-3"><Form.Label>Last Updated Date</Form.Label><Form.Control type="text" value={pageForm.last_updated} onChange={e => setPageForm({...pageForm, last_updated: e.target.value})} /></Form.Group></Col>
-                                            </Row>
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <Form.Check type="switch" label="Page Active & Visible" checked={pageForm.is_active === 1} onChange={e => setPageForm({...pageForm, is_active: e.target.checked ? 1 : 0})} />
-                                                <Button type="submit" variant="primary">Update Page Settings</Button>
-                                            </div>
-                                        </Form>
-                                    </Card.Body>
-                                </Card>
+                    {loading ? (
+                        <div className="py-5">
+                            <LoadingSpinner text="Retrieving legal documents..." />
+                        </div>
+                    ) : (
+                        <Tab.Pane eventKey={activeTab}>
+                            {selectedPage && (
+                                <>
+                                    <Card className="mb-4">
+                                        <Card.Header className="bg-primary text-white">
+                                            <h5 className="mb-0">Settings for {selectedPage.title}</h5>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            <Form onSubmit={handlePageSubmit}>
+                                                <Row>
+                                                    <Col md={4}><Form.Group className="mb-3"><Form.Label>Badge Label</Form.Label><Form.Control type="text" value={pageForm.label} onChange={e => setPageForm({...pageForm, label: e.target.value})} /></Form.Group></Col>
+                                                    <Col md={4}><Form.Group className="mb-3"><Form.Label>Main Page Title</Form.Label><Form.Control type="text" value={pageForm.title} onChange={e => setPageForm({...pageForm, title: e.target.value})} /></Form.Group></Col>
+                                                    <Col md={4}><Form.Group className="mb-3"><Form.Label>Last Updated Date</Form.Label><Form.Control type="text" value={pageForm.last_updated} onChange={e => setPageForm({...pageForm, last_updated: e.target.value})} /></Form.Group></Col>
+                                                </Row>
+                                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                                    <Form.Check type="switch" label="Page Active & Visible" checked={pageForm.is_active === 1} onChange={e => setPageForm({...pageForm, is_active: e.target.checked ? 1 : 0})} />
+                                                    <Button type="submit" variant="primary">Update Page Settings</Button>
+                                                </div>
+                                            </Form>
+                                        </Card.Body>
+                                    </Card>
 
-                                <Card>
-                                    <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
-                                        <h5 className="mb-0">Page Sections</h5>
-                                        <Button variant="light" size="sm" onClick={() => handleSectionShow()}>Add Content Section</Button>
-                                    </Card.Header>
-                                    <Card.Body>
-                                        <Table hover responsive>
-                                            <thead className="table-light">
-                                                <tr><th>Sort</th><th>Heading</th><th>Content Preview</th><th>Status</th><th>Actions</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                {sections.map(s => (
-                                                    <tr key={s.id}>
-                                                        <td>{s.sort_order}</td>
-                                                        <td>{s.heading}</td>
-                                                        <td className="text-truncate" style={{maxWidth: '400px'}}>{s.content}</td>
-                                                        <td><span className={`badge bg-${s.is_active ? 'success' : 'secondary'}`}>{s.is_active ? 'Active' : 'Hidden'}</span></td>
-                                                        <td>
-                                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleSectionShow(s)}>Edit</Button>
-                                                            <Button size="sm" variant="danger" onClick={() => handleSectionDelete(s.id)}>Delete</Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                    </Card.Body>
-                                </Card>
-                            </>
-                        )}
-                    </Tab.Pane>
+                                    <Card>
+                                        <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
+                                            <h5 className="mb-0">Page Sections</h5>
+                                            <Button variant="light" size="sm" onClick={() => handleSectionShow()}>Add Content Section</Button>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            <Table hover responsive>
+                                                <thead className="table-light">
+                                                    <tr><th>Sort</th><th>Heading</th><th>Content Preview</th><th>Status</th><th>Actions</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sections.map(s => (
+                                                        <tr key={s.id}>
+                                                            <td>{s.sort_order}</td>
+                                                            <td>{s.heading}</td>
+                                                            <td className="text-truncate" style={{maxWidth: '400px'}}>{s.content}</td>
+                                                            <td><span className={`badge bg-${s.is_active ? 'success' : 'secondary'}`}>{s.is_active ? 'Active' : 'Hidden'}</span></td>
+                                                            <td>
+                                                                <Button size="sm" variant="info" className="me-2" onClick={() => handleSectionShow(s)}>Edit</Button>
+                                                                <Button size="sm" variant="danger" onClick={() => handleSectionDelete(s.id)}>Delete</Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </Table>
+                                        </Card.Body>
+                                    </Card>
+                                </>
+                            )}
+                        </Tab.Pane>
+                    )}
                 </Tab.Content>
             </Tab.Container>
 

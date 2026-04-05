@@ -131,7 +131,7 @@ const FooterCMS = () => {
                             <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit Settings</Button>
                         </Card.Header>
                         <Card.Body>
-                            {loading ? <LoadingSpinner text="Loading footer settings..." fluid={false} /> : (
+                            {loading ? <LoadingSpinner text="Fetching brand assets..." fluid={false} /> : (
                                 <Row>
                                     <Col md={3} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Branding</h6>

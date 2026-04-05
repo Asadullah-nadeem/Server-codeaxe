@@ -83,9 +83,6 @@ const RegisteredUsers = () => {
         }
     };
 
-    if (loading && users.length === 0) {
-        return <LoadingSpinner text="Loading Registered Users..." />;
-    }
 
     return (
         <Container fluid className="px-6 py-4">
@@ -108,117 +105,125 @@ const RegisteredUsers = () => {
                                 <Button variant="success" size="sm" onClick={() => setShowAddModal(true)}>+ Add User</Button>
                             </div>
                         </Card.Header>
-                        <Table responsive className="text-nowrap mb-0 table-hover align-middle">
-                            <thead className="table-light">
-                                <tr>
-                                    <th className="border-bottom-0">Name</th>
-                                    <th className="border-bottom-0">Email</th>
-                                    <th className="border-bottom-0">Login Type</th>
-                                    <th className="border-bottom-0">Status</th>
-                                    <th className="border-bottom-0">Registration Date</th>
-                                    <th className="border-bottom-0">Verified</th>
-                                    <th className="border-bottom-0">Verification</th>
-                                    <th className="border-bottom-0">Resets</th>
-                                    <th className="border-bottom-0">Messages</th>
-                                    <th className="border-bottom-0">Requests</th>
-                                    <th className="border-bottom-0 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {users.length > 0 ? users.map((u) => (
-                                    <tr key={u.id}>
-                                        <td className="py-3">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div className="bg-light-primary text-primary rounded-circle p-2">
-                                                    <User size={18} />
-                                                </div>
-                                                <h6 className="mb-0 fw-bold">{u.username || u.name}</h6>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 text-muted">{u.email}</td>
-                                        <td className="py-3">
-                                            <Badge bg={u.login_type === 'sso' ? 'info' : 'secondary'} className="text-uppercase x-small">
-                                                {u.login_type || 'password'}
-                                            </Badge>
-                                        </td>
-                                        <td className="py-3">
-                                            {u.is_banned == 1 ? (
-                                                <Badge bg="danger" className="text-uppercase x-small px-2">Banned</Badge>
-                                            ) : (
-                                                <Badge bg="success" className="text-uppercase x-small px-2">Active</Badge>
-                                            )}
-                                        </td>
-                                        <td className="py-3">
-                                            {new Date(u.created_at).toLocaleDateString()}
-                                            <Badge bg="secondary" className="ms-2 x-small opacity-75">
-                                                {new Date() - new Date(u.created_at) < 7 * 24 * 60 * 60 * 1000 ? 'NEW' : 'OLD'}
-                                            </Badge>
-                                        </td>
-                                        <td className="py-3">
-                                            {u.email_verified_at ? (
-                                                <Badge bg="success" pill>YES</Badge>
-                                            ) : (
-                                                <div className="d-flex flex-column align-items-start gap-1">
-                                                    <Badge bg="danger" pill>NO</Badge>
-                                                    <Button 
-                                                        variant="link" 
-                                                        size="sm" 
-                                                        className="p-0 text-decoration-none x-small fw-bold text-primary" 
-                                                        onClick={() => handleVerify(u.id)}
-                                                    >
-                                                        Verify Now
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="py-3">
-                                            {u.verification_tokens && u.verification_tokens.length > 0 ? (
-                                                <Badge bg="warning" text="dark">{u.verification_tokens.length} PENDING</Badge>
-                                            ) : (
-                                                <span className="text-muted small">None</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3">
-                                            {u.password_resets && u.password_resets.length > 0 ? (
-                                                <Badge bg="danger">{u.password_resets.length} ACTIVE</Badge>
-                                            ) : (
-                                                <span className="text-muted small">None</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3">
-                                            {u.messages && u.messages.length > 0 ? (
-                                                <Badge bg="info">{u.messages.length}</Badge>
-                                            ) : (
-                                                <span className="text-muted small">None</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3">
-                                            {u.requests && u.requests.length > 0 ? (
-                                                <Badge bg="success">{u.requests.length}</Badge>
-                                            ) : (
-                                                <span className="text-muted small">None</span>
-                                            )}
-                                        </td>
-                                        <td className="py-3 text-center">
-                                            <div className="d-flex gap-2 justify-content-center">
-                                                <Button variant="outline-primary" size="sm" onClick={() => handleViewProfile(u)}>
-                                                    Profile
-                                                </Button>
-                                                <Button variant={u.is_banned == 1 ? "success" : "danger"} size="sm" onClick={() => handleToggleBan(u)}>
-                                                    {u.is_banned == 1 ? 'Unban' : 'Ban'}
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="8" className="text-center py-5 text-muted">
-                                            No registered users found in the system.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </Table>
+                        <Card.Body className="p-0">
+                            {loading && users.length === 0 ? (
+                                <div className="py-5">
+                                    <LoadingSpinner text="Consulting user directory..." />
+                                </div>
+                            ) : (
+                                <Table responsive className="text-nowrap mb-0 table-hover align-middle">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th className="border-bottom-0">Name</th>
+                                            <th className="border-bottom-0">Email</th>
+                                            <th className="border-bottom-0">Login Type</th>
+                                            <th className="border-bottom-0">Status</th>
+                                            <th className="border-bottom-0">Registration Date</th>
+                                            <th className="border-bottom-0">Verified</th>
+                                            <th className="border-bottom-0">Verification</th>
+                                            <th className="border-bottom-0">Resets</th>
+                                            <th className="border-bottom-0">Messages</th>
+                                            <th className="border-bottom-0">Requests</th>
+                                            <th className="border-bottom-0 text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {users.length > 0 ? users.map((u) => (
+                                            <tr key={u.id}>
+                                                <td className="py-3">
+                                                    <div className="d-flex align-items-center gap-3">
+                                                        <div className="bg-light-primary text-primary rounded-circle p-2">
+                                                            <User size={18} />
+                                                        </div>
+                                                        <h6 className="mb-0 fw-bold">{u.username || u.name}</h6>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 text-muted">{u.email}</td>
+                                                <td className="py-3">
+                                                    <Badge bg={u.login_type === 'sso' ? 'info' : 'secondary'} className="text-uppercase x-small">
+                                                        {u.login_type || 'password'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.is_banned == 1 ? (
+                                                        <Badge bg="danger" className="text-uppercase x-small px-2">Banned</Badge>
+                                                    ) : (
+                                                        <Badge bg="success" className="text-uppercase x-small px-2">Active</Badge>
+                                                    )}
+                                                </td>
+                                                <td className="py-3">
+                                                    {new Date(u.created_at).toLocaleDateString()}
+                                                    <Badge bg="secondary" className="ms-2 x-small opacity-75">
+                                                        {new Date() - new Date(u.created_at) < 7 * 24 * 60 * 60 * 1000 ? 'NEW' : 'OLD'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.email_verified_at ? (
+                                                        <Badge bg="success" pill>YES</Badge>
+                                                    ) : (
+                                                        <div className="d-flex flex-column align-items-start gap-1">
+                                                            <Badge bg="danger" pill>NO</Badge>
+                                                            <Button 
+                                                                variant="link" 
+                                                                size="sm" 
+                                                                className="p-0 text-decoration-none x-small fw-bold text-primary" 
+                                                                onClick={() => handleVerify(u.id)}
+                                                            >
+                                                                Verify Now
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.verification_tokens && u.verification_tokens.length > 0 ? (
+                                                        <Badge bg="warning" text="dark">{u.verification_tokens.length} PENDING</Badge>
+                                                    ) : (
+                                                        <span className="text-muted small">None</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.password_resets && u.password_resets.length > 0 ? (
+                                                        <Badge bg="danger">{u.password_resets.length} ACTIVE</Badge>
+                                                    ) : (
+                                                        <span className="text-muted small">None</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.messages && u.messages.length > 0 ? (
+                                                        <Badge bg="info">{u.messages.length}</Badge>
+                                                    ) : (
+                                                        <span className="text-muted small">None</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3">
+                                                    {u.requests && u.requests.length > 0 ? (
+                                                        <Badge bg="success">{u.requests.length}</Badge>
+                                                    ) : (
+                                                        <span className="text-muted small">None</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 text-center">
+                                                    <div className="d-flex gap-2 justify-content-center">
+                                                        <Button variant="outline-primary" size="sm" onClick={() => handleViewProfile(u)}>
+                                                            Profile
+                                                        </Button>
+                                                        <Button variant={u.is_banned == 1 ? "success" : "danger"} size="sm" onClick={() => handleToggleBan(u)}>
+                                                            {u.is_banned == 1 ? 'Unban' : 'Ban'}
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="11" className="text-center py-5 text-muted">
+                                                    No registered users found in the system.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </Table>
+                            )}
+                        </Card.Body>
                     </Card>
                 </Col>
             </Row>

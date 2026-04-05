@@ -284,7 +284,7 @@ const PermissionsPanel = ({ roles, setRoles }) => {
                         ))}
                     </div>
 
-                    {loading ? <LoadingSpinner text="Loading Permissions..." className="p-4 small" fluid={false} /> : (
+                    {loading ? <LoadingSpinner text="Fetching permission matrix..." className="p-4 small" fluid={false} /> : (
                         <div className="table-responsive">
                             <table className="table table-sm mb-0">
                                 <thead>
@@ -764,7 +764,9 @@ const SuperAdminPage = () => {
 
                 <Card.Body className="p-0">
                     {loading ? (
-                        <LoadingSpinner text="Loading accounts..." />
+                        <div className="py-5">
+                            <LoadingSpinner text="Synchronizing administrative directory..." />
+                        </div>
                     ) : filtered.length === 0 ? (
                         <div className="text-center py-5 text-muted">
                             <User size={40} strokeWidth={1} className="mb-2" />

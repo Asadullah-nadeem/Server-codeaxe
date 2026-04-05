@@ -67,88 +67,95 @@ const AboutCMS = () => {
         } catch (error) { alert("Failed to delete section."); }
     };
 
-    if (loading) return <LoadingSpinner text="Loading about settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
             <h2 className="mb-4">About Us - Management</h2>
 
-            <Card className="mb-4">
-                <Card.Header className="bg-primary text-white">
-                    <h5 className="mb-0">Page Header & Intro</h5>
-                </Card.Header>
-                <Card.Body>
-                    <Form onSubmit={handleHeaderSubmit}>
-                        <Row>
-                            <Col md={6}>
+            {loading ? (
+                <div className="py-5">
+                    <LoadingSpinner text="Fetching company information..." />
+                </div>
+            ) : (
+                <>
+                    <Card className="mb-4">
+                        <Card.Header className="bg-primary text-white">
+                            <h5 className="mb-0">Page Header & Intro</h5>
+                        </Card.Header>
+                        <Card.Body>
+                            <Form onSubmit={handleHeaderSubmit}>
+                                <Row>
+                                    <Col md={6}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Badge Label</Form.Label>
+                                            <Form.Control type="text" value={headerForm.label} onChange={e => setHeaderForm({...headerForm, label: e.target.value})} required />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={6}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Main Title</Form.Label>
+                                            <Form.Control type="text" value={headerForm.title} onChange={e => setHeaderForm({...headerForm, title: e.target.value})} required />
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Badge Label</Form.Label>
-                                    <Form.Control type="text" value={headerForm.label} onChange={e => setHeaderForm({...headerForm, label: e.target.value})} required />
+                                    <Form.Label>Intro Description</Form.Label>
+                                    <Form.Control as="textarea" rows={3} value={headerForm.description} onChange={e => setHeaderForm({...headerForm, description: e.target.value})} required />
                                 </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Main Title</Form.Label>
-                                    <Form.Control type="text" value={headerForm.title} onChange={e => setHeaderForm({...headerForm, title: e.target.value})} required />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Intro Description</Form.Label>
-                            <Form.Control as="textarea" rows={3} value={headerForm.description} onChange={e => setHeaderForm({...headerForm, description: e.target.value})} required />
-                        </Form.Group>
-                        <Row>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>CTA Button Label</Form.Label>
-                                    <Form.Control type="text" value={headerForm.cta_label} onChange={e => setHeaderForm({...headerForm, cta_label: e.target.value})} />
-                                </Form.Group>
-                            </Col>
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>CTA Button Link</Form.Label>
-                                    <Form.Control type="text" value={headerForm.cta_link} onChange={e => setHeaderForm({...headerForm, cta_link: e.target.value})} />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-                        <Button type="submit" variant="primary">Save Header Settings</Button>
-                    </Form>
-                </Card.Body>
-            </Card>
+                                <Row>
+                                    <Col md={6}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>CTA Button Label</Form.Label>
+                                            <Form.Control type="text" value={headerForm.cta_label} onChange={e => setHeaderForm({...headerForm, cta_label: e.target.value})} />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={6}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>CTA Button Link</Form.Label>
+                                            <Form.Control type="text" value={headerForm.cta_link} onChange={e => setHeaderForm({...headerForm, cta_link: e.target.value})} />
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+                                <Button type="submit" variant="primary">Save Header Settings</Button>
+                            </Form>
+                        </Card.Body>
+                    </Card>
 
-            <Card>
-                <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">About Sections</h5>
-                    <Button variant="light" size="sm" onClick={() => handleSectionShow()}>Add New Section</Button>
-                </Card.Header>
-                <Card.Body>
-                    <Table hover responsive>
-                        <thead className="table-light">
-                            <tr>
-                                <th>Sort</th>
-                                <th>Title</th>
-                                <th>Content Sneak Peek</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.sections.map(s => (
-                                <tr key={s.id}>
-                                    <td>{s.sort_order}</td>
-                                    <td>{s.title}</td>
-                                    <td className="text-truncate" style={{maxWidth: '300px'}}>{s.content}</td>
-                                    <td><span className={`badge bg-${s.is_active ? 'success' : 'secondary'}`}>{s.is_active ? 'Active' : 'Hidden'}</span></td>
-                                    <td>
-                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleSectionShow(s)}>Edit</Button>
-                                        <Button size="sm" variant="danger" onClick={() => handleSectionDelete(s.id)}>Delete</Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </Card.Body>
-            </Card>
+                    <Card>
+                        <Card.Header className="bg-dark text-white d-flex justify-content-between align-items-center">
+                            <h5 className="mb-0">About Sections</h5>
+                            <Button variant="light" size="sm" onClick={() => handleSectionShow()}>Add New Section</Button>
+                        </Card.Header>
+                        <Card.Body>
+                            <Table hover responsive>
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Sort</th>
+                                        <th>Title</th>
+                                        <th>Content Sneak Peek</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.sections.map(s => (
+                                        <tr key={s.id}>
+                                            <td>{s.sort_order}</td>
+                                            <td>{s.title}</td>
+                                            <td className="text-truncate" style={{maxWidth: '300px'}}>{s.content}</td>
+                                            <td><span className={`badge bg-${s.is_active ? 'success' : 'secondary'}`}>{s.is_active ? 'Active' : 'Hidden'}</span></td>
+                                            <td>
+                                                <Button size="sm" variant="info" className="me-2" onClick={() => handleSectionShow(s)}>Edit</Button>
+                                                <Button size="sm" variant="danger" onClick={() => handleSectionDelete(s.id)}>Delete</Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </Card.Body>
+                    </Card>
+                </>
+            )}
 
             {/* Section Modal */}
             <Modal show={showSectionModal} onHide={() => setShowSectionModal(false)}>

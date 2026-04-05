@@ -174,146 +174,144 @@ const PortfolioCMS = () => {
         <Container fluid className="px-6 py-4">
             <h2 className="mb-4">Portfolio Management</h2>
 
-            <Tab.Container defaultActiveKey="items">
-                <Nav variant="tabs" className="mb-4">
-                    <Nav.Item><Nav.Link eventKey="items">Portfolio Items</Nav.Link></Nav.Item>
-                    <Nav.Item><Nav.Link eventKey="categories">Categories</Nav.Link></Nav.Item>
-                </Nav>
+            {loading ? (
+                <div className="py-5">
+                    <LoadingSpinner text="Fetching portfolio assets..." />
+                </div>
+            ) : (
+                <Tab.Container defaultActiveKey="items">
+                    <Nav variant="tabs" className="mb-4">
+                        <Nav.Item><Nav.Link eventKey="items">Portfolio Items</Nav.Link></Nav.Item>
+                        <Nav.Item><Nav.Link eventKey="categories">Categories</Nav.Link></Nav.Item>
+                    </Nav>
 
-                <Tab.Content>
-                    {/* ITEMS TAB */}
-                    <Tab.Pane eventKey="items">
-                        <Row className="mb-3 align-items-center">
-                            <Col md={6}>
-                                <InputGroup>
-                                    <InputGroup.Text>Search</InputGroup.Text>
-                                    <Form.Control placeholder="Search items by title or category..." value={searchItem} onChange={e => setSearchItem(e.target.value)} />
-                                </InputGroup>
-                            </Col>
-                            <Col md={6} className="text-end">
-                                <Button variant="primary" onClick={() => handleItemShow()}>Add Portfolio Item</Button>
-                            </Col>
-                        </Row>
-                        <Card>
-                            <Card.Body>
-                                {loading ? <LoadingSpinner text="Loading portfolio data..." fluid={false} /> : (
-                                    <>
-                                        <Table hover responsive>
-                                            <thead className="table-light">
-                                                <tr>
-                                                    <th>Image</th>
-                                                    <th>Title</th>
-                                                    <th>Category</th>
-                                                    <th>Year</th>
-                                                    <th>Active</th>
-                                                    <th>Order</th>
-                                                    <th>Actions</th>
+                    <Tab.Content>
+                        {/* ITEMS TAB */}
+                        <Tab.Pane eventKey="items">
+                            <Row className="mb-3 align-items-center">
+                                <Col md={6}>
+                                    <InputGroup>
+                                        <InputGroup.Text>Search</InputGroup.Text>
+                                        <Form.Control placeholder="Search items by title or category..." value={searchItem} onChange={e => setSearchItem(e.target.value)} />
+                                    </InputGroup>
+                                </Col>
+                                <Col md={6} className="text-end">
+                                    <Button variant="primary" onClick={() => handleItemShow()}>Add Portfolio Item</Button>
+                                </Col>
+                            </Row>
+                            <Card>
+                                <Card.Body>
+                                    <Table hover responsive>
+                                        <thead className="table-light">
+                                            <tr>
+                                                <th>Image</th>
+                                                <th>Title</th>
+                                                <th>Category</th>
+                                                <th>Year</th>
+                                                <th>Active</th>
+                                                <th>Order</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedItems.length === 0 ? <tr><td colSpan="7">No items found.</td></tr> : paginatedItems.map(item => (
+                                                <tr key={item.id}>
+                                                    <td>{item.image_url ? <Image src={item.image_url} alt="" width={60} height={40} style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'4px'}} unoptimized /> : 'None'}</td>
+                                                    <td><strong>{item.title}</strong></td>
+                                                    <td>{getCatName(item.category_id)}</td>
+                                                    <td>{item.project_year || '-'}</td>
+                                                    <td><span className={`badge bg-${item.is_active == 1 ? 'success' : 'secondary'}`}>{item.is_active == 1 ? 'Yes' : 'No'}</span></td>
+                                                    <td>{item.sort_order}</td>
+                                                    <td>
+                                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleItemShow(item)}>Edit</Button>
+                                                        <Button size="sm" variant="danger" onClick={() => handleItemDelete(item.id)}>Delete</Button>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {paginatedItems.length === 0 ? <tr><td colSpan="7">No items found.</td></tr> : paginatedItems.map(item => (
-                                                    <tr key={item.id}>
-                                                        <td>{item.image_url ? <Image src={item.image_url} alt="" width={60} height={40} style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'4px'}} unoptimized /> : 'None'}</td>
-                                                        <td><strong>{item.title}</strong></td>
-                                                        <td>{getCatName(item.category_id)}</td>
-                                                        <td>{item.project_year || '-'}</td>
-                                                        <td><span className={`badge bg-${item.is_active == 1 ? 'success' : 'secondary'}`}>{item.is_active == 1 ? 'Yes' : 'No'}</span></td>
-                                                        <td>{item.sort_order}</td>
-                                                        <td>
-                                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleItemShow(item)}>Edit</Button>
-                                                            <Button size="sm" variant="danger" onClick={() => handleItemDelete(item.id)}>Delete</Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                        
-                                        {totalItemPages > 1 && (
-                                            <Pagination className="justify-content-center mt-3">
-                                                <Pagination.Prev disabled={itemPage === 1} onClick={() => setItemPage(itemPage - 1)} />
-                                                {[...Array(totalItemPages)].map((_, idx) => (
-                                                    <Pagination.Item key={idx + 1} active={idx + 1 === itemPage} onClick={() => setItemPage(idx + 1)}>
-                                                        {idx + 1}
-                                                    </Pagination.Item>
-                                                ))}
-                                                <Pagination.Next disabled={itemPage === totalItemPages} onClick={() => setItemPage(itemPage + 1)} />
-                                            </Pagination>
-                                        )}
-                                    </>
-                                )}
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
+                                            ))}
+                                        </tbody>
+                                    </Table>
+                                    
+                                    {totalItemPages > 1 && (
+                                        <Pagination className="justify-content-center mt-3">
+                                            <Pagination.Prev disabled={itemPage === 1} onClick={() => setItemPage(itemPage - 1)} />
+                                            {[...Array(totalItemPages)].map((_, idx) => (
+                                                <Pagination.Item key={idx + 1} active={idx + 1 === itemPage} onClick={() => setItemPage(idx + 1)}>
+                                                    {idx + 1}
+                                                </Pagination.Item>
+                                            ))}
+                                            <Pagination.Next disabled={itemPage === totalItemPages} onClick={() => setItemPage(itemPage + 1)} />
+                                        </Pagination>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Tab.Pane>
 
-                    {/* CATEGORIES TAB */}
-                    <Tab.Pane eventKey="categories">
-                        <Row className="mb-3 align-items-center">
-                            <Col md={4}>
-                                <InputGroup>
-                                    <InputGroup.Text>Search</InputGroup.Text>
-                                    <Form.Control placeholder="Search categories by label or slug..." value={searchCat} onChange={e => setSearchCat(e.target.value)} />
-                                </InputGroup>
-                            </Col>
-                            <Col md={4}>
-                                <Form.Select value={filterCatStatus} onChange={e => setFilterCatStatus(e.target.value)}>
-                                    <option value="all">Display All Status</option>
-                                    <option value="active">Active Only</option>
-                                    <option value="inactive">Inactive Only</option>
-                                </Form.Select>
-                            </Col>
-                            <Col md={4} className="text-end">
-                                <Button variant="primary" onClick={() => handleCatShow()}>Add Category</Button>
-                            </Col>
-                        </Row>
-                        <Card>
-                            <Card.Body>
-                                {loading ? <LoadingSpinner text="Loading portfolio data..." fluid={false} /> : (
-                                    <>
-                                        <Table hover responsive>
-                                            <thead className="table-light">
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Label</th>
-                                                    <th>Slug</th>
-                                                    <th>Active</th>
-                                                    <th>Order</th>
-                                                    <th>Actions</th>
+                        {/* CATEGORIES TAB */}
+                        <Tab.Pane eventKey="categories">
+                            <Row className="mb-3 align-items-center">
+                                <Col md={4}>
+                                    <InputGroup>
+                                        <InputGroup.Text>Search</InputGroup.Text>
+                                        <Form.Control placeholder="Search categories by label or slug..." value={searchCat} onChange={e => setSearchCat(e.target.value)} />
+                                    </InputGroup>
+                                </Col>
+                                <Col md={4}>
+                                    <Form.Select value={filterCatStatus} onChange={e => setFilterCatStatus(e.target.value)}>
+                                        <option value="all">Display All Status</option>
+                                        <option value="active">Active Only</option>
+                                        <option value="inactive">Inactive Only</option>
+                                    </Form.Select>
+                                </Col>
+                                <Col md={4} className="text-end">
+                                    <Button variant="primary" onClick={() => handleCatShow()}>Add Category</Button>
+                                </Col>
+                            </Row>
+                            <Card>
+                                <Card.Body>
+                                    <Table hover responsive>
+                                        <thead className="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Label</th>
+                                                <th>Slug</th>
+                                                <th>Active</th>
+                                                <th>Order</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {paginatedCats.length === 0 ? <tr><td colSpan="6">No categories found.</td></tr> : paginatedCats.map(cat => (
+                                                <tr key={cat.id}>
+                                                    <td>{cat.id}</td>
+                                                    <td><strong>{cat.label}</strong></td>
+                                                    <td><code>{cat.slug}</code></td>
+                                                    <td><span className={`badge bg-${cat.is_active == 1 ? 'success' : 'secondary'}`}>{cat.is_active == 1 ? 'Yes' : 'No'}</span></td>
+                                                    <td>{cat.sort_order}</td>
+                                                    <td>
+                                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleCatShow(cat)}>Edit</Button>
+                                                        <Button size="sm" variant="danger" onClick={() => handleCatDelete(cat.id)}>Delete</Button>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {paginatedCats.length === 0 ? <tr><td colSpan="6">No categories found.</td></tr> : paginatedCats.map(cat => (
-                                                    <tr key={cat.id}>
-                                                        <td>{cat.id}</td>
-                                                        <td><strong>{cat.label}</strong></td>
-                                                        <td><code>{cat.slug}</code></td>
-                                                        <td><span className={`badge bg-${cat.is_active == 1 ? 'success' : 'secondary'}`}>{cat.is_active == 1 ? 'Yes' : 'No'}</span></td>
-                                                        <td>{cat.sort_order}</td>
-                                                        <td>
-                                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleCatShow(cat)}>Edit</Button>
-                                                            <Button size="sm" variant="danger" onClick={() => handleCatDelete(cat.id)}>Delete</Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </Table>
-                                        {totalCatPages > 1 && (
-                                            <Pagination className="justify-content-center mt-3">
-                                                <Pagination.Prev disabled={catPage === 1} onClick={() => setCatPage(catPage - 1)} />
-                                                {[...Array(totalCatPages)].map((_, idx) => (
-                                                    <Pagination.Item key={idx + 1} active={idx + 1 === catPage} onClick={() => setCatPage(idx + 1)}>
-                                                        {idx + 1}
-                                                    </Pagination.Item>
-                                                ))}
-                                                <Pagination.Next disabled={catPage === totalCatPages} onClick={() => setCatPage(catPage + 1)} />
-                                            </Pagination>
-                                        )}
-                                    </>
-                                )}
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
-                </Tab.Content>
-            </Tab.Container>
+                                            ))}
+                                        </tbody>
+                                    </Table>
+                                    {totalCatPages > 1 && (
+                                        <Pagination className="justify-content-center mt-3">
+                                            <Pagination.Prev disabled={catPage === 1} onClick={() => setCatPage(catPage - 1)} />
+                                            {[...Array(totalCatPages)].map((_, idx) => (
+                                                <Pagination.Item key={idx + 1} active={idx + 1 === catPage} onClick={() => setCatPage(idx + 1)}>
+                                                    {idx + 1}
+                                                </Pagination.Item>
+                                            ))}
+                                            <Pagination.Next disabled={catPage === totalCatPages} onClick={() => setCatPage(catPage + 1)} />
+                                        </Pagination>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </Tab.Pane>
+                    </Tab.Content>
+                </Tab.Container>
+            )}
 
             {/* Category Modal */}
             <Modal show={showCatModal} onHide={() => setShowCatModal(false)}>

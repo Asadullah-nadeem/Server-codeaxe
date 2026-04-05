@@ -143,7 +143,7 @@ const NavigationCMS = () => {
                             <Button variant="light" size="sm" onClick={handleSettingsShow}>Edit Settings</Button>
                         </Card.Header>
                         <Card.Body>
-                            {loading ? <LoadingSpinner text="Loading nav settings..." fluid={false} /> : (
+                            {loading ? <LoadingSpinner text="Fetching header data..." fluid={false} /> : (
                                 <Row>
                                     <Col md={6} className="mb-3">
                                         <h6 className="text-muted text-uppercase mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>SEO Tags</h6>
@@ -197,7 +197,7 @@ const NavigationCMS = () => {
                     <Card>
                         <Card.Body>
                             {loading ? (
-                                <LoadingSpinner text="Loading navigation items..." fluid={false} />
+                                <LoadingSpinner text="Fetching navigation structure..." fluid={false} />
                             ) : (
                                 <Table responsive hover>
                                     <thead className="table-light">

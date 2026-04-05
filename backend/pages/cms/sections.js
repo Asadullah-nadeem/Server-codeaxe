@@ -143,7 +143,6 @@ const SectionsCMS = () => {
     const enabledCount  = sections.filter(s => s.is_enabled).length;
     const disabledCount = sections.length - enabledCount;
 
-    if (loading) return <LoadingSpinner text="Loading section settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -166,6 +165,7 @@ const SectionsCMS = () => {
             {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
 
             {/* Summary stats bar */}
+            {/* Summary stats bar */}
             <Row className="mb-4">
                 <Col md={4} className="mb-3">
                     <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #0d6efd', borderRadius: 12 }}>
@@ -174,7 +174,7 @@ const SectionsCMS = () => {
                                 <Layout size={20} className="text-primary" />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold">{sections.length}</h5>
+                                <h5 className="mb-0 fw-bold">{loading ? '...' : sections.length}</h5>
                                 <small className="text-muted">Total Sections</small>
                             </div>
                         </Card.Body>
@@ -187,7 +187,7 @@ const SectionsCMS = () => {
                                 <CheckCircle size={20} className="text-success" />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold text-success">{enabledCount}</h5>
+                                <h5 className="mb-0 fw-bold text-success">{loading ? '...' : enabledCount}</h5>
                                 <small className="text-muted">Enabled</small>
                             </div>
                         </Card.Body>
@@ -200,7 +200,7 @@ const SectionsCMS = () => {
                                 <XCircle size={20} className="text-danger" />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold text-danger">{disabledCount}</h5>
+                                <h5 className="mb-0 fw-bold text-danger">{loading ? '...' : disabledCount}</h5>
                                 <small className="text-muted">Disabled</small>
                             </div>
                         </Card.Body>
@@ -218,87 +218,93 @@ const SectionsCMS = () => {
                         variant={filterPage === p ? 'primary' : 'outline-secondary'}
                         onClick={() => setFilterPage(p)}
                         style={{ borderRadius: 20 }}
+                        disabled={loading}
                     >
                         {p}
                     </Button>
                 ))}
             </div>
 
-            {/* Section cards grid */}
-            <Row>
-                {filtered.map(section => (
-                    <Col xl={4} lg={6} md={12} key={section.key} className="mb-4">
-                        <Card
-                            className="h-100 border-0 shadow-sm"
-                            style={{
-                                borderRadius: 14,
-                                opacity: section.is_enabled ? 1 : 0.7,
-                                transition: 'opacity 0.3s ease',
-                                borderLeft: `4px solid ${section.is_enabled ? '#198754' : '#adb5bd'}`,
-                            }}
-                        >
-                            <Card.Body className="p-4">
-                                {/* Top row */}
-                                <div className="d-flex justify-content-between align-items-start mb-3">
-                                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                                        <Badge bg={PAGE_COLORS[section.page] || 'secondary'} style={{ borderRadius: 8 }}>
-                                            {section.page}
-                                        </Badge>
-                                        <Badge
-                                            bg={section.is_enabled ? 'success' : 'secondary'}
+            {loading ? (
+                <div className="py-5">
+                    <LoadingSpinner text="Fetching site section configurations..." />
+                </div>
+            ) : (
+                <Row>
+                    {filtered.map(section => (
+                        <Col xl={4} lg={6} md={12} key={section.key} className="mb-4">
+                            <Card
+                                className="h-100 border-0 shadow-sm"
+                                style={{
+                                    borderRadius: 14,
+                                    opacity: section.is_enabled ? 1 : 0.7,
+                                    transition: 'opacity 0.3s ease',
+                                    borderLeft: `4px solid ${section.is_enabled ? '#198754' : '#adb5bd'}`,
+                                }}
+                            >
+                                <Card.Body className="p-4">
+                                    {/* Top row */}
+                                    <div className="d-flex justify-content-between align-items-start mb-3">
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                            <Badge bg={PAGE_COLORS[section.page] || 'secondary'} style={{ borderRadius: 8 }}>
+                                                {section.page}
+                                            </Badge>
+                                            <Badge
+                                                bg={section.is_enabled ? 'success' : 'secondary'}
+                                                style={{ borderRadius: 8 }}
+                                            >
+                                                {section.is_enabled ? '● Live' : '○ Hidden'}
+                                            </Badge>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="light"
+                                            className="border"
+                                            onClick={() => handleEditOpen(section)}
+                                            title="Edit label/description"
                                             style={{ borderRadius: 8 }}
                                         >
-                                            {section.is_enabled ? '● Live' : '○ Hidden'}
-                                        </Badge>
+                                            <Settings size={13} />
+                                        </Button>
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        variant="light"
-                                        className="border"
-                                        onClick={() => handleEditOpen(section)}
-                                        title="Edit label/description"
-                                        style={{ borderRadius: 8 }}
-                                    >
-                                        <Settings size={13} />
-                                    </Button>
-                                </div>
 
-                                {/* Title & description */}
-                                <h6 className="fw-bold mb-1">{section.custom_label}</h6>
-                                <p className="text-muted small mb-3" style={{ lineHeight: 1.5 }}>
-                                    {section.custom_desc}
-                                </p>
-                                <code className="text-muted" style={{ fontSize: '0.72rem' }}>
-                                    key: {section.key}
-                                </code>
+                                    {/* Title & description */}
+                                    <h6 className="fw-bold mb-1">{section.custom_label}</h6>
+                                    <p className="text-muted small mb-3" style={{ lineHeight: 1.5 }}>
+                                        {section.custom_desc}
+                                    </p>
+                                    <code className="text-muted" style={{ fontSize: '0.72rem' }}>
+                                        key: {section.key}
+                                    </code>
 
-                                {/* Toggle button */}
-                                <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                                    <span className={`small fw-semibold ${section.is_enabled ? 'text-success' : 'text-secondary'}`}>
-                                        {section.is_enabled ? 'Visible on site' : 'Hidden from site'}
-                                    </span>
-                                    <Button
-                                        variant={section.is_enabled ? 'outline-danger' : 'outline-success'}
-                                        size="sm"
-                                        disabled={saving === section.key}
-                                        onClick={() => handleToggle(section)}
-                                        className="d-flex align-items-center gap-2"
-                                        style={{ borderRadius: 8, minWidth: 110 }}
-                                    >
-                                        {saving === section.key ? (
-                                            <><Spinner animation="border" size="sm" /> Saving...</>
-                                        ) : section.is_enabled ? (
-                                            <><EyeOff size={14} /> Disable</>
-                                        ) : (
-                                            <><Eye size={14} /> Enable</>
-                                        )}
-                                    </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+                                    {/* Toggle button */}
+                                    <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                                        <span className={`small fw-semibold ${section.is_enabled ? 'text-success' : 'text-secondary'}`}>
+                                            {section.is_enabled ? 'Visible on site' : 'Hidden from site'}
+                                        </span>
+                                        <Button
+                                            variant={section.is_enabled ? 'outline-danger' : 'outline-success'}
+                                            size="sm"
+                                            disabled={saving === section.key}
+                                            onClick={() => handleToggle(section)}
+                                            className="d-flex align-items-center gap-2"
+                                            style={{ borderRadius: 8, minWidth: 110 }}
+                                        >
+                                            {saving === section.key ? (
+                                                <><Spinner animation="border" size="sm" /> Saving...</>
+                                            ) : section.is_enabled ? (
+                                                <><EyeOff size={14} /> Disable</>
+                                            ) : (
+                                                <><Eye size={14} /> Enable</>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            )}
 
             {/* Quick reference info */}
             <Alert variant="info" className="mt-2">

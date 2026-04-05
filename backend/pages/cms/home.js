@@ -175,7 +175,6 @@ const HomeCMS = () => {
         fetchHomeData();
     };
 
-    if (loading) return <LoadingSpinner text="Loading home settings..." />;
 
     return (
         <Container fluid className="px-6 py-4">
@@ -194,229 +193,236 @@ const HomeCMS = () => {
                     <Nav.Item><Nav.Link eventKey="partners">Partners</Nav.Link></Nav.Item>
                     <Nav.Item><Nav.Link eventKey="cta">Call To Action</Nav.Link></Nav.Item>
                 </Nav>
-
+ 
                 <Tab.Content>
-                    {/* HEADERS TAB */}
-                    <Tab.Pane eventKey="headers">
-                        <Table hover responsive>
-                            <thead className="table-light"><tr><th>Key</th><th>Index</th><th>Label</th><th>Title</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.headers.map(h => (
-                                    <tr key={h.id}>
-                                        <td><code>{h.section_key}</code></td>
-                                        <td>{h.section_index || '-'}</td>
-                                        <td>{h.label}</td>
-                                        <td>{h.title || '-'}</td>
-                                        <td><Button size="sm" variant="info" onClick={() => handleHeaderShow(h)}>Edit</Button></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
-
-                    {/* HERO TAB */}
-                    <Tab.Pane eventKey="hero">
-                        <Card>
-                            <Card.Body>
-                                <Form onSubmit={handleHeroSubmit}>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Badge Text</Form.Label>
-                                        <Form.Control type="text" value={heroForm.badge || ''} onChange={e => setHeroForm({...heroForm, badge: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Main Title (HTML allowed)</Form.Label>
-                                        <Form.Control as="textarea" rows={2} value={heroForm.title || ''} onChange={e => setHeroForm({...heroForm, title: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Hero Description</Form.Label>
-                                        <Form.Control as="textarea" rows={3} value={heroForm.description || ''} onChange={e => setHeroForm({...heroForm, description: e.target.value})} required />
-                                    </Form.Group>
-                                    <Button type="submit" variant="primary">Save Hero Section</Button>
-                                </Form>
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
-
-                    {/* SERVICES TAB */}
-                    <Tab.Pane eventKey="services">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => serviceCrud.handleShow()}>Add Service Card</Button>
+                    {loading ? (
+                        <div className="py-5">
+                            <LoadingSpinner text="Synchronizing home content data..." />
                         </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Index</th><th>Icon</th><th>Title</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.services.map(s => (
-                                    <tr key={s.id}>
-                                        <td>{s.index_number}</td><td>{s.icon}</td><td>{s.title}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => serviceCrud.handleShow(s)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => serviceCrud.handleDelete(s.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                    ) : (
+                        <>
+                            {/* HEADERS TAB */}
+                            <Tab.Pane eventKey="headers">
+                                <Table hover responsive>
+                                    <thead className="table-light"><tr><th>Key</th><th>Index</th><th>Label</th><th>Title</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.headers.map(h => (
+                                            <tr key={h.id}>
+                                                <td><code>{h.section_key}</code></td>
+                                                <td>{h.section_index || '-'}</td>
+                                                <td>{h.label}</td>
+                                                <td>{h.title || '-'}</td>
+                                                <td><Button size="sm" variant="info" onClick={() => handleHeaderShow(h)}>Edit</Button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* PROJECTS TAB */}
-                    <Tab.Pane eventKey="projects">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => handleProjectShow()}>Add Project</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Year</th><th>Title</th><th>Image URL</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.projects.map(p => (
-                                    <tr key={p.id}>
-                                        <td>{p.year}</td><td>{p.title}</td><td>{p.image_url}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleProjectShow(p)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => handleProjectDelete(p.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* HERO TAB */}
+                            <Tab.Pane eventKey="hero">
+                                <Card>
+                                    <Card.Body>
+                                        <Form onSubmit={handleHeroSubmit}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Badge Text</Form.Label>
+                                                <Form.Control type="text" value={heroForm.badge || ''} onChange={e => setHeroForm({...heroForm, badge: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Main Title (HTML allowed)</Form.Label>
+                                                <Form.Control as="textarea" rows={2} value={heroForm.title || ''} onChange={e => setHeroForm({...heroForm, title: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Hero Description</Form.Label>
+                                                <Form.Control as="textarea" rows={3} value={heroForm.description || ''} onChange={e => setHeroForm({...heroForm, description: e.target.value})} required />
+                                            </Form.Group>
+                                            <Button type="submit" variant="primary">Save Hero Section</Button>
+                                        </Form>
+                                    </Card.Body>
+                                </Card>
+                            </Tab.Pane>
 
-                    {/* STATS TAB */}
-                    <Tab.Pane eventKey="stats">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => statCrud.handleShow()}>Add Stat</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Value</th><th>Label</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.stats.map(s => (
-                                    <tr key={s.id}>
-                                        <td><h2>{s.value}</h2></td><td>{s.label}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => statCrud.handleShow(s)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => statCrud.handleDelete(s.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* SERVICES TAB */}
+                            <Tab.Pane eventKey="services">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => serviceCrud.handleShow()}>Add Service Card</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Index</th><th>Icon</th><th>Title</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.services.map(s => (
+                                            <tr key={s.id}>
+                                                <td>{s.index_number}</td><td>{s.icon}</td><td>{s.title}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => serviceCrud.handleShow(s)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => serviceCrud.handleDelete(s.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* PRINCIPLES TAB */}
-                    <Tab.Pane eventKey="principles">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => principleCrud.handleShow()}>Add Principle</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Title</th><th>Icon</th><th>Description</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.principles.map(p => (
-                                    <tr key={p.id}>
-                                        <td>{p.title}</td><td>{p.icon}</td><td className="text-truncate" style={{maxWidth: '200px'}}>{p.description}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => principleCrud.handleShow(p)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => principleCrud.handleDelete(p.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* PROJECTS TAB */}
+                            <Tab.Pane eventKey="projects">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => handleProjectShow()}>Add Project</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Year</th><th>Title</th><th>Image URL</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.projects.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.year}</td><td>{p.title}</td><td>{p.image_url}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => handleProjectShow(p)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => handleProjectDelete(p.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* TECHNOLOGIES TAB */}
-                    <Tab.Pane eventKey="technologies">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => techCrud.handleShow()}>Add Tech</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Name</th><th>Image Source</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.technologies.map(t => (
-                                    <tr key={t.id}>
-                                        <td>{t.name}</td><td>{t.src}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => techCrud.handleShow(t)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => techCrud.handleDelete(t.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* STATS TAB */}
+                            <Tab.Pane eventKey="stats">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => statCrud.handleShow()}>Add Stat</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Value</th><th>Label</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.stats.map(s => (
+                                            <tr key={s.id}>
+                                                <td><h2>{s.value}</h2></td><td>{s.label}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => statCrud.handleShow(s)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => statCrud.handleDelete(s.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* SYSTEM STATUS TAB */}
-                    <Tab.Pane eventKey="system_status">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => statusCrud.handleShow()}>Add Status Module</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Label</th><th>Status</th><th>Ping</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.system_status.map(s => (
-                                    <tr key={s.id}>
-                                        <td>{s.label}</td>
-                                        <td><span className={`badge bg-${s.status === 'Operational' ? 'success' : 'warning'}`}>{s.status}</span></td>
-                                        <td>{s.ping}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => statusCrud.handleShow(s)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => statusCrud.handleDelete(s.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* PRINCIPLES TAB */}
+                            <Tab.Pane eventKey="principles">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => principleCrud.handleShow()}>Add Principle</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Title</th><th>Icon</th><th>Description</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.principles.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.title}</td><td>{p.icon}</td><td className="text-truncate" style={{maxWidth: '200px'}}>{p.description}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => principleCrud.handleShow(p)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => principleCrud.handleDelete(p.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* PARTNERS TAB */}
-                    <Tab.Pane eventKey="partners">
-                        <div className="d-flex justify-content-end mb-3">
-                            <Button variant="primary" onClick={() => partnerCrud.handleShow()}>Add Partner Link</Button>
-                        </div>
-                        <Table hover>
-                            <thead className="table-light"><tr><th>Name</th><th>Logo Source</th><th>Actions</th></tr></thead>
-                            <tbody>
-                                {data.partners.map(p => (
-                                    <tr key={p.id}>
-                                        <td>{p.name}</td><td>{p.src}</td>
-                                        <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => partnerCrud.handleShow(p)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => partnerCrud.handleDelete(p.id)}>Delete</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </Tab.Pane>
+                            {/* TECHNOLOGIES TAB */}
+                            <Tab.Pane eventKey="technologies">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => techCrud.handleShow()}>Add Tech</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Name</th><th>Image Source</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.technologies.map(t => (
+                                            <tr key={t.id}>
+                                                <td>{t.name}</td><td>{t.src}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => techCrud.handleShow(t)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => techCrud.handleDelete(t.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
-                    {/* CTA TAB */}
-                    <Tab.Pane eventKey="cta">
-                        <Card>
-                            <Card.Body>
-                                <Form onSubmit={handleCtaSubmit}>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Badge</Form.Label>
-                                        <Form.Control type="text" value={ctaForm.badge || ''} onChange={e => setCtaForm({...ctaForm, badge: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Title</Form.Label>
-                                        <Form.Control type="text" value={ctaForm.title || ''} onChange={e => setCtaForm({...ctaForm, title: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Description</Form.Label>
-                                        <Form.Control as="textarea" rows={2} value={ctaForm.description || ''} onChange={e => setCtaForm({...ctaForm, description: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Button Label</Form.Label>
-                                        <Form.Control type="text" value={ctaForm.button_label || ''} onChange={e => setCtaForm({...ctaForm, button_label: e.target.value})} required />
-                                    </Form.Group>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Button Link</Form.Label>
-                                        <Form.Control type="text" value={ctaForm.button_link || ''} onChange={e => setCtaForm({...ctaForm, button_link: e.target.value})} required />
-                                    </Form.Group>
-                                    <Button type="submit" variant="primary">Save CTA Section</Button>
-                                </Form>
-                            </Card.Body>
-                        </Card>
-                    </Tab.Pane>
+                            {/* SYSTEM STATUS TAB */}
+                            <Tab.Pane eventKey="system_status">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => statusCrud.handleShow()}>Add Status Module</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Label</th><th>Status</th><th>Ping</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.system_status.map(s => (
+                                            <tr key={s.id}>
+                                                <td>{s.label}</td>
+                                                <td><span className={`badge bg-${s.status === 'Operational' ? 'success' : 'warning'}`}>{s.status}</span></td>
+                                                <td>{s.ping}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => statusCrud.handleShow(s)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => statusCrud.handleDelete(s.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
 
+                            {/* PARTNERS TAB */}
+                            <Tab.Pane eventKey="partners">
+                                <div className="d-flex justify-content-end mb-3">
+                                    <Button variant="primary" onClick={() => partnerCrud.handleShow()}>Add Partner Link</Button>
+                                </div>
+                                <Table hover>
+                                    <thead className="table-light"><tr><th>Name</th><th>Logo Source</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {data.partners.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.name}</td><td>{p.src}</td>
+                                                <td>
+                                                    <Button size="sm" variant="info" className="me-2" onClick={() => partnerCrud.handleShow(p)}>Edit</Button>
+                                                    <Button size="sm" variant="danger" onClick={() => partnerCrud.handleDelete(p.id)}>Delete</Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Tab.Pane>
+
+                            {/* CTA TAB */}
+                            <Tab.Pane eventKey="cta">
+                                <Card>
+                                    <Card.Body>
+                                        <Form onSubmit={handleCtaSubmit}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Badge</Form.Label>
+                                                <Form.Control type="text" value={ctaForm.badge || ''} onChange={e => setCtaForm({...ctaForm, badge: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Title</Form.Label>
+                                                <Form.Control type="text" value={ctaForm.title || ''} onChange={e => setCtaForm({...ctaForm, title: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Description</Form.Label>
+                                                <Form.Control as="textarea" rows={2} value={ctaForm.description || ''} onChange={e => setCtaForm({...ctaForm, description: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Button Label</Form.Label>
+                                                <Form.Control type="text" value={ctaForm.button_label || ''} onChange={e => setCtaForm({...ctaForm, button_label: e.target.value})} required />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Button Link</Form.Label>
+                                                <Form.Control type="text" value={ctaForm.button_link || ''} onChange={e => setCtaForm({...ctaForm, button_link: e.target.value})} required />
+                                            </Form.Group>
+                                            <Button type="submit" variant="primary">Save CTA Section</Button>
+                                        </Form>
+                                    </Card.Body>
+                                </Card>
+                            </Tab.Pane>
+                        </>
+                    )}
                 </Tab.Content>
             </Tab.Container>
 
