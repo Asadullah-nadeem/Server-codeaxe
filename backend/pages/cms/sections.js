@@ -165,43 +165,42 @@ const SectionsCMS = () => {
             {success && <Alert variant="success" dismissible onClose={() => setSuccess(null)}>{success}</Alert>}
 
             {/* Summary stats bar */}
-            {/* Summary stats bar */}
-            <Row className="mb-4">
+            <Row className="mb-5">
                 <Col md={4} className="mb-3">
-                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #0d6efd', borderRadius: 12 }}>
-                        <Card.Body className="d-flex align-items-center gap-3 py-3">
-                            <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 48, height: 48 }}>
-                                <Layout size={20} className="text-primary" />
+                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #6366f1', borderRadius: 16 }}>
+                        <Card.Body className="d-flex align-items-center gap-3 py-4">
+                            <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 56, height: 56, background: '#eef2ff' }}>
+                                <Layout size={28} style={{ color: '#6366f1' }} />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold">{loading ? '...' : sections.length}</h5>
-                                <small className="text-muted">Total Sections</small>
+                                <p className="text-muted mb-1 x-small fw-bold text-uppercase" style={{ letterSpacing: '0.8px' }}>Total Sections</p>
+                                <h3 className="mb-0 fw-bold">{loading ? <Spinner animation="grow" size="sm" variant="primary" /> : sections.length}</h3>
                             </div>
                         </Card.Body>
                     </Card>
                 </Col>
                 <Col md={4} className="mb-3">
-                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #198754', borderRadius: 12 }}>
-                        <Card.Body className="d-flex align-items-center gap-3 py-3">
-                            <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 48, height: 48 }}>
-                                <CheckCircle size={20} className="text-success" />
+                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #10b981', borderRadius: 16 }}>
+                        <Card.Body className="d-flex align-items-center gap-3 py-4">
+                            <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 56, height: 56, background: '#ecfdf5' }}>
+                                <CheckCircle size={28} style={{ color: '#10b981' }} />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold text-success">{loading ? '...' : enabledCount}</h5>
-                                <small className="text-muted">Enabled</small>
+                                <p className="text-muted mb-1 x-small fw-bold text-uppercase" style={{ letterSpacing: '0.8px' }}>Enabled</p>
+                                <h3 className="mb-0 fw-bold text-success">{loading ? <Spinner animation="grow" size="sm" variant="success" /> : enabledCount}</h3>
                             </div>
                         </Card.Body>
                     </Card>
                 </Col>
                 <Col md={4} className="mb-3">
-                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #dc3545', borderRadius: 12 }}>
-                        <Card.Body className="d-flex align-items-center gap-3 py-3">
-                            <div className="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 48, height: 48 }}>
-                                <XCircle size={20} className="text-danger" />
+                    <Card className="border-0 shadow-sm h-100" style={{ borderLeft: '4px solid #ef4444', borderRadius: 16 }}>
+                        <Card.Body className="d-flex align-items-center gap-3 py-4">
+                            <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 56, height: 56, background: '#fef2f2' }}>
+                                <XCircle size={28} style={{ color: '#ef4444' }} />
                             </div>
                             <div>
-                                <h5 className="mb-0 fw-bold text-danger">{loading ? '...' : disabledCount}</h5>
-                                <small className="text-muted">Disabled</small>
+                                <p className="text-muted mb-1 x-small fw-bold text-uppercase" style={{ letterSpacing: '0.8px' }}>Disabled</p>
+                                <h3 className="mb-0 fw-bold text-danger">{loading ? <Spinner animation="grow" size="sm" variant="danger" /> : disabledCount}</h3>
                             </div>
                         </Card.Body>
                     </Card>
@@ -359,6 +358,9 @@ const SectionsCMS = () => {
                     </Form>
                 </Modal>
             )}
+            <style jsx>{`
+                .x-small { font-size: 11px; }
+            `}</style>
         </Container>
     );
 };
