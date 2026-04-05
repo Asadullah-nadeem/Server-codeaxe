@@ -149,6 +149,26 @@ const ActiveChats = () => {
     }, 4000);
   };
 
+  const handleClearHistory = async () => {
+    if (!selectedChatId) return;
+    if (!confirm('Are you sure you want to clear the entire chat history for this user? This cannot be undone.')) return;
+    
+    try {
+      setSending(true);
+      const res = await fetchApi(`/admin/messages/chats/${selectedChatId}/clear`, { method: 'DELETE' });
+      if (res.success) {
+        setMessages([]);
+        // Update the chats list (clear latest message preview)
+        setChats(prev => prev.map(c => c.id === selectedChatId ? { ...c, latest_message: null } : c));
+        alert('Chat history cleared successfully.');
+      }
+    } catch (error) {
+      alert(error.message || 'Failed to clear chat history.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   const filteredChats = chats.filter(c =>
     c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.request_title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -198,28 +218,31 @@ const ActiveChats = () => {
                     <div className={`bg-light-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'secondary')} text-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'muted')} rounded-circle p-2`}>
                       <User size={20} />
                     </div>
-                    {chat.unread_count > 0 && (
-                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white p-1" style={{ fontSize: '0.5rem' }}>
-                        {chat.unread_count}
-                      </span>
-                    )}
                   </div>
                   <div className="flex-grow-1 min-width-0">
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                      <h6 className={`mb-0 text-truncate fw-bold ${selectedChatId === chat.id ? 'text-primary' : 'text-dark'}`}>{chat.username}</h6>
-                      <small className="text-muted opacity-75" style={{ fontSize: '10px' }}>
+                      <h6 className={`mb-0 text-truncate ${chat.unread_count > 0 ? 'fw-bold text-dark' : 'fw-semibold text-muted'}`}>
+                        {chat.username}
+                      </h6>
+                      <small className="text-muted opacity-75 x-small flex-shrink-0">
                         {chat.latest_message ? new Date(chat.latest_message.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
                       </small>
                     </div>
-                    <p className="small text-muted mb-1 text-truncate fw-semibold">{chat.request_title}</p>
-                    <p className="small text-muted mb-0 text-truncate" style={{ fontSize: '0.8rem opacity: 0.8' }}>
-                      {chat.latest_message ? (chat.latest_message.sender_type === 'admin' ? 'You: ' : chat.username + ': ') : ''}
-                      {chat.latest_message?.message || 'No messages'}
-                    </p>
+                    <p className="small text-muted mb-1 text-truncate fw-semibold" style={{ fontSize: '11px' }}>{chat.request_title}</p>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <p className="small text-muted mb-0 text-truncate" style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                        {chat.latest_message ? (chat.latest_message.sender_type === 'admin' ? 'You: ' : '') : ''}
+                        {chat.latest_message?.message || 'No messages'}
+                      </p>
+                      {chat.unread_count > 0 && (
+                        <Badge bg="primary" pill className="ms-2 pulse-badge" style={{ fontSize: '9px' }}>{chat.unread_count}</Badge>
+                      )}
+                    </div>
                   </div>
                 </ListGroup.Item>
               )) : (
                 <div className="p-5 text-center text-muted">
+                  <div className="mb-3 opacity-50"><MessageCircle size={48} /></div>
                   <p className="small mb-0">No conversations found</p>
                 </div>
               )}
@@ -355,6 +378,7 @@ const ActiveChats = () => {
             </div>
           )}
         </div>
+        </div>
       )}
 
       <Offcanvas show={showDetails} onHide={() => setShowDetails(false)} placement="end">
@@ -401,6 +425,34 @@ const ActiveChats = () => {
                   <p className="mb-0 mt-2 text-dark">{new Date(selectedChat.created_at).toLocaleString()}</p>
                 </div>
               )}
+              <div>
+                <small className="text-muted text-uppercase fw-bold x-small">Management Controls</small>
+                <div className="mt-3 d-grid gap-2">
+                  <Button 
+                    variant="outline-danger" 
+                    size="sm" 
+                    className="d-flex align-items-center justify-content-center gap-2 py-2 shadow-none"
+                    onClick={handleClearHistory}
+                    disabled={sending || messages.length === 0}
+                  >
+                    <Trash2 size={14} /> Clear Conversation History
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-top">
+                 <div className="alert alert-light border-0 shadow-sm mb-0">
+                    <div className="d-flex align-items-center gap-3">
+                       <div className="bg-primary bg-opacity-10 p-2 rounded text-primary">
+                          <CheckCircle size={20} />
+                       </div>
+                       <div>
+                          <h6 className="mb-0 fw-bold">Super Admin Controller</h6>
+                          <p className="mb-0 x-small text-muted">Authorized Conversation Management View</p>
+                       </div>
+                    </div>
+                 </div>
+              </div>
             </div>
           ) : (
             <div className="text-center mt-5 text-muted">
@@ -437,6 +489,15 @@ const ActiveChats = () => {
                 @keyframes blink-anim {
                   0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
                   40% { opacity: 1; transform: translateY(-3px); }
+                }
+                .pulse-badge {
+                  box-shadow: 0 0 0 rgba(13, 110, 253, 0.4);
+                  animation: pulse-primary 2s infinite;
+                }
+                @keyframes pulse-primary {
+                  0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4); }
+                  70% { box-shadow: 0 0 0 6px rgba(13, 110, 253, 0); }
+                  100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
                 }
             `}</style>
     </Container>
