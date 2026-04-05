@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Badge, Image } from 'react-bootstrap';
 import { fetchApi } from '../../utils/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { Eye, PencilSquare, Trash, PersonCircle } from 'react-bootstrap-icons';
 
 const UsersCMS = () => {
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [selectedAdmin, setSelectedAdmin] = useState(null);
     const [form, setForm] = useState({ id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 });
 
     const fetchAdmins = async () => {
@@ -16,7 +19,6 @@ const UsersCMS = () => {
             if (res?.success) setAdmins(res.data);
         } catch (error) {
             console.error(error);
-            // If they aren't a superadmin, this will fail
             alert('Access Denied: You must be a Super Admin to manage accounts.');
         } finally {
             setLoading(false);
@@ -28,6 +30,11 @@ const UsersCMS = () => {
     const handleShow = (item = null) => {
         setForm(item ? {...item, password: ''} : { id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 });
         setShowModal(true);
+    };
+
+    const handleViewProfile = (admin) => {
+        setSelectedAdmin(admin);
+        setShowProfileModal(true);
     };
 
     const handleSubmit = async (e) => {
@@ -57,32 +64,52 @@ const UsersCMS = () => {
             <h2 className="mb-1">Admin Account Management</h2>
             <p className="text-muted mb-4 small">Manage internal users who can access this dashboard. (Super Admin Only)</p>
 
-            <Card>
-                <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">All System Admins</h5>
-                    <Button variant="light" size="sm" onClick={() => handleShow()}>Create New Admin</Button>
+            <Card className="border-0 shadow-sm">
+                <Card.Header className="bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0 fw-bold text-dark">System Access Control</h5>
+                    <Button variant="primary" size="sm" className="px-4" onClick={() => handleShow()}>Create New Account</Button>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body className="p-0">
                     {loading ? (
                         <div className="py-5">
                             <LoadingSpinner text="Fetching administrative access..." />
                         </div>
                     ) : (
-                        <Table hover responsive className="text-nowrap">
-                            <thead className="table-light">
-                                <tr><th>Name</th><th>Username</th><th>Email / Role</th><th>Account Status</th><th>Created</th><th>Actions</th></tr>
+                        <Table hover responsive className="mb-0 align-middle">
+                            <thead className="bg-light">
+                                <tr><th>Admin Profile</th><th>Username</th><th>Permissions</th><th>Account Identity</th><th>Actions</th></tr>
                             </thead>
                             <tbody>
                                 {admins.map(a => (
                                     <tr key={a.id}>
-                                        <td><strong>{a.name}</strong></td>
-                                        <td><code>{a.username}</code></td>
-                                        <td>{a.email}<br/><small className="text-muted text-uppercase">{a.role}</small></td>
-                                        <td><Badge bg={a.is_active == 1 ? 'success' : 'secondary'}>{a.is_active == 1 ? 'Active' : 'Disabled'}</Badge></td>
-                                        <td>{new Date(a.created_at).toLocaleDateString()}</td>
                                         <td>
-                                            <Button size="sm" variant="info" className="me-2" onClick={() => handleShow(a)}>Edit</Button>
-                                            <Button size="sm" variant="danger" onClick={() => handleDelete(a.id)}>Delete</Button>
+                                            <div className="d-flex align-items-center">
+                                                {a.photo ? (
+                                                    <Image src={a.photo} className="rounded-circle" width={40} height={40} style={{objectFit: 'cover'}} alt={a.name}/>
+                                                ) : (
+                                                    <div className="rounded-circle bg-light-primary text-primary d-flex align-items-center justify-content-center" style={{width: '40px', height: '40px', fontWeight: 'bold'}}>
+                                                        {a.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                                <div className="ms-3 lh-1">
+                                                    <h5 className="mb-1">{a.name}</h5>
+                                                    <Badge bg={a.is_active == 1 ? 'success' : 'danger'} className="x-small">{a.is_active == 1 ? 'ACTIVE' : 'LOCKED'}</Badge>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><code className="text-primary fw-bold">@{a.username}</code></td>
+                                        <td>
+                                            <Badge bg="light-info" className="text-info text-uppercase px-2">{a.role}</Badge>
+                                            <div className="x-small text-muted mt-1">Full access granted</div>
+                                        </td>
+                                        <td>
+                                            <div className="small text-dark fw-medium">{a.email}</div>
+                                            <div className="x-small text-muted">Created: {new Date(a.created_at).toLocaleDateString()}</div>
+                                        </td>
+                                        <td>
+                                            <Button size="sm" variant="light" className="me-2 text-primary" onClick={() => handleViewProfile(a)} title="View Detail Profile"><Eye size={14}/></Button>
+                                            <Button size="sm" variant="light" className="me-2 text-info" onClick={() => handleShow(a)} title="Edit Settings"><PencilSquare size={14}/></Button>
+                                            <Button size="sm" variant="light" className="text-danger" onClick={() => handleDelete(a.id)} title="Revoke Access"><Trash size={14}/></Button>
                                         </td>
                                     </tr>
                                 ))}
@@ -92,6 +119,46 @@ const UsersCMS = () => {
                 </Card.Body>
             </Card>
 
+            {/* Profile Detail Modal */}
+            <Modal show={showProfileModal} onHide={() => setShowProfileModal(false)} centered>
+                <Modal.Body className="p-0 overflow-hidden rounded-3">
+                    <div style={{height: '100px', background: 'linear-gradient(45deg, #624bff, #a34bff)'}}></div>
+                    <div className="px-4 pb-4">
+                        <div className="d-flex justify-content-center mt-n5 mb-3">
+                            {selectedAdmin?.photo ? (
+                                <Image src={selectedAdmin.photo} className="rounded-circle border border-4 border-white shadow" width={100} height={100} style={{objectFit: 'cover'}} alt={selectedAdmin.name}/>
+                            ) : (
+                                <div className="rounded-circle bg-white border border-4 border-white shadow d-flex align-items-center justify-content-center text-primary fw-bold fs-1" style={{width: '100px', height: '100px'}}>
+                                    {selectedAdmin?.name.charAt(0)}
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-center mb-4">
+                            <h3 className="mb-0 fw-bold">{selectedAdmin?.name}</h3>
+                            <p className="text-muted small">@{selectedAdmin?.username}</p>
+                            <Badge bg="primary" className="text-uppercase px-3 py-1 rounded-pill">{selectedAdmin?.role}</Badge>
+                        </div>
+                        <hr className="my-4 opacity-10" />
+                        <div className="row g-4 text-center">
+                            <div className="col-6">
+                                <h6 className="text-muted small text-uppercase fw-bold ls-1 mb-1">Email Node</h6>
+                                <p className="mb-0 fw-medium">{selectedAdmin?.email}</p>
+                            </div>
+                            <div className="col-6">
+                                <h6 className="text-muted small text-uppercase fw-bold ls-1 mb-1">Status</h6>
+                                <p className={`mb-0 fw-bold ${selectedAdmin?.is_active == 1 ? 'text-success' : 'text-danger'}`}>
+                                    {selectedAdmin?.is_active == 1 ? 'ONLINE / ACTIVE' : 'LOCKED / DISABLED'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-light p-3 text-center border-top">
+                        <Button variant="secondary" size="sm" className="px-5 rounded-pill" onClick={() => setShowProfileModal(false)}>Close View</Button>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Edit User Modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton><Modal.Title>{form.id ? 'Update' : 'Create'} Admin User</Modal.Title></Modal.Header>
                 <Form onSubmit={handleSubmit}>
@@ -136,6 +203,11 @@ const UsersCMS = () => {
                     </Modal.Footer>
                 </Form>
             </Modal>
+             <style jsx>{`
+                .x-small { font-size: 10px; }
+                .ls-1 { letter-spacing: 1px; }
+                .mt-n5 { margin-top: -3rem !important; }
+            `}</style>
         </Container>
     );
 };

@@ -20,15 +20,32 @@ import NotificationList from 'data/Notification';
 
 // import hooks
 import useMounted from 'hooks/useMounted';
+import { fetchApi } from 'utils/api';
 
 const QuickMenu = () => {
 
     const hasMounted = useMounted();
     const router = useRouter();
+    const [profile, setProfile] = useState(null);
 
     const isDesktop = useMediaQuery({
         query: '(min-width: 1224px)'
     })
+
+    const fetchProfile = async () => {
+        try {
+            const token = localStorage.getItem('admin_token');
+            if (!token) return;
+            const res = await fetchApi('/admin/profile');
+            if (res.success) setProfile(res.data);
+        } catch (error) {
+            console.error("Failed to load profile for menu", error);
+        }
+    };
+
+    useEffect(() => {
+        if (hasMounted) fetchProfile();
+    }, [hasMounted]);
 
     const handleLogout = async () => {
         try {
@@ -49,12 +66,13 @@ const QuickMenu = () => {
             localStorage.removeItem('admin_name');
             localStorage.removeItem('admin_username');
             localStorage.removeItem('admin_login_type');
+            localStorage.removeItem('admin_email');
           router.push('/v1/auth/sign-in');
         }
     };
 
-    const adminName = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin';
-    const adminRole = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Role' : 'Role';
+    const adminName = profile?.name || (hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_name') || 'Admin' : 'Admin');
+    const adminRole = profile?.role || (hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_role') || 'Role' : 'Role');
     const adminLoginType = hasMounted && typeof window !== 'undefined' ? localStorage.getItem('admin_login_type') || 'password' : 'password';
 
     const getInitials = (name) => {
@@ -90,21 +108,29 @@ const QuickMenu = () => {
 
     const ProfileMenu = () => (
         <Dropdown.Menu
-            className="dropdown-menu dropdown-menu-end"
+            className="dropdown-menu dropdown-menu-end shadow border-0 py-3"
             align="end"
             aria-labelledby="dropdownUser"
+            style={{ minWidth: '220px' }}
         >
-            <Dropdown.Item as="div" className="px-4 pb-0 pt-2" bsPrefix=' '>
-                <div className="lh-1 ">
-                    <h5 className="mb-1"> {adminName}</h5>
+            <Dropdown.Item as="div" className="px-4 pb-2" bsPrefix=' '>
+                <div className="lh-1 mb-2">
+                    <h5 className="mb-1 fw-bold"> {adminName}</h5>
                     <div className="d-flex align-items-center gap-2">
-                        <Link href="/pages/profile" className="text-inherit fs-6 text-uppercase">{adminRole}</Link>
-                        <span className="badge bg-light-info text-info border px-2 py-1 x-small text-uppercase">{adminLoginType}</span>
+                        <span className="text-muted small text-uppercase fw-bold ls-1">{adminRole}</span>
+                        <span className="badge bg-light-primary text-primary px-2 py-1 x-small text-uppercase">{adminLoginType}</span>
                     </div>
                 </div>
-                <div className=" dropdown-divider mt-3 mb-2"></div>
             </Dropdown.Item>
-            <Dropdown.Item onClick={handleLogout}>
+            <div className="dropdown-divider my-2"></div>
+            <Dropdown.Item onClick={() => router.push('/pages/profile')}>
+                <i className="fe fe-user me-2 text-primary"></i> View My Profile
+            </Dropdown.Item>
+            <Dropdown.Item onClick={() => router.push('/admin/superadmin')}>
+                <i className="fe fe-settings me-2 text-info"></i> Account Settings
+            </Dropdown.Item>
+            <div className="dropdown-divider my-2"></div>
+            <Dropdown.Item onClick={handleLogout} className="text-danger fw-bold">
                 <i className="fe fe-power me-2"></i>Sign Out
             </Dropdown.Item>
         </Dropdown.Menu>
@@ -298,8 +324,14 @@ const QuickMenu = () => {
                     bsPrefix=' '
                     className="rounded-circle"
                     id="dropdownUser" style={{ cursor: 'pointer' }}>
-                    <div className="avatar avatar-md avatar-indicators avatar-online bg-primary rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm">
-                        {getInitials(adminName)}
+                    <div className="avatar avatar-md avatar-indicators avatar-online rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm"
+                         style={{ 
+                             background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : '#624bff',
+                             backgroundSize: 'cover',
+                             width: '40px',
+                             height: '40px'
+                         }}>
+                        {!profile?.photo && getInitials(adminName)}
                     </div>
                 </Dropdown.Toggle>
                 <ProfileMenu />
@@ -330,8 +362,14 @@ const QuickMenu = () => {
                     bsPrefix=' '
                     className="rounded-circle"
                     id="dropdownUserMobile" style={{ cursor: 'pointer' }}>
-                    <div className="avatar avatar-sm avatar-indicators avatar-online bg-primary rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" style={{width:'36px', height:'36px'}}>
-                        {getInitials(adminName)}
+                    <div className="avatar avatar-sm avatar-indicators avatar-online rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" 
+                         style={{
+                             background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : '#624bff',
+                             backgroundSize: 'cover',
+                             width:'36px', 
+                             height:'36px'
+                         }}>
+                        {!profile?.photo && getInitials(adminName)}
                     </div>
                 </Dropdown.Toggle>
                 <ProfileMenu />

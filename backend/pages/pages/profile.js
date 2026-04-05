@@ -15,12 +15,12 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <Container fluid className="p-6">
+    <Container fluid className="px-6 py-4">
       {/* Page Heading */}
-      <PageHeading heading="User Profile Context"/>
+      <PageHeading heading="Administrative Account Control"/>
 
       {/* Profile Header (Centralized Navigation) */}
-      <div className="mb-6 shadow-sm rounded">
+      <div className="mb-6">
         <ProfileHeader activeKey={activeTab} onSelect={setActiveTab} />
       </div>
 

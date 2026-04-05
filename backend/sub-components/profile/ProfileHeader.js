@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Col, Row, Image, Spinner, Button } from "react-bootstrap";
 import { fetchApi } from "utils/api";
 import MediaGallery from "../../components/MediaGallery";
-import { Camera } from "react-bootstrap-icons";
+import { Camera, House, Images, People, Activity, ShieldCheck } from "react-bootstrap-icons";
 
 const ProfileHeader = ({ activeKey, onSelect }) => {
   const [profile, setProfile] = useState(null);
@@ -64,54 +64,75 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
         ></div>
         <div className="bg-white rounded-bottom smooth-shadow-sm ">
           <div className="d-flex align-items-center justify-content-between pt-4 pb-6 px-4">
-            <div className="d-flex align-items-center">
-              <div className="avatar-xxl avatar-indicators avatar-online me-2 position-relative d-flex justify-content-center align-items-center mt-n10 rounded-circle border border-4 border-white shadow-lg text-white fw-bold fs-1" 
-                   style={{ 
-                     width: '8.5rem', 
-                     height: '8.5rem', 
-                     background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
-                     backgroundSize: 'cover',
-                     backgroundPosition: 'center top',
-                     boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.25)',
-                     position: 'relative',
-                     overflow: 'hidden'
-                   }}>
-                {!profile?.photo && <span style={{ textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>{getInitials(adminName)}</span>}
+            <div className="d-flex align-items-start">
+              <div className="position-relative mt-n10 ms-4">
+                <div className="rounded-circle border border-4 border-white shadow-lg overflow-hidden d-flex justify-content-center align-items-center"
+                     style={{ 
+                       width: '9rem', 
+                       height: '9rem', 
+                       background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                       boxShadow: '0 0 20px rgba(99, 102, 241, 0.3)'
+                     }}>
+                  {profile?.photo ? (
+                    <img 
+                      src={profile.photo} 
+                      alt={adminName} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} 
+                    />
+                  ) : (
+                    <span className="text-white fw-bold display-4" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                      {getInitials(adminName)}
+                    </span>
+                  )}
+                </div>
                 
-                <div className="position-absolute bottom-0 end-0 mb-3 me-3" style={{ zIndex: 10 }}>
+                {/* Camera Trigger */}
+                <div className="position-absolute bottom-0 end-0 mb-2 me-2" style={{ zIndex: 10 }}>
                    <div 
-                    className="p-2 cursor-pointer bg-primary text-white rounded-circle shadow-lg hover-scale transition-all d-flex align-items-center justify-content-center border border-2 border-white" 
+                    className="p-0 cursor-pointer bg-white text-primary rounded-circle shadow-sm hover-scale transition-all d-flex align-items-center justify-content-center border border-2 border-primary" 
                     onClick={() => setShowMedia(true)}
-                    style={{ width: '42px', height: '42px' }}
-                    title="Change Profile Image"
+                    style={{ width: '36px', height: '36px' }}
+                    title="Change Avatar"
                    >
-                     <Camera size={18} />
+                     <Camera size={16} />
                    </div>
                 </div>
+
+                {/* Status Indicator */}
+                <div className="position-absolute top-0 start-0 mt-3 ms-3">
+                   <span className="p-2 bg-success border border-3 border-white rounded-circle d-block shadow-sm" title="Online now"></span>
+                </div>
               </div>
-              {/* text */}
-              <div className="lh-1 ms-3 mt-3">
-                <h2 className="mb-0 d-flex align-items-center gap-2">
-                  {adminName}
-                  <span className="badge bg-light-primary text-primary px-3 py-1 rounded-pill" style={{fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px'}}>{profile?.role || 'Admin'}</span>
-                  <Link
-                    href="#!"
-                    data-bs-toggle="tooltip"
-                    data-placement="top"
-                    title="Verified Account"
-                    className="d-flex align-items-center"
-                  >
-                    <Image
-                      src="/images/svg/checked-mark.svg"
-                      alt=""
-                      height="20"
-                      width="20"
-                    />
-                  </Link>
-                </h2>
-                <p className="mb-0 d-block text-muted mt-2 fw-medium opacity-75">
-                  <span className="text-primary fw-bold">@{adminUsername}</span> / {profile?.email}
-                </p>
+
+              {/* Identity Info */}
+              <div className="ms-md-4 mt-3 flex-grow-1">
+                <div className="d-md-flex align-items-center mb-1 flex-wrap">
+                  <h1 className="mb-0 fw-bold text-dark h2 me-2" style={{ letterSpacing: '-0.5px' }}>{adminName}</h1>
+                  <div className="d-flex align-items-center gap-2 mt-1 mt-md-0">
+                    <Link href="#!" className="d-flex align-items-center me-1">
+                      <Image
+                        src="/images/svg/checked-mark.svg"
+                        alt="Verified"
+                        height="18"
+                        width="18"
+                      />
+                    </Link>
+                    <span className="badge bg-primary px-3 py-1 rounded-pill fw-bold text-white shadow-sm" style={{fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase', border: '2px solid rgba(255,255,255,0.2)'}}>
+                      {profile?.role || 'Administrator'}
+                    </span>
+                  </div>
+                </div>
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 mt-3 information-row">
+                  <p className="mb-0 text-muted small fw-bold d-flex align-items-center px-3 py-1 bg-light rounded-pill border">
+                    <i className="fe fe-user me-2 text-primary"></i>@{adminUsername}
+                  </p>
+                  <p className="mb-0 text-muted small fw-bold d-flex align-items-center px-3 py-1 bg-light rounded-pill border ms-md-2">
+                    <i className="fe fe-mail me-2 text-primary"></i>{profile?.email}
+                  </p>
+                  <p className="mb-0 text-muted small fw-bold d-flex align-items-center px-3 py-1 bg-light rounded-pill border border-success border-opacity-25 ms-md-2" style={{ color: '#0d9488' }}>
+                    <i className="fe fe-shield me-2" style={{ color: '#0d9488' }}></i>Full Control Node
+                  </p>
+                </div>
               </div>
             </div>
             <div>
@@ -125,33 +146,30 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
           </div>
           {/* nav */}
           {/* nav */}
-          <ul className="nav nav-lt-tab px-4 border-top" id="pills-tab" role="tablist" style={{ borderBottomWidth: 0, backgroundColor: '#fafbfe' }}>
+          {/* Dynamic Navigation Tabs */}
+          <ul className="nav nav-lt-tab px-4 border-top" id="pills-tab" role="tablist" style={{ borderBottomWidth: 0, backgroundColor: '#fffffe' }}>
             <li className="nav-item">
-              <span className={`nav-link cursor-pointer py-3 px-4 fw-bold ${activeKey === 'overview' ? 'active text-primary' : 'text-muted'}`} 
-                    onClick={() => onSelect('overview')}
-                    style={{ borderBottom: activeKey === 'overview' ? '3px solid #624bff' : 'none', transition: 'all 0.2s' }}>
-                Overview
+              <span className={`nav-link cursor-pointer py-3 px-4 d-flex align-items-center gap-2 fw-bold transition-all ${activeKey === 'overview' ? 'active text-primary border-bottom border-primary border-3' : 'text-muted'}`} 
+                    onClick={() => onSelect('overview')}>
+                <House size={16} /> Overview
               </span>
             </li>
             <li className="nav-item">
-              <span className={`nav-link cursor-pointer py-3 px-4 fw-bold ${activeKey === 'files' ? 'active text-primary' : 'text-muted'}`} 
-                    onClick={() => onSelect('files')}
-                    style={{ borderBottom: activeKey === 'files' ? '3px solid #624bff' : 'none', transition: 'all 0.2s' }}>
-                Files & Media
+              <span className={`nav-link cursor-pointer py-3 px-4 d-flex align-items-center gap-2 fw-bold transition-all ${activeKey === 'files' ? 'active text-primary border-bottom border-primary border-3' : 'text-muted'}`} 
+                    onClick={() => onSelect('files')}>
+                <Images size={16} /> Files & Media
               </span>
             </li>
             <li className="nav-item">
-              <span className={`nav-link cursor-pointer py-3 px-4 fw-bold ${activeKey === 'teams' ? 'active text-primary' : 'text-muted'}`} 
-                    onClick={() => onSelect('teams')}
-                    style={{ borderBottom: activeKey === 'teams' ? '3px solid #624bff' : 'none', transition: 'all 0.2s' }}>
-                Teams Network
+              <span className={`nav-link cursor-pointer py-3 px-4 d-flex align-items-center gap-2 fw-bold transition-all ${activeKey === 'teams' ? 'active text-primary border-bottom border-primary border-3' : 'text-muted'}`} 
+                    onClick={() => onSelect('teams')}>
+                <People size={16} /> Teams Network
               </span>
             </li>
             <li className="nav-item">
-              <span className={`nav-link cursor-pointer py-3 px-4 fw-bold ${activeKey === 'activity' ? 'active text-primary' : 'text-muted'}`} 
-                    onClick={() => onSelect('activity')}
-                    style={{ borderBottom: activeKey === 'activity' ? '3px solid #624bff' : 'none', transition: 'all 0.2s' }}>
-                Activity Log
+              <span className={`nav-link cursor-pointer py-3 px-4 d-flex align-items-center gap-2 fw-bold transition-all ${activeKey === 'activity' ? 'active text-primary border-bottom border-primary border-3' : 'text-muted'}`} 
+                    onClick={() => onSelect('activity')}>
+                <Activity size={16} /> Activity Log
               </span>
             </li>
           </ul>
@@ -166,7 +184,9 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
 
       <style jsx>{`
         .cursor-pointer { cursor: pointer; }
-        .hover-opacity-100:hover { opacity: 1 !important; }
+        .transition-all { transition: all 0.2s ease-in-out; }
+        .nav-link:hover { color: #624bff !important; }
+        .nav-link { border-bottom: 3px solid transparent; }
       `}</style>
     </Row>
   );

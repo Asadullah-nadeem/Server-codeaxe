@@ -1,28 +1,33 @@
-// import node module libraries
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
-import { Col, Card, Dropdown, Image, Spinner } from 'react-bootstrap';
-import { MoreVertical } from 'react-feather';
+import { Col, Card, Dropdown, Image, Spinner, Modal, Badge, Button } from 'react-bootstrap';
+import { MoreVertical, User } from 'react-feather';
 import { fetchApi } from "utils/api";
+import { Eye } from 'react-bootstrap-icons';
 
 const ProjectsContributions = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
 
     useEffect(() => {
-        const fetchProjects = async () => {
+        const fetchData = async () => {
             try {
-                const data = await fetchApi("/admin/portfolio/items");
-                if (data.success) {
-                    setProjects(data.data.slice(0, 5));
-                }
+                const [projRes, profRes] = await Promise.all([
+                    fetchApi("/admin/portfolio/items"),
+                    fetchApi("/admin/profile")
+                ]);
+                
+                if (projRes.success) setProjects(projRes.data.slice(0, 5));
+                if (profRes.success) setProfile(profRes.value || profRes.data);
             } catch (err) {
-                console.error("Failed to fetch projects", err);
+                console.error("Failed to fetch dashboard data", err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProjects();
+        fetchData();
     }, []);
 
     const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
@@ -117,17 +122,55 @@ const ProjectsContributions = () => {
                                     </div>
                                 </div>
                                 <div className="d-flex align-items-center ms-10 ms-md-0 mt-3 mt-md-0">
-                                    <div className="avatar-group me-3">
-                                        <span className="avatar avatar-sm border border-2 border-white rounded-circle shadow-sm">
-                                            <Image alt="avatar" src={`/images/avatar/avatar-${(index % 10) + 1}.jpg`} className="rounded-circle" />
-                                        </span>
-                                    </div>
-                                    <ActionMenu/>
-                                </div>
+                                    <div className="avatar-group me-3 cursor-pointer" onClick={() => setShowProfileModal(true)} title="View Contributor Profile">
+                                         <span className="avatar avatar-sm border border-2 border-white rounded-circle shadow-sm">
+                                             {profile?.photo ? (
+                                                 <Image alt="avatar" src={profile.photo} className="rounded-circle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                             ) : (
+                                                 <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{ width: '100%', height: '100%', fontWeight: 'bold', fontSize: '10px' }}>
+                                                     {profile?.name ? profile.name.charAt(0) : 'A'}
+                                                 </div>
+                                             )}
+                                         </span>
+                                     </div>
+                                     <ActionMenu/>
+                                 </div>
                             </div>
                         );
                     })
                 )}
+
+                {/* Profile Preview Modal (Mini Profile) */}
+                <Modal show={showProfileModal} onHide={() => setShowProfileModal(false)} centered size="sm">
+                    <Modal.Body className="p-0 overflow-hidden rounded-4 shadow-lg border-0">
+                        <div className="p-4 text-center" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' }}>
+                            <div className="mb-3">
+                                {profile?.photo ? (
+                                    <Image src={profile.photo} className="rounded-circle border border-3 border-white shadow" width={80} height={80} style={{objectFit: 'cover'}} />
+                                ) : (
+                                    <div className="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center mx-auto shadow" style={{width: '80px', height: '80px', fontSize: '2rem', fontWeight: 'bold'}}>
+                                        {profile?.name?.charAt(0) || 'A'}
+                                    </div>
+                                )}
+                            </div>
+                            <h5 className="text-white mb-0 fw-bold">{profile?.name}</h5>
+                            <p className="text-white opacity-75 small mb-0">@{profile?.username}</p>
+                        </div>
+                        <div className="p-4 bg-white">
+                            <div className="mb-3">
+                                <label className="text-muted x-small fw-bold text-uppercase mb-1">Assigned Role</label>
+                                <p className="mb-0 fw-bold text-dark">{profile?.role}</p>
+                            </div>
+                            <div className="mb-4">
+                                <label className="text-muted x-small fw-bold text-uppercase mb-1">Email Endpoint</label>
+                                <p className="mb-0 small text-truncate">{profile?.email}</p>
+                            </div>
+                            <Button variant="primary" className="w-100 rounded-pill py-2 shadow-sm" onClick={() => setShowProfileModal(false)}>
+                                Close Preview
+                            </Button>
+                        </div>
+                    </Modal.Body>
+                </Modal>
             </Card.Body>
         </Card>
     );
