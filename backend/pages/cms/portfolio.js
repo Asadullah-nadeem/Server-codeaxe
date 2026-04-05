@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Pagination, InputGroup } from 'react-bootstrap';
+import { Row, Col, Card, Table, Button, Form, Modal, Container, Nav, Tab, Pagination, InputGroup, Badge } from 'react-bootstrap';
 import Image from 'next/image';
 import { fetchApi } from '../../utils/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { Trash2, Filter, CheckSquare, Square, XCircle, CheckCircle } from 'react-feather';
 
 const PortfolioCMS = () => {
     const [categories, setCategories] = useState([]);
@@ -16,12 +17,21 @@ const PortfolioCMS = () => {
     // search and pagination states
     const [searchItem, setSearchItem] = useState('');
     const [itemPage, setItemPage] = useState(1);
-    const itemsPerPage = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     
     const [searchCat, setSearchCat] = useState('');
     const [filterCatStatus, setFilterCatStatus] = useState('all'); // all, active, inactive
     const [catPage, setCatPage] = useState(1);
-    const catsPerPage = 10;
+    const [catsPerPage, setCatsPerPage] = useState(10);
+
+    // Selection states
+    const [selectedItems, setSelectedItems] = useState([]);
+    const [selectedCats, setSelectedCats] = useState([]);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+
+    // Advanced Filtering for Items
+    const [filterItemCat, setFilterItemCat] = useState('all');
+    const [filterItemStatus, setFilterItemStatus] = useState('all');
 
     const [catForm, setCatForm] = useState({ id: null, slug: '', label: '', description: '', is_active: 1, sort_order: 0 });
     const [itemForm, setItemForm] = useState({ 
@@ -125,10 +135,14 @@ const PortfolioCMS = () => {
     const getCatName = (id) => categories.find(c => c.id == id)?.label || `ID-${id}`;
 
     // Filter and Paginate Items
-    const filteredItems = items.filter(i => 
-        i.title.toLowerCase().includes(searchItem.toLowerCase()) || 
-        getCatName(i.category_id).toLowerCase().includes(searchItem.toLowerCase())
-    );
+    const filteredItems = items.filter(i => {
+        const matchesSearch = i.title.toLowerCase().includes(searchItem.toLowerCase()) || 
+                              getCatName(i.category_id).toLowerCase().includes(searchItem.toLowerCase());
+        const matchesCat    = filterItemCat === 'all' ? true : i.category_id == filterItemCat;
+        const matchesStatus = filterItemStatus === 'all' ? true : 
+                              (filterItemStatus === 'active' ? i.is_active == 1 : i.is_active == 0);
+        return matchesSearch && matchesCat && matchesStatus;
+    });
     const totalItemPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
     const paginatedItems = filteredItems.slice((itemPage - 1) * itemsPerPage, itemPage * itemsPerPage);
 
@@ -144,8 +158,8 @@ const PortfolioCMS = () => {
     const paginatedCats = filteredCats.slice((catPage - 1) * catsPerPage, catPage * catsPerPage);
 
     // Reset page if search changes
-    useEffect(() => { setItemPage(1); }, [searchItem]);
-    useEffect(() => { setCatPage(1); }, [searchCat, filterCatStatus]);
+    useEffect(() => { setItemPage(1); setSelectedItems([]); }, [searchItem, filterItemCat, filterItemStatus, itemsPerPage]);
+    useEffect(() => { setCatPage(1); setSelectedCats([]); }, [searchCat, filterCatStatus, catsPerPage]);
 
     const [showMediaModal, setShowMediaModal] = useState(false);
     const [mediaItems, setMediaItems] = useState([]);
@@ -170,6 +184,57 @@ const PortfolioCMS = () => {
         setShowMediaModal(true);
     };
 
+    // Bulk delete handlers
+    const handleBulkDeleteItems = async () => {
+        if (!confirm(`Are you sure you want to delete ${selectedItems.length} portfolio items? This cannot be undone.`)) return;
+        try {
+            setBulkDeleting(true);
+            await Promise.all(selectedItems.map(id => fetchApi(`/admin/portfolio/items/${id}`, { method: 'DELETE' })));
+            setSelectedItems([]);
+            fetchData();
+        } catch (error) { alert("Failed to delete some items."); }
+        finally { setBulkDeleting(false); }
+    };
+
+    const handleBulkDeleteCats = async () => {
+        if (!confirm(`Are you sure you want to delete ${selectedCats.length} categories? This might affect items under them.`)) return;
+        try {
+            setBulkDeleting(true);
+            await Promise.all(selectedCats.map(id => fetchApi(`/admin/portfolio/categories/${id}`, { method: 'DELETE' })));
+            setSelectedCats([]);
+            fetchData();
+        } catch (error) { alert("Failed to delete some categories."); }
+        finally { setBulkDeleting(false); }
+    };
+
+    const toggleSelectItem = (id) => {
+        setSelectedItems(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const toggleSelectAllItems = () => {
+        const pageIds = paginatedItems.map(i => i.id);
+        const allSelected = pageIds.every(id => selectedItems.includes(id));
+        if (allSelected) {
+            setSelectedItems(prev => prev.filter(id => !pageIds.includes(id)));
+        } else {
+            setSelectedItems(prev => [...new Set([...prev, ...pageIds])]);
+        }
+    };
+
+    const toggleSelectCat = (id) => {
+        setSelectedCats(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const toggleSelectAllCats = () => {
+        const pageIds = paginatedCats.map(c => c.id);
+        const allSelected = pageIds.every(id => selectedCats.includes(id));
+        if (allSelected) {
+            setSelectedCats(prev => prev.filter(id => !pageIds.includes(id)));
+        } else {
+            setSelectedCats(prev => [...new Set([...prev, ...pageIds])]);
+        }
+    };
+
     return (
         <Container fluid className="px-6 py-4">
             <h2 className="mb-4">Portfolio Management</h2>
@@ -188,15 +253,41 @@ const PortfolioCMS = () => {
                     <Tab.Content>
                         {/* ITEMS TAB */}
                         <Tab.Pane eventKey="items">
-                            <Row className="mb-3 align-items-center">
-                                <Col md={6}>
+                            <Row className="mb-3 g-3 align-items-center">
+                                <Col lg={4} md={6}>
                                     <InputGroup>
-                                        <InputGroup.Text>Search</InputGroup.Text>
-                                        <Form.Control placeholder="Search items by title or category..." value={searchItem} onChange={e => setSearchItem(e.target.value)} />
+                                        <InputGroup.Text className="bg-white border-end-0"><Filter size={14} /></InputGroup.Text>
+                                        <Form.Control placeholder="Search portfolio..." value={searchItem} onChange={e => setSearchItem(e.target.value)} className="border-start-0" />
                                     </InputGroup>
                                 </Col>
-                                <Col md={6} className="text-end">
-                                    <Button variant="primary" onClick={() => handleItemShow()}>Add Portfolio Item</Button>
+                                <Col lg={2} md={3}>
+                                    <Form.Select value={filterItemCat} onChange={e => setFilterItemCat(e.target.value)}>
+                                        <option value="all">All Categories</option>
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                                    </Form.Select>
+                                </Col>
+                                <Col lg={2} md={3}>
+                                    <Form.Select value={filterItemStatus} onChange={e => setFilterItemStatus(e.target.value)}>
+                                        <option value="all">Any Status</option>
+                                        <option value="active">Active (Live)</option>
+                                        <option value="inactive">Inactive</option>
+                                    </Form.Select>
+                                </Col>
+                                <Col lg={2} md={3}>
+                                    <Form.Select value={itemsPerPage} onChange={e => setItemsPerPage(parseInt(e.target.value))}>
+                                        <option value="10">Show 10</option>
+                                        <option value="50">Show 50</option>
+                                        <option value="10000">Show All</option>
+                                    </Form.Select>
+                                </Col>
+                                <Col lg={2} md={12} className="text-end">
+                                    {selectedItems.length > 0 ? (
+                                        <Button variant="danger" className="me-2" onClick={handleBulkDeleteItems} disabled={bulkDeleting}>
+                                            <Trash2 size={14} className="me-1" /> Delete Selected ({selectedItems.length})
+                                        </Button>
+                                    ) : (
+                                        <Button variant="primary" onClick={() => handleItemShow()}>+ New Portfolio Item</Button>
+                                    )}
                                 </Col>
                             </Row>
                             <Card>
@@ -204,27 +295,50 @@ const PortfolioCMS = () => {
                                     <Table hover responsive>
                                         <thead className="table-light">
                                             <tr>
+                                                <th style={{ width: 40 }}>
+                                                    <Form.Check 
+                                                        type="checkbox" 
+                                                        checked={paginatedItems.length > 0 && paginatedItems.every(i => selectedItems.includes(i.id))}
+                                                        onChange={toggleSelectAllItems}
+                                                    />
+                                                </th>
                                                 <th>Image</th>
                                                 <th>Title</th>
                                                 <th>Category</th>
                                                 <th>Year</th>
-                                                <th>Active</th>
+                                                <th>Status</th>
                                                 <th>Order</th>
-                                                <th>Actions</th>
+                                                <th className="text-end">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {paginatedItems.length === 0 ? <tr><td colSpan="7">No items found.</td></tr> : paginatedItems.map(item => (
-                                                <tr key={item.id}>
-                                                    <td>{item.image_url ? <Image src={item.image_url} alt="" width={60} height={40} style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'4px'}} unoptimized /> : 'None'}</td>
-                                                    <td><strong>{item.title}</strong></td>
-                                                    <td>{getCatName(item.category_id)}</td>
-                                                    <td>{item.project_year || '-'}</td>
-                                                    <td><span className={`badge bg-${item.is_active == 1 ? 'success' : 'secondary'}`}>{item.is_active == 1 ? 'Yes' : 'No'}</span></td>
-                                                    <td>{item.sort_order}</td>
+                                            {paginatedItems.length === 0 ? <tr><td colSpan="8" className="text-center py-5 text-muted">No items matching filters.</td></tr> : paginatedItems.map(item => (
+                                                <tr key={item.id} className={selectedItems.includes(item.id) ? 'table-primary shadow-sm' : ''} style={{ transition: 'all 0.2s' }}>
                                                     <td>
-                                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleItemShow(item)}>Edit</Button>
-                                                        <Button size="sm" variant="danger" onClick={() => handleItemDelete(item.id)}>Delete</Button>
+                                                        <Form.Check 
+                                                            type="checkbox" 
+                                                            checked={selectedItems.includes(item.id)}
+                                                            onChange={() => toggleSelectItem(item.id)}
+                                                        />
+                                                    </td>
+                                                    <td>{item.image_url ? <Image src={item.image_url} alt="" width={60} height={40} style={{width: '60px', height: '40px', objectFit:'cover', borderRadius:'6px', border:'1px solid #eee'}} unoptimized /> : <div className="bg-light rounded d-flex align-items-center justify-content-center" style={{width: 60, height: 40}}><Filter size={14} className="text-muted opacity-50" /></div>}</td>
+                                                    <td>
+                                                        <h6 className="mb-0 fw-bold">{item.title}</h6>
+                                                        <small className="text-muted d-block" style={{fontSize: 10}}>{item.project_url ? 'Link Attached' : 'No External Link'}</small>
+                                                    </td>
+                                                    <td><Badge bg="light" text="dark" className="border">{getCatName(item.category_id)}</Badge></td>
+                                                    <td>{item.project_year || '-'}</td>
+                                                    <td>
+                                                        {item.is_active == 1 ? (
+                                                            <Badge bg="success-soft" className="text-success"><CheckCircle size={10} className="me-1" /> Live</Badge>
+                                                        ) : (
+                                                            <Badge bg="secondary-soft" className="text-secondary"><XCircle size={10} className="me-1" /> Hidden</Badge>
+                                                        )}
+                                                    </td>
+                                                    <td>{item.sort_order}</td>
+                                                    <td className="text-end">
+                                                        <Button size="sm" variant="light" className="me-2" onClick={() => handleItemShow(item)}>Edit</Button>
+                                                        <Button size="sm" variant="danger-soft" className="text-danger" onClick={() => handleItemDelete(item.id)}>Delete</Button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -248,22 +362,35 @@ const PortfolioCMS = () => {
 
                         {/* CATEGORIES TAB */}
                         <Tab.Pane eventKey="categories">
-                            <Row className="mb-3 align-items-center">
-                                <Col md={4}>
+                            <Row className="mb-3 g-3 align-items-center">
+                                <Col lg={4} md={6}>
                                     <InputGroup>
-                                        <InputGroup.Text>Search</InputGroup.Text>
-                                        <Form.Control placeholder="Search categories by label or slug..." value={searchCat} onChange={e => setSearchCat(e.target.value)} />
+                                        <InputGroup.Text><Filter size={14} /></InputGroup.Text>
+                                        <Form.Control placeholder="Search categories..." value={searchCat} onChange={e => setSearchCat(e.target.value)} />
                                     </InputGroup>
                                 </Col>
-                                <Col md={4}>
+                                <Col lg={3} md={6}>
                                     <Form.Select value={filterCatStatus} onChange={e => setFilterCatStatus(e.target.value)}>
                                         <option value="all">Display All Status</option>
                                         <option value="active">Active Only</option>
                                         <option value="inactive">Inactive Only</option>
                                     </Form.Select>
                                 </Col>
-                                <Col md={4} className="text-end">
-                                    <Button variant="primary" onClick={() => handleCatShow()}>Add Category</Button>
+                                <Col lg={2} md={6}>
+                                    <Form.Select value={catsPerPage} onChange={e => setCatsPerPage(parseInt(e.target.value))}>
+                                        <option value="10">Show 10</option>
+                                        <option value="50">Show 50</option>
+                                        <option value="10000">Show All</option>
+                                    </Form.Select>
+                                </Col>
+                                <Col lg={3} md={12} className="text-end">
+                                    {selectedCats.length > 0 ? (
+                                        <Button variant="danger" className="me-2" onClick={handleBulkDeleteCats} disabled={bulkDeleting}>
+                                            <Trash2 size={14} className="me-1" /> Delete Categories ({selectedCats.length})
+                                        </Button>
+                                    ) : (
+                                        <Button variant="primary" onClick={() => handleCatShow()}>+ Add Category</Button>
+                                    )}
                                 </Col>
                             </Row>
                             <Card>
@@ -271,25 +398,43 @@ const PortfolioCMS = () => {
                                     <Table hover responsive>
                                         <thead className="table-light">
                                             <tr>
+                                                <th style={{ width: 40 }}>
+                                                    <Form.Check 
+                                                        type="checkbox" 
+                                                        checked={paginatedCats.length > 0 && paginatedCats.every(c => selectedCats.includes(c.id))}
+                                                        onChange={toggleSelectAllCats}
+                                                    />
+                                                </th>
                                                 <th>ID</th>
                                                 <th>Label</th>
                                                 <th>Slug</th>
-                                                <th>Active</th>
+                                                <th>Status</th>
                                                 <th>Order</th>
-                                                <th>Actions</th>
+                                                <th className="text-end">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {paginatedCats.length === 0 ? <tr><td colSpan="6">No categories found.</td></tr> : paginatedCats.map(cat => (
-                                                <tr key={cat.id}>
-                                                    <td>{cat.id}</td>
+                                            {paginatedCats.length === 0 ? <tr><td colSpan="7" className="text-center py-5 text-muted">No categories found.</td></tr> : paginatedCats.map(cat => (
+                                                <tr key={cat.id} className={selectedCats.includes(cat.id) ? 'table-primary shadow-sm' : ''} style={{ transition: 'all 0.2s' }}>
+                                                    <td>
+                                                        <Form.Check 
+                                                            type="checkbox" 
+                                                            checked={selectedCats.includes(cat.id)}
+                                                            onChange={() => toggleSelectCat(cat.id)}
+                                                        />
+                                                    </td>
+                                                    <td><code className="text-muted">#{cat.id}</code></td>
                                                     <td><strong>{cat.label}</strong></td>
                                                     <td><code>{cat.slug}</code></td>
-                                                    <td><span className={`badge bg-${cat.is_active == 1 ? 'success' : 'secondary'}`}>{cat.is_active == 1 ? 'Yes' : 'No'}</span></td>
-                                                    <td>{cat.sort_order}</td>
                                                     <td>
-                                                        <Button size="sm" variant="info" className="me-2" onClick={() => handleCatShow(cat)}>Edit</Button>
-                                                        <Button size="sm" variant="danger" onClick={() => handleCatDelete(cat.id)}>Delete</Button>
+                                                        <Badge bg={cat.is_active == 1 ? 'success-soft' : 'secondary-soft'} className={cat.is_active == 1 ? 'text-success' : 'text-secondary'}>
+                                                            {cat.is_active == 1 ? 'Active' : 'Disabled'}
+                                                        </Badge>
+                                                    </td>
+                                                    <td>{cat.sort_order}</td>
+                                                    <td className="text-end">
+                                                        <Button size="sm" variant="light" className="me-2" onClick={() => handleCatShow(cat)}>Edit</Button>
+                                                        <Button size="sm" variant="danger-soft" className="text-danger" onClick={() => handleCatDelete(cat.id)}>Delete</Button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -477,6 +622,12 @@ const PortfolioCMS = () => {
                 .cursor-pointer { cursor: pointer; }
                 .hover-card:hover { transform: translateY(-5px); }
                 .x-small { font-size: 11px; }
+                .bg-success-soft { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
+                .bg-secondary-soft { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+                .bg-danger-soft { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+                .btn-danger-soft { background-color: rgba(220, 53, 69, 0.05); border: 1px solid rgba(220, 53, 69, 0.1); }
+                .btn-danger-soft:hover { background-color: #dc3545; color: white !important; }
+                .table-primary { background-color: rgba(13, 110, 253, 0.05) !important; }
             `}</style>
         </Container>
     );
