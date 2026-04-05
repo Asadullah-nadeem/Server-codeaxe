@@ -80,6 +80,26 @@ const ActiveChats = () => {
     }
   };
 
+  const handleClearHistory = async () => {
+    if (!selectedChatId) return;
+    if (!confirm('Are you sure you want to clear the entire chat history for this user? This cannot be undone.')) return;
+    
+    try {
+      setSending(true);
+      const res = await fetchApi(`/admin/messages/chats/${selectedChatId}/clear`, { method: 'DELETE' });
+      if (res.success) {
+        setMessages([]);
+        // Update the chats list (clear latest message preview)
+        setChats(prev => prev.map(c => c.id === selectedChatId ? { ...c, latest_message: null } : c));
+        alert('Chat history cleared successfully.');
+      }
+    } catch (error) {
+      alert(error.message || 'Failed to clear chat history.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   useEffect(() => {
     loadChats();
     const chatInterval = setInterval(() => loadChats(true), 10000);
@@ -149,31 +169,10 @@ const ActiveChats = () => {
     }, 4000);
   };
 
-  const handleClearHistory = async () => {
-    if (!selectedChatId) return;
-    if (!confirm('Are you sure you want to clear the entire chat history for this user? This cannot be undone.')) return;
-    
-    try {
-      setSending(true);
-      const res = await fetchApi(`/admin/messages/chats/${selectedChatId}/clear`, { method: 'DELETE' });
-      if (res.success) {
-        setMessages([]);
-        // Update the chats list (clear latest message preview)
-        setChats(prev => prev.map(c => c.id === selectedChatId ? { ...c, latest_message: null } : c));
-        alert('Chat history cleared successfully.');
-      }
-    } catch (error) {
-      alert(error.message || 'Failed to clear chat history.');
-    } finally {
-      setSending(false);
-    }
-  };
-
   const filteredChats = chats.filter(c =>
     c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.request_title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
 
   return (
     <Container fluid className="p-0">
@@ -183,201 +182,201 @@ const ActiveChats = () => {
         </div>
       ) : (
         <div className="d-flex" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
-        {/* Sidebar: Chat List */}
-        <div className="bg-white border-end d-flex flex-column" style={{ width: '350px', minWidth: '350px' }}>
-          <div className="p-4 border-bottom bg-light bg-opacity-50">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4 className="fw-bold mb-0">Inbox</h4>
-              <Badge bg="primary" pill>{chats.filter(c => c.unread_count > 0).length} New</Badge>
-            </div>
-            <div className="input-group input-group-sm">
-              <span className="input-group-text bg-white border-end-0">
-                <Search size={14} className="text-muted" />
-              </span>
-              <Form.Control
-                type="text"
-                placeholder="Search conversations..."
-                className="border-start-0 ps-0 shadow-none border"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex-grow-1 overflow-auto custom-scrollbar">
-            <ListGroup variant="flush">
-              {filteredChats.length > 0 ? filteredChats.map((chat) => (
-                <ListGroup.Item
-                  key={chat.id}
-                  action
-                  active={selectedChatId === chat.id}
-                  onClick={() => setSelectedChatId(chat.id)}
-                  className={`p-3 border-bottom border-light d-flex align-items-start gap-3 ${selectedChatId === chat.id ? 'bg-light' : ''}`}
-                >
-                  <div className="position-relative">
-                    <div className={`bg-light-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'secondary')} text-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'muted')} rounded-circle p-2`}>
-                      <User size={20} />
-                    </div>
-                  </div>
-                  <div className="flex-grow-1 min-width-0">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <h6 className={`mb-0 text-truncate ${chat.unread_count > 0 ? 'fw-bold text-dark' : 'fw-semibold text-muted'}`}>
-                        {chat.username}
-                      </h6>
-                      <small className="text-muted opacity-75 x-small flex-shrink-0">
-                        {chat.latest_message ? new Date(chat.latest_message.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
-                      </small>
-                    </div>
-                    <p className="small text-muted mb-1 text-truncate fw-semibold" style={{ fontSize: '11px' }}>{chat.request_title}</p>
-                    <div className="d-flex align-items-center justify-content-between">
-                      <p className="small text-muted mb-0 text-truncate" style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                        {chat.latest_message ? (chat.latest_message.sender_type === 'admin' ? 'You: ' : '') : ''}
-                        {chat.latest_message?.message || 'No messages'}
-                      </p>
-                      {chat.unread_count > 0 && (
-                        <Badge bg="primary" pill className="ms-2 pulse-badge" style={{ fontSize: '9px' }}>{chat.unread_count}</Badge>
-                      )}
-                    </div>
-                  </div>
-                </ListGroup.Item>
-              )) : (
-                <div className="p-5 text-center text-muted">
-                  <div className="mb-3 opacity-50"><MessageCircle size={48} /></div>
-                  <p className="small mb-0">No conversations found</p>
-                </div>
-              )}
-            </ListGroup>
-          </div>
-        </div>
-
-        {/* Main Content: Chat View */}
-        <div className="flex-grow-1 d-flex flex-column bg-light">
-          {selectedChat ? (
-            <>
-              {/* Chat Header */}
-              <div className="p-3 bg-white border-bottom d-flex justify-content-between align-items-center shadow-sm z-index-1">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px' }}>
-                    <User size={20} />
-                  </div>
-                  <div>
-                    <div className="d-flex align-items-center gap-2">
-                      <h5 className="mb-0 fw-bold">{selectedChat.username}</h5>
-                      <Badge bg={selectedChat.status === 'resolved' ? 'success' : (selectedChat.status === 'pending' ? 'warning' : 'info')} className="text-uppercase x-small" style={{ fontSize: '8px' }}>
-                        {selectedChat.status}
-                      </Badge>
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="text-muted x-small text-uppercase">{selectedChat.request_title}</span>
-                      <Badge bg="success" className="p-1 rounded-circle" style={{ width: '6px', height: '6px' }}> </Badge>
-                      <span className="text-success x-small">Support Thread</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <Button variant="link" className="text-muted p-2" title="View Request Details" onClick={() => setShowDetails(true)}>
-                    <Clock size={18} />
-                  </Button>
-
-                  <Dropdown align="end">
-                    <Dropdown.Toggle bsPrefix=" " as="span" role="button" className="text-muted p-2 shadow-none border-0 d-inline-flex align-items-center justify-content-center" style={{ cursor: 'pointer' }}>
-                      <MoreVertical size={18} />
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="shadow-sm border-0">
-                      <Dropdown.Header className="x-small text-uppercase">Project Status</Dropdown.Header>
-                      <Dropdown.Item onClick={() => handleUpdateStatus('pending')} className="d-flex align-items-center gap-2 py-2">
-                        <RotateCcw size={14} className="text-warning" /> Mark as Pending
-                      </Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleUpdateStatus('resolved')} className="d-flex align-items-center gap-2 py-2">
-                        <CheckCircle size={14} className="text-success" /> Mark as Resolved
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Header className="x-small text-uppercase">Management</Dropdown.Header>
-                      <Dropdown.Item onClick={handleClearChat} className="d-flex align-items-center gap-2 py-2 text-danger">
-                        <Trash2 size={14} /> Clear Chat history
-                      </Dropdown.Item>
-                      <Dropdown.Item className="d-flex align-items-center gap-2 py-2">
-                        <Info size={14} /> View User Profile
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </div>
+          {/* Sidebar: Chat List */}
+          <div className="bg-white border-end d-flex flex-column" style={{ width: '350px', minWidth: '350px' }}>
+            <div className="p-4 border-bottom bg-light bg-opacity-50">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h4 className="fw-bold mb-0">Inbox</h4>
+                <Badge bg="primary" pill>{chats.filter(c => c.unread_count > 0).length} New</Badge>
               </div>
+              <div className="input-group input-group-sm">
+                <span className="input-group-text bg-white border-end-0">
+                  <Search size={14} className="text-muted" />
+                </span>
+                <Form.Control
+                  type="text"
+                  placeholder="Search conversations..."
+                  className="border-start-0 ps-0 shadow-none border"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
 
-              {/* Messages List */}
-              <div
-                className="flex-grow-1 p-4 overflow-auto d-flex flex-column gap-3 custom-scrollbar"
-                ref={scrollRef}
-                style={{ backgroundImage: 'radial-gradient(#d1d5db 1px, transparent 1px)', backgroundSize: '20px 20px' }}
-              >
-                {messages.map((msg, idx) => (
-                  <div key={msg.id || idx} className={`d-flex ${msg.sender_type === 'admin' ? 'justify-content-end' : 'justify-content-start'}`}>
-                    <div className="d-flex flex-column" style={{ maxWidth: '70%' }}>
-                      <div className={`p-3 rounded shadow-sm ${msg.sender_type === 'admin'
-                        ? 'bg-primary text-white'
-                        : 'bg-white text-dark border'
-                        }`}>
-                        {msg.message}
-                      </div>
-                      <div className={`mt-1 d-flex gap-2 align-items-center x-small text-muted ${msg.sender_type === 'admin' ? 'justify-content-end' : 'justify-content-start'}`}>
-                        {msg.sender_type === 'admin' && <Check size={10} className="text-primary" />}
-                        <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="flex-grow-1 overflow-auto custom-scrollbar">
+              <ListGroup variant="flush">
+                {filteredChats.length > 0 ? filteredChats.map((chat) => (
+                  <ListGroup.Item
+                    key={chat.id}
+                    action
+                    active={selectedChatId === chat.id}
+                    onClick={() => setSelectedChatId(chat.id)}
+                    className={`p-3 border-bottom border-light d-flex align-items-start gap-3 ${selectedChatId === chat.id ? 'bg-light' : ''}`}
+                  >
+                    <div className="position-relative">
+                      <div className={`bg-light-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'secondary')} text-${selectedChatId === chat.id ? 'primary' : (chat.unread_count > 0 ? 'danger' : 'muted')} rounded-circle p-2`}>
+                        <User size={20} />
                       </div>
                     </div>
-                  </div>
-                ))}
-                
-                {isOtherTyping && (
-                  <div className="d-flex justify-content-start">
-                    <div className="d-flex flex-column" style={{ maxWidth: '70%' }}>
-                      <div className="p-3 rounded shadow-sm bg-white text-dark border d-flex align-items-center">
-                        <div className="typing-dots-container d-flex gap-1 align-items-center">
-                          <span className="typing-dot"></span>
-                          <span className="typing-dot"></span>
-                          <span className="typing-dot"></span>
-                          <span className="typing-dot"></span>
-                        </div>
+                    <div className="flex-grow-1 min-width-0">
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <h6 className={`mb-0 text-truncate ${chat.unread_count > 0 ? 'fw-bold text-dark' : 'fw-semibold text-muted'}`}>
+                          {chat.username}
+                        </h6>
+                        <small className="text-muted opacity-75 x-small flex-shrink-0">
+                          {chat.latest_message ? new Date(chat.latest_message.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
+                        </small>
                       </div>
-                      <div className="mt-1 d-flex gap-2 align-items-center x-small text-muted justify-content-start">
-                        <span>{selectedChat.username} is typing...</span>
+                      <p className="small text-muted mb-1 text-truncate fw-semibold" style={{ fontSize: '11px' }}>{chat.request_title}</p>
+                      <div className="d-flex align-items-center justify-content-between">
+                        <p className="small text-muted mb-0 text-truncate" style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                          {chat.latest_message ? (chat.latest_message.sender_type === 'admin' ? 'You: ' : '') : ''}
+                          {chat.latest_message?.message || 'No messages'}
+                        </p>
+                        {chat.unread_count > 0 && (
+                          <Badge bg="primary" pill className="ms-2 pulse-badge" style={{ fontSize: '9px' }}>{chat.unread_count}</Badge>
+                        )}
                       </div>
                     </div>
+                  </ListGroup.Item>
+                )) : (
+                  <div className="p-5 text-center text-muted">
+                    <div className="mb-3 opacity-50"><MessageCircle size={48} /></div>
+                    <p className="small mb-0">No conversations found</p>
                   </div>
                 )}
-              </div>
-
-              {/* Chat Input */}
-              <div className="p-4 bg-white border-top">
-                <Form onSubmit={handleSendMessage} className="d-flex gap-2">
-                  <Form.Control
-                    type="text"
-                    placeholder="Type your message here..."
-                    className="py-3 px-4 bg-light border-0 shadow-none rounded-pill"
-                    value={newMessage}
-                    onChange={handleTyping}
-                    disabled={sending}
-                  />
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="rounded-circle px-3 py-2 d-flex align-items-center justify-content-center shadow-sm"
-                    disabled={!newMessage.trim() || sending}
-                  >
-                    {sending ? <Spinner animation="border" size="sm" /> : <Send size={20} />}
-                  </Button>
-                </Form>
-              </div>
-            </>
-          ) : (
-            <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted">
-              <div className="bg-white rounded-circle p-5 mb-4 shadow-sm">
-                <MessageCircle size={64} strokeWidth={1} className="text-primary opacity-50" />
-              </div>
-              <h4 className="fw-bold text-dark">Select a conversation</h4>
-              <p className="small">Choose a client from the list on the left to start messaging.</p>
+              </ListGroup>
             </div>
-          )}
-        </div>
+          </div>
+
+          {/* Main Content: Chat View */}
+          <div className="flex-grow-1 d-flex flex-column bg-light">
+            {selectedChat ? (
+              <>
+                {/* Chat Header */}
+                <div className="p-3 bg-white border-bottom d-flex justify-content-between align-items-center shadow-sm z-index-1">
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px' }}>
+                      <User size={20} />
+                    </div>
+                    <div>
+                      <div className="d-flex align-items-center gap-2">
+                        <h5 className="mb-0 fw-bold">{selectedChat.username}</h5>
+                        <Badge bg={selectedChat.status === 'resolved' ? 'success' : (selectedChat.status === 'pending' ? 'warning' : 'info')} className="text-uppercase x-small" style={{ fontSize: '8px' }}>
+                          {selectedChat.status}
+                        </Badge>
+                      </div>
+                      <div className="d-flex align-items-center gap-2">
+                        <span className="text-muted x-small text-uppercase">{selectedChat.request_title}</span>
+                        <Badge bg="success" className="p-1 rounded-circle" style={{ width: '6px', height: '6px' }}> </Badge>
+                        <span className="text-success x-small">Support Thread</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <Button variant="link" className="text-muted p-2" title="View Request Details" onClick={() => setShowDetails(true)}>
+                      <Clock size={18} />
+                    </Button>
+
+                    <Dropdown align="end">
+                      <Dropdown.Toggle bsPrefix=" " as="span" role="button" className="text-muted p-2 shadow-none border-0 d-inline-flex align-items-center justify-content-center" style={{ cursor: 'pointer' }}>
+                        <MoreVertical size={18} />
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu className="shadow-sm border-0">
+                        <Dropdown.Header className="x-small text-uppercase">Project Status</Dropdown.Header>
+                        <Dropdown.Item onClick={() => handleUpdateStatus('pending')} className="d-flex align-items-center gap-2 py-2">
+                          <RotateCcw size={14} className="text-warning" /> Mark as Pending
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleUpdateStatus('resolved')} className="d-flex align-items-center gap-2 py-2">
+                          <CheckCircle size={14} className="text-success" /> Mark as Resolved
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Header className="x-small text-uppercase">Management</Dropdown.Header>
+                        <Dropdown.Item onClick={handleClearChat} className="d-flex align-items-center gap-2 py-2 text-danger">
+                          <Trash2 size={14} /> Clear Chat history
+                        </Dropdown.Item>
+                        <Dropdown.Item className="d-flex align-items-center gap-2 py-2">
+                          <Info size={14} /> View User Profile
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </div>
+                </div>
+
+                {/* Messages List */}
+                <div
+                  className="flex-grow-1 p-4 overflow-auto d-flex flex-column gap-3 custom-scrollbar"
+                  ref={scrollRef}
+                  style={{ backgroundImage: 'radial-gradient(#d1d5db 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+                >
+                  {messages.map((msg, idx) => (
+                    <div key={msg.id || idx} className={`d-flex ${msg.sender_type === 'admin' ? 'justify-content-end' : 'justify-content-start'}`}>
+                      <div className="d-flex flex-column" style={{ maxWidth: '70%' }}>
+                        <div className={`p-3 rounded shadow-sm ${msg.sender_type === 'admin'
+                          ? 'bg-primary text-white'
+                          : 'bg-white text-dark border'
+                          }`}>
+                          {msg.message}
+                        </div>
+                        <div className={`mt-1 d-flex gap-2 align-items-center x-small text-muted ${msg.sender_type === 'admin' ? 'justify-content-end' : 'justify-content-start'}`}>
+                          {msg.sender_type === 'admin' && <Check size={10} className="text-primary" />}
+                          <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isOtherTyping && (
+                    <div className="d-flex justify-content-start">
+                      <div className="d-flex flex-column" style={{ maxWidth: '70%' }}>
+                        <div className="p-3 rounded shadow-sm bg-white text-dark border d-flex align-items-center">
+                          <div className="typing-dots-container d-flex gap-1 align-items-center">
+                            <span className="typing-dot"></span>
+                            <span className="typing-dot"></span>
+                            <span className="typing-dot"></span>
+                            <span className="typing-dot"></span>
+                          </div>
+                        </div>
+                        <div className="mt-1 d-flex gap-2 align-items-center x-small text-muted justify-content-start">
+                          <span>{selectedChat.username} is typing...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chat Input */}
+                <div className="p-4 bg-white border-top">
+                  <Form onSubmit={handleSendMessage} className="d-flex gap-2">
+                    <Form.Control
+                      type="text"
+                      placeholder="Type your message here..."
+                      className="py-3 px-4 bg-light border-0 shadow-none rounded-pill"
+                      value={newMessage}
+                      onChange={handleTyping}
+                      disabled={sending}
+                    />
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="rounded-circle px-3 py-2 d-flex align-items-center justify-content-center shadow-sm"
+                      disabled={!newMessage.trim() || sending}
+                    >
+                      {sending ? <Spinner animation="border" size="sm" /> : <Send size={20} />}
+                    </Button>
+                  </Form>
+                </div>
+              </>
+            ) : (
+              <div className="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted">
+                <div className="bg-white rounded-circle p-5 mb-4 shadow-sm">
+                  <MessageCircle size={64} strokeWidth={1} className="text-primary opacity-50" />
+                </div>
+                <h4 className="fw-bold text-dark">Select a conversation</h4>
+                <p className="small">Choose a client from the list on the left to start messaging.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -425,6 +424,7 @@ const ActiveChats = () => {
                   <p className="mb-0 mt-2 text-dark">{new Date(selectedChat.created_at).toLocaleString()}</p>
                 </div>
               )}
+              
               <div>
                 <small className="text-muted text-uppercase fw-bold x-small">Management Controls</small>
                 <div className="mt-3 d-grid gap-2">
