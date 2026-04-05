@@ -22,9 +22,11 @@ const AboutMe = () => {
 
     if (loading) {
         return (
-            <Col xl={6} lg={12} md={12} xs={12} className="mb-6">
-                <Card><Card.Body className="text-center py-5"><Spinner animation="border" variant="primary" /></Card.Body></Card>
-            </Col>
+            <Card className="border-0 shadow-sm mb-6">
+                <Card.Body className="text-center py-5">
+                    <Spinner animation="border" variant="primary" />
+                </Card.Body>
+            </Card>
         );
     }
 
@@ -32,30 +34,29 @@ const AboutMe = () => {
     const adminRole = profile?.role || 'Administrator';
 
     return (
-        <Col xl={6} lg={12} md={12} xs={12} className="mb-6">
-            <Card>
-                <Card.Body>
-                    <Card.Title as="h4">About Me</Card.Title>
-                    <span className="text-uppercase fw-medium text-dark fs-5 ls-2">Profile Info</span>
-                    <p className="mt-2 mb-6">You are currently logged in as {adminRole}. Your account has full access to the management dashboard.
-                    </p>
-                    <Row>
-                        <Col xs={12} className="mb-5">
-                            <h6 className="text-uppercase fs-5 ls-2">Role</h6>
-                            <p className="mb-0 text-uppercase">{adminRole}</p>
-                        </Col>
-                        <Col xs={12}>
-                            <h6 className="text-uppercase fs-5 ls-2">Email </h6>
-                            <p className="mb-0">{adminEmail}</p>
-                        </Col>
-                        <Col xs={12} className="mt-5">
-                            <h6 className="text-uppercase fs-5 ls-2">Username</h6>
-                            <p className="mb-0 font-monospace">@{profile?.username || 'admin'}</p>
-                        </Col>
-                    </Row>
-                </Card.Body>
-            </Card>
-        </Col>
+        <Card className="border-0 shadow-sm mb-6">
+            <Card.Body>
+                <Card.Title as="h4" className="mb-4 fw-bold">About Me</Card.Title>
+                <div className="mb-4">
+                    <span className="text-uppercase fw-bold text-muted fs-6 ls-1">Profile Info</span>
+                    <p className="mt-2 text-dark fs-5">You are currently logged in as <span className="fw-bold text-primary">{adminRole}</span>. Your account has full access to the management dashboard.</p>
+                </div>
+                <Row className="g-4">
+                    <Col xs={12} md={6}>
+                        <h6 className="text-uppercase fw-bold text-muted fs-6 ls-1">Role</h6>
+                        <p className="mb-0 text-dark fw-medium text-uppercase">{adminRole}</p>
+                    </Col>
+                    <Col xs={12} md={6}>
+                        <h6 className="text-uppercase fw-bold text-muted fs-6 ls-1">Email</h6>
+                        <p className="mb-0 text-dark fw-medium">{adminEmail}</p>
+                    </Col>
+                    <Col xs={12}>
+                        <h6 className="text-uppercase fw-bold text-muted fs-6 ls-1">Username</h6>
+                        <p className="mb-0 text-primary fw-bold font-monospace">@{profile?.username || 'superadmin'}</p>
+                    </Col>
+                </Row>
+            </Card.Body>
+        </Card>
     )
 }
 

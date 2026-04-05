@@ -270,10 +270,10 @@ const MediaCMS = () => {
                                 <div>
                                     <CloudUpload size={40} className="text-primary mb-2 opacity-50" />
                                     <p className="mb-0 small fw-bold text-muted">Click to browse your device</p>
-                                    <small className="text-muted d-block mt-1 x-small">(Supports Image, Video, PDF, ZIP up to 50MB)</small>
+                                    <small className="text-muted d-block mt-1 x-small">(Supports all file types up to 50MB)</small>
                                 </div>
                             )}
-                            <input type="file" id="fileInput" hidden onChange={handleFileChange} accept="image/*,video/*,.pdf,.zip" />
+                            <input type="file" id="fileInput" hidden onChange={handleFileChange} />
                         </div>
 
                         <Form.Group className="mb-3">

@@ -138,11 +138,11 @@ const NavbarVertical = (props) => {
           {DashboardMenu.map(function (menu, index) {
             if (menu.grouptitle) {
               return (
-                <Card bsPrefix="nav-item" key={index}>
+                <li className="nav-item" key={index}>
                   {/* group title item */}
                   <div className="navbar-heading">{menu.title}</div>
                   {/* end of group title item */}
-                </Card>
+                </li>
               );
             } else {
               if (menu.children) {
@@ -327,7 +327,7 @@ const NavbarVertical = (props) => {
                 );
               } else {
                 return (
-                  <Card bsPrefix="nav-item" key={index}>
+                  <li className="nav-item" key={index}>
                     {/* menu item without any childern items like Documentation and Changelog items*/}
                     <Link
                       href={menu.link}
@@ -352,7 +352,7 @@ const NavbarVertical = (props) => {
                       )}
                     </Link>
                     {/* end of menu item without any childern items */}
-                  </Card>
+                  </li>
                 );
               }
             }

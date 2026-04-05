@@ -15,6 +15,7 @@ import MyTeam from 'sub-components/profile/MyTeam';
 import ProfileHeader from 'sub-components/profile/ProfileHeader';
 import ProjectsContributions from 'sub-components/profile/ProjectsContributions';
 import RecentFromBlog from 'sub-components/profile/RecentFromBlog';
+import AccessLibrary from 'sub-components/profile/AccessLibrary';
 
 // sub components for /pages/billing
 import CurrentPlan from 'sub-components/billing/CurrentPlan';
@@ -39,6 +40,7 @@ export {
    ProfileHeader,
    ProjectsContributions,
    RecentFromBlog,
+   AccessLibrary,
 
    CurrentPlan,
    BillingAddress,

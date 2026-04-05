@@ -1,25 +1,44 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Col, Row, Image, Spinner } from "react-bootstrap";
+import { Col, Row, Image, Spinner, Button } from "react-bootstrap";
 import { fetchApi } from "utils/api";
+import MediaGallery from "../../components/MediaGallery";
+import { Camera } from "react-bootstrap-icons";
 
 const ProfileHeader = ({ activeKey, onSelect }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showMedia, setShowMedia] = useState(false);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const res = await fetchApi('/admin/profile');
-        if (res.success) setProfile(res.data);
-      } catch (error) {
-        console.error("Failed to load profile", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadProfile();
   }, []);
+
+  const loadProfile = async () => {
+    try {
+      const res = await fetchApi('/admin/profile');
+      if (res.success) setProfile(res.data);
+    } catch (error) {
+      console.error("Failed to load profile", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePhoto = async (photoUrl) => {
+    try {
+      const res = await fetchApi('/admin/profile/update', {
+        method: 'POST',
+        body: JSON.stringify({ photo: photoUrl })
+      });
+      if (res.success) {
+        setProfile({ ...profile, photo: photoUrl });
+        setShowMedia(false);
+      }
+    } catch (error) {
+      console.error("Failed to update photo", error);
+    }
+  };
 
   const adminName = profile?.name || 'Admin';
   const adminUsername = profile?.username || 'admin';
@@ -46,14 +65,35 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
         <div className="bg-white rounded-bottom smooth-shadow-sm ">
           <div className="d-flex align-items-center justify-content-between pt-4 pb-6 px-4">
             <div className="d-flex align-items-center">
-              <div className="avatar-xxl avatar-indicators avatar-online me-2 position-relative d-flex justify-content-center align-items-center mt-n10 bg-primary rounded-circle border border-4 border-white shadow-sm text-white fw-bold fs-1" style={{ width: '8rem', height: '8rem' }}>
-                {getInitials(adminName)}
+              <div className="avatar-xxl avatar-indicators avatar-online me-2 position-relative d-flex justify-content-center align-items-center mt-n10 rounded-circle border border-4 border-white shadow-lg text-white fw-bold fs-1" 
+                   style={{ 
+                     width: '8.5rem', 
+                     height: '8.5rem', 
+                     background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', 
+                     backgroundSize: 'cover',
+                     backgroundPosition: 'center top',
+                     boxShadow: '0 20px 40px -12px rgba(0, 0, 0, 0.25)',
+                     position: 'relative',
+                     overflow: 'hidden'
+                   }}>
+                {!profile?.photo && <span style={{ textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>{getInitials(adminName)}</span>}
+                
+                <div className="position-absolute bottom-0 end-0 mb-3 me-3" style={{ zIndex: 10 }}>
+                   <div 
+                    className="p-2 cursor-pointer bg-primary text-white rounded-circle shadow-lg hover-scale transition-all d-flex align-items-center justify-content-center border border-2 border-white" 
+                    onClick={() => setShowMedia(true)}
+                    style={{ width: '42px', height: '42px' }}
+                    title="Change Profile Image"
+                   >
+                     <Camera size={18} />
+                   </div>
+                </div>
               </div>
               {/* text */}
               <div className="lh-1 ms-3 mt-3">
                 <h2 className="mb-0 d-flex align-items-center gap-2">
                   {adminName}
-                  <span className="badge bg-light-primary text-primary px-2 py-1 rounded-pill" style={{fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px'}}>{profile?.role || 'Admin'}</span>
+                  <span className="badge bg-light-primary text-primary px-3 py-1 rounded-pill" style={{fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px'}}>{profile?.role || 'Admin'}</span>
                   <Link
                     href="#!"
                     data-bs-toggle="tooltip"
@@ -61,26 +101,17 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
                     title="Verified Account"
                     className="d-flex align-items-center"
                   >
-                    <style jsx>{`
-        .cursor-pointer { cursor: pointer; }
-        .glass-header { 
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .premium-shadow {
-          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1) !important;
-        }
-      `}</style>
                     <Image
                       src="/images/svg/checked-mark.svg"
                       alt=""
-                      height="18"
-                      width="18"
+                      height="20"
+                      width="20"
                     />
                   </Link>
                 </h2>
-                <p className="mb-0 d-block text-muted mt-2">@{adminUsername} / {profile?.email}</p>
+                <p className="mb-0 d-block text-muted mt-2 fw-medium opacity-75">
+                  <span className="text-primary fw-bold">@{adminUsername}</span> / {profile?.email}
+                </p>
               </div>
             </div>
             <div>
@@ -126,6 +157,17 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
           </ul>
         </div>
       </Col>
+
+      <MediaGallery 
+        show={showMedia} 
+        onHide={() => setShowMedia(false)} 
+        onSelect={(url) => handleUpdatePhoto(url)} 
+      />
+
+      <style jsx>{`
+        .cursor-pointer { cursor: pointer; }
+        .hover-opacity-100:hover { opacity: 1 !important; }
+      `}</style>
     </Row>
   );
 };

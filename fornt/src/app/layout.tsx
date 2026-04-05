@@ -6,8 +6,15 @@ import Script from 'next/script';
 import Layout from "../components/Layout";
 import "../index.css";
 
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 export const dynamic = 'force-static';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0a0a0a',
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const fallbackMetadata: Metadata = {
@@ -170,16 +177,30 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Script id="json-ld" type="application/ld+json" strategy="afterInteractive">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": siteName,
-            "url": process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in",
-            "logo": settings.site_logo_url || "https://api.codeaxe.co.in/api/dms/media/RWNPiJ/12",
-            "sameAs": [
-              settings.social_facebook,
-              settings.social_instagram,
-              settings.social_linkedin,
-              settings.social_twitter
-            ].filter(Boolean)
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": `${process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in"}#organization`,
+                "name": siteName,
+                "url": process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in",
+                "logo": settings.site_logo_url || "https://api.codeaxe.co.in/api/dms/media/RWNPiJ/12",
+                "sameAs": [
+                  settings.social_facebook,
+                  settings.social_instagram,
+                  settings.social_linkedin,
+                  settings.social_twitter
+                ].filter(Boolean)
+              },
+              {
+                "@type": "WebSite",
+                "@id": `${process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in"}#website`,
+                "url": process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in",
+                "name": siteName,
+                "publisher": {
+                  "@id": `${process.env.NEXT_PUBLIC_BASE_URL || "https://codeaxe.co.in"}#organization`
+                }
+              }
+            ]
           })}
         </Script>
         <TooltipProvider>

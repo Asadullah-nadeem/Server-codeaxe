@@ -41,6 +41,9 @@ class DmsController extends Controller
             'filesystems.disks.s3.use_path_style_endpoint' => ($this->getProviderKey('s3', 'use_path_style_endpoint') === '1'),
             'filesystems.disks.s3.throw'  => true, 
         ]);
+        
+        // CRITICAL: Purge the disk cache so Laravel forces a rebuild using the new dynamic config immediately
+        Storage::purge('s3');
     }
 
     // ─── Helper: stream a media file back to browser ──────
@@ -133,11 +136,10 @@ class DmsController extends Controller
         }
 
         $request->validate([
-            'photo'            => 'required|file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,wmv,webp,pdf,zip,ico,mpeg,webm,avif|max:51200', // 50 MB max
+            'photo'            => 'required|file|max:51200', // 50 MB max
             'storage_provider' => 'required|in:imagekit,s3',
             'username'         => 'required|string|max:50',
         ], [
-            'photo.mimes' => 'The file type you selected is not supported. Please use images, videos (MP4, MOV, etc), PDF, or ZIP.',
             'photo.max'   => 'The file is too large! Maximum allowed size is 50MB.',
         ]);
 
@@ -179,7 +181,7 @@ class DmsController extends Controller
 
             } else { // s3
                 $this->configureS3Disk();
-                Storage::disk('s3')->putFileAs($folder, $file, $randomName, 'private');
+                Storage::disk('s3')->putFileAs($folder, $file, $randomName);
                 $finalUrl   = $folder . '/' . $randomName;
                 $provFileId = $finalUrl;
             }

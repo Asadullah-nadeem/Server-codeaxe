@@ -51,11 +51,33 @@ const MediaGallery = ({ show, onHide, onSelect }) => {
       <Modal.Body className="bg-light p-4">
         <Card className="mb-4">
           <Card.Body>
-            <Form onSubmit={handleUpload} className="d-flex gap-3 align-items-end">
-              <Form.Group className="flex-grow-1"><Form.Label className="small">Quick Upload</Form.Label><Form.Control type="file" size="sm" onChange={e => setUploadForm({ ...uploadForm, photo: e.target.files[0] })} required accept="image/*" /></Form.Group>
-              <Button type="submit" variant="primary" size="sm" disabled={uploading}>{uploading ? '...' : 'Upload'}</Button>
+            <Form onSubmit={handleUpload} className="d-flex flex-wrap gap-3 align-items-end">
+              <Form.Group style={{flex: '1 1 200px'}}>
+                <Form.Label className="small fw-bold mb-1">Upload to Cloud</Form.Label>
+                <Form.Control 
+                  type="file" 
+                  size="sm" 
+                  onChange={e => setUploadForm({ ...uploadForm, photo: e.target.files[0] })} 
+                  required 
+                  accept="image/*" 
+                />
+              </Form.Group>
+              <Form.Group style={{width: '180px'}}>
+                <Form.Label className="small fw-bold mb-1">Storage Provider</Form.Label>
+                <Form.Select 
+                  size="sm" 
+                  value={uploadForm.storage_provider} 
+                  onChange={e => setUploadForm({ ...uploadForm, storage_provider: e.target.value })}
+                >
+                  <option value="imagekit">ImageKit (CDN)</option>
+                  <option value="s3">AWS S3 (Standard)</option>
+                </Form.Select>
+              </Form.Group>
+              <Button type="submit" variant="primary" size="sm" disabled={uploading}>
+                {uploading ? 'Streaming...' : 'Sync Now'}
+              </Button>
             </Form>
-            {uploading && <ProgressBar animated now={100} className="mt-2" style={{ height: '3px' }} />}
+            {uploading && <ProgressBar animated now={100} className="mt-2" style={{ height: '4px' }} />}
           </Card.Body>
         </Card>
 

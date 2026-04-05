@@ -126,6 +126,12 @@ export const DashboardMenu = [
 	},
 	{
 		id: uuid(),
+		title: 'System Activity',
+		icon: 'activity',
+		link: '/cms/activity'
+	},
+	{
+		id: uuid(),
 		title: 'Admin Accounts',
 		icon: 'users',
 		link: '/admin/users'

@@ -123,23 +123,31 @@ const ContactCMS = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {submissions.map(s => (
-                                            <tr key={s.id}>
-                                                <td>{new Date(s.submitted_at).toLocaleDateString()}</td>
-                                                <td><strong>{s.name}</strong><br/><small className="text-muted">{s.company}</small></td>
-                                                <td>{s.email}</td>
-                                                <td><p className="mb-0 small" style={{maxWidth: '300px'}}>{s.message}</p></td>
-                                                <td>
-                                                    <Badge bg={s.status === 'new' ? 'primary' : s.status === 'read' ? 'info' : 'success'}>
-                                                        {s.status.toUpperCase()}
-                                                    </Badge>
-                                                </td>
-                                                <td>
-                                                    <Button size="sm" variant="outline-info" className="me-1" onClick={() => handleStatusUpdate(s.id, 'read')}>Read</Button>
-                                                    <Button size="sm" variant="outline-success" onClick={() => handleStatusUpdate(s.id, 'replied')}>Replied</Button>
+                                        {submissions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center text-muted py-5">
+                                                    No contact inquiries have been submitted yet.
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            submissions.map(s => (
+                                                <tr key={s.id}>
+                                                    <td>{new Date(s.submitted_at).toLocaleDateString()}</td>
+                                                    <td><strong>{s.name}</strong><br/><small className="text-muted">{s.company}</small></td>
+                                                    <td>{s.email}</td>
+                                                    <td><p className="mb-0 small" style={{maxWidth: '300px'}}>{s.message}</p></td>
+                                                    <td>
+                                                        <Badge bg={s.status === 'new' ? 'primary' : s.status === 'read' ? 'info' : 'success'}>
+                                                            {s.status?.toUpperCase() || 'NEW'}
+                                                        </Badge>
+                                                    </td>
+                                                    <td>
+                                                        <Button size="sm" variant="outline-info" className="me-1" onClick={() => handleStatusUpdate(s.id, 'read')}>Read</Button>
+                                                        <Button size="sm" variant="outline-success" onClick={() => handleStatusUpdate(s.id, 'replied')}>Replied</Button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </Table>
                             </Card.Body>
@@ -174,17 +182,21 @@ const ContactCMS = () => {
                                         <Table size="sm" hover>
                                             <thead><tr><th>Icon</th><th>Label</th><th>Status</th><th>Action</th></tr></thead>
                                             <tbody>
-                                                {pageData.direct_info.map(item => (
-                                                    <tr key={item.id}>
-                                                        <td>{item.icon}</td>
-                                                        <td>{item.label}</td>
-                                                        <td><Badge bg={item.is_active ? 'success' : 'secondary'}>{item.is_active ? 'On' : 'Off'}</Badge></td>
-                                                        <td>
-                                                            <Button size="xs" variant="info" className="me-1" onClick={() => { setInfoForm(item); setShowInfoModal(true); }}>Edit</Button>
-                                                            <Button size="xs" variant="danger" onClick={() => handleInfoDelete(item.id)}>Del</Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {pageData.direct_info.length === 0 ? (
+                                                    <tr><td colSpan="4" className="text-center text-muted py-3">No direct info links configured.</td></tr>
+                                                ) : (
+                                                    pageData.direct_info.map(item => (
+                                                        <tr key={item.id}>
+                                                            <td>{item.icon}</td>
+                                                            <td>{item.label}</td>
+                                                            <td><Badge bg={item.is_active ? 'success' : 'secondary'}>{item.is_active ? 'On' : 'Off'}</Badge></td>
+                                                            <td>
+                                                                <Button size="xs" variant="info" className="me-1" onClick={() => { setInfoForm(item); setShowInfoModal(true); }}>Edit</Button>
+                                                                <Button size="xs" variant="danger" onClick={() => handleInfoDelete(item.id)}>Del</Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </Table>
                                     </Card.Body>
@@ -201,17 +213,21 @@ const ContactCMS = () => {
                                         <Table size="sm" hover>
                                             <thead><tr><th>Label</th><th>Value</th><th>Status</th><th>Action</th></tr></thead>
                                             <tbody>
-                                                {pageData.response_times.map(item => (
-                                                    <tr key={item.id}>
-                                                        <td>{item.label}</td>
-                                                        <td>{item.value}</td>
-                                                        <td><Badge bg={item.is_active ? 'success' : 'secondary'}>{item.is_active ? 'On' : 'Off'}</Badge></td>
-                                                        <td>
-                                                            <Button size="xs" variant="info" className="me-1" onClick={() => { setTimeForm(item); setShowTimeModal(true); }}>Edit</Button>
-                                                            <Button size="xs" variant="danger" onClick={() => handleTimeDelete(item.id)}>Del</Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {pageData.response_times.length === 0 ? (
+                                                    <tr><td colSpan="4" className="text-center text-muted py-3">No response times configured.</td></tr>
+                                                ) : (
+                                                    pageData.response_times.map(item => (
+                                                        <tr key={item.id}>
+                                                            <td>{item.label}</td>
+                                                            <td>{item.value}</td>
+                                                            <td><Badge bg={item.is_active ? 'success' : 'secondary'}>{item.is_active ? 'On' : 'Off'}</Badge></td>
+                                                            <td>
+                                                                <Button size="xs" variant="info" className="me-1" onClick={() => { setTimeForm(item); setShowTimeModal(true); }}>Edit</Button>
+                                                                <Button size="xs" variant="danger" onClick={() => handleTimeDelete(item.id)}>Del</Button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </Table>
                                     </Card.Body>

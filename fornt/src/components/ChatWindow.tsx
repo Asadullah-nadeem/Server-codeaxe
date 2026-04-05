@@ -136,8 +136,8 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
             <span className="text-[10px] font-mono-label uppercase tracking-widest text-muted-foreground">Support Sync Active</span>
           </div>
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-          <X size={18} />
+        <button aria-label="Close Chat window" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
 
@@ -206,6 +206,7 @@ export default function ChatWindow({ requestId, title, onClose }: { requestId: n
           />
           <button
             type="submit"
+            aria-label="Send message"
             disabled={!newMessage.trim() || sending}
             className="absolute right-2 p-2 text-accent hover:text-primary transition-colors disabled:opacity-30"
           >

@@ -71,7 +71,9 @@ const Navbar = () => {
           {settings.site_logo_url && !logoError ? (
             <img
               src={settings.site_logo_url}
-              alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Logo`}
+              fetchPriority="high"
+              decoding="async"
+              alt={`${settings.site_name_prefix || 'Code'}${settings.site_name_accent || 'Axe'} Brand Logo`}
               className="h-8 w-auto object-contain"
               onError={() => setLogoError(true)}
             />
@@ -95,8 +97,8 @@ const Navbar = () => {
 
           {/* Portfolio Dropdown */}
           <div className="relative" onMouseEnter={() => setOpenDropdown("portfolio")} onMouseLeave={() => setOpenDropdown(null)}>
-            <button className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
-              {settings.nav_portfolio_label} <ChevronDown size={12} strokeWidth={1.5} />
+            <button aria-expanded={openDropdown === "portfolio"} aria-haspopup="true" className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
+              {settings.nav_portfolio_label} <ChevronDown size={12} strokeWidth={1.5} aria-hidden="true" />
             </button>
             <AnimatePresence>
               {openDropdown === "portfolio" && (
@@ -114,8 +116,8 @@ const Navbar = () => {
 
           {/* Info Dropdown */}
           <div className="relative" onMouseEnter={() => setOpenDropdown("info")} onMouseLeave={() => setOpenDropdown(null)}>
-            <button className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
-              {settings.nav_info_label} <ChevronDown size={12} strokeWidth={1.5} />
+            <button aria-expanded={openDropdown === "info"} aria-haspopup="true" className="font-mono-label text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-1">
+              {settings.nav_info_label} <ChevronDown size={12} strokeWidth={1.5} aria-hidden="true" />
             </button>
             <AnimatePresence>
               {openDropdown === "info" && (
@@ -147,8 +149,8 @@ const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+        <button aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen} className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={20} strokeWidth={1.5} aria-hidden="true" /> : <Menu size={20} strokeWidth={1.5} aria-hidden="true" />}
         </button>
       </div>
 

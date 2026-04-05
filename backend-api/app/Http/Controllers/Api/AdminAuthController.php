@@ -82,6 +82,7 @@ class AdminAuthController extends Controller
         if($request->has('name')) $updateData['name'] = $request->name;
         if($request->has('username')) $updateData['username'] = $request->username;
         if($request->has('email')) $updateData['email'] = $request->email;
+        if($request->has('photo')) $updateData['photo'] = $request->photo;
         if($request->has('password')) $updateData['password'] = Hash::make($request->password);
         
         if(empty($updateData)) {
@@ -139,7 +140,7 @@ class AdminAuthController extends Controller
     // ─── Admin Management (Super Admin only check via role middleware) ─────
     public function listAdmins()
     {
-        $admins = DB::table('admins')->select('id', 'name', 'username', 'email', 'role', 'is_active', 'created_at')->get();
+        $admins = DB::table('admins')->select('id', 'name', 'username', 'email', 'photo', 'role', 'is_active', 'created_at')->get();
         return response()->json(['success' => true, 'data' => $admins]);
     }
 
@@ -197,6 +198,7 @@ class AdminAuthController extends Controller
         if ($request->has('name'))      $update['name']     = $request->name;
         if ($request->has('username'))  $update['username'] = $request->username;
         if ($request->has('email'))     $update['email']    = $request->email;
+        if ($request->has('photo'))     $update['photo']    = $request->photo;
         if ($request->has('password'))  $update['password'] = Hash::make($request->password);
         if ($request->has('role'))      $update['role']     = $request->role;
         if ($request->has('is_active')) $update['is_active']= $request->is_active;

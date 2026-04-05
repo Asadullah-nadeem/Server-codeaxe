@@ -56,53 +56,80 @@ const ProjectsContributions = () => {
 
     if (loading) {
         return (
-            <Col xl={6} lg={12} md={12} xs={12} className="mb-6">
-                <Card>
-                    <Card.Body className="text-center py-5">
-                        <Spinner animation="border" variant="primary" />
-                    </Card.Body>
-                </Card>
-            </Col>
+            <Card className="border-0 shadow-sm mb-6">
+                <Card.Body className="text-center py-5">
+                    <Spinner animation="border" variant="primary" />
+                </Card.Body>
+            </Card>
         );
     }
 
+    const getIconStyle = (title, index) => {
+        const colors = [
+            { bg: '#eef2ff', color: '#4f46e5', gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' },
+            { bg: '#fff7ed', color: '#ea580c', gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' },
+            { bg: '#f0fdf4', color: '#16a34a', gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' },
+            { bg: '#faf5ff', color: '#9333ea', gradient: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)' },
+            { bg: '#fdf2f8', color: '#db2777', gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }
+        ];
+        return colors[index % colors.length];
+    };
+
     return (
-        <Col xl={6} lg={12} md={12} xs={12} className="mb-6">
-            <Card>
-                <Card.Body>
-                    <Card.Title as="h4">Projects Management</Card.Title>
-                    {projects.length === 0 ? (
-                        <p className="text-muted small">No projects found.</p>
-                    ) : (
-                        projects.map((item, index) => (
+        <Card className="border-0 shadow-sm mb-6 pb-2">
+            <Card.Body>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <Card.Title as="h4" className="mb-0 fw-bold">Projects Management</Card.Title>
+                    <Link href="/cms/work" className="btn btn-link link-primary p-0 text-decoration-none small fw-bold">View All</Link>
+                </div>
+                {projects.length === 0 ? (
+                    <div className="text-center py-4">
+                        <p className="text-muted small mb-0">No active projects found in portfolio.</p>
+                    </div>
+                ) : (
+                    projects.map((item, index) => {
+                        const style = getIconStyle(item.title, index);
+                        return (
                             <div className="d-md-flex justify-content-between align-items-center mb-4" key={index}>
                                 <div className="d-flex align-items-center">
-                                    <div>
-                                        <div className={`icon-shape icon-md border p-4 rounded-1 bg-light`}>
-                                            <Image src={item.image_url || '/images/brand/layers-logo.svg'} alt="" width="24" height="24" />
-                                        </div>
+                                    <div 
+                                        className="rounded-3 d-flex align-items-center justify-content-center shadow-sm"
+                                        style={{ 
+                                            width: '52px', 
+                                            height: '52px', 
+                                            backgroundColor: style.bg,
+                                            border: `1px solid ${style.bg}` 
+                                        }}
+                                    >
+                                        {item.image_url ? (
+                                            <Image src={item.image_url} alt="" width="32" height="32" className="rounded-2" style={{ objectFit: 'cover' }} />
+                                        ) : (
+                                            <div className="text-white d-flex align-items-center justify-content-center rounded-2" style={{ width: '32px', height: '32px', background: style.gradient, fontSize: '14px', fontWeight: 'bold' }}>
+                                                {item.title.substring(0, 1).toUpperCase()}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="ms-3">
                                         <h5 className="mb-1">
-                                            <Link href="#" className="text-inherit">{item.title}</Link>
+                                            <Link href="#" className="text-inherit fw-bold">{item.title}</Link>
                                         </h5>
-                                        <p className="mb-0 fs-5 text-muted">{item.description.substring(0, 60)}...</p>
+                                        <p className="mb-0 fs-6 text-muted" style={{ maxWidth: '280px' }}>{item.description.substring(0, 55)}...</p>
                                     </div>
                                 </div>
-                                <div className="d-flex align-items-center ms-10 ms-md-0 mt-3">
-                                    <div className="avatar-group me-2">
-                                        <span className="avatar avatar-sm">
+                                <div className="d-flex align-items-center ms-10 ms-md-0 mt-3 mt-md-0">
+                                    <div className="avatar-group me-3">
+                                        <span className="avatar avatar-sm border border-2 border-white rounded-circle shadow-sm">
                                             <Image alt="avatar" src={`/images/avatar/avatar-${(index % 10) + 1}.jpg`} className="rounded-circle" />
                                         </span>
                                     </div>
                                     <ActionMenu/>
                                 </div>
                             </div>
-                        ))
-                    )}
-                </Card.Body>
-            </Card>
-        </Col>
+                        );
+                    })
+                )}
+            </Card.Body>
+        </Card>
     );
 };
 

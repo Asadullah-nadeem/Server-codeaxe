@@ -6,9 +6,10 @@ import {
   ActivityFeed,
   MyTeam,
   ProfileHeader,
-  ProjectsContributions
+  ProjectsContributions,
+  AccessLibrary
 } from 'sub-components'
-import { FileText, Users, Activity, Layout, ExternalLink } from 'react-feather';
+import { FileText, Users, Activity, HardDrive, ExternalLink } from 'react-feather';
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -19,7 +20,7 @@ const Profile = () => {
       <PageHeading heading="User Profile Context"/>
 
       {/* Profile Header (Centralized Navigation) */}
-      <div className="mb-6">
+      <div className="mb-6 shadow-sm rounded">
         <ProfileHeader activeKey={activeTab} onSelect={setActiveTab} />
       </div>
 
@@ -42,48 +43,23 @@ const Profile = () => {
 
               {/* FILES TAB */}
               <Tab.Pane eventKey="files">
-                <Card className="border-0 shadow-sm mb-6">
-                  <Card.Header className="bg-white py-3 border-bottom-0">
-                    <h4 className="mb-0">Access Library</h4>
+                <Card className="border-0 shadow-sm mb-6 pb-2">
+                  <Card.Header className="bg-white py-4 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="p-2 bg-light-primary rounded-3 text-primary d-flex align-items-center">
+                        <HardDrive size={20} />
+                      </div>
+                      <h4 className="mb-0 fw-bold">Distributed Management System (DMS) Resources</h4>
+                    </div>
+                    <Button variant="outline-primary" size="sm" onClick={() => (window.location.href='/cms/media')}>
+                      <ExternalLink size={14} className="me-2" /> Media Dashboard
+                    </Button>
                   </Card.Header>
-                  <Card.Body>
-                    <Table hover responsive className="text-nowrap mb-0 align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Asset Name</th>
-                          <th>Extension</th>
-                          <th>Last Synchronized</th>
-                          <th>Access</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { name: 'Architecture_Framework.pdf', ext: 'PDF', date: 'Oct 12, 2023', size: '2.4 MB' },
-                          { name: 'System_Logs_Final.log', ext: 'LOG', date: 'Oct 15, 2023', size: '1.1 MB' },
-                          { name: 'Brand_Identity_Assets.zip', ext: 'ZIP', date: 'Oct 20, 2023', size: '15.8 MB' },
-                          { name: 'Deployment_Script_V2.sh', ext: 'SH', date: 'Nov 02, 2023', size: '45 KB' }
-                        ].map((file, i) => (
-                          <tr key={i}>
-                            <td>
-                              <div className="d-flex align-items-center gap-3">
-                                <FileText className="text-primary" size={18} />
-                                <span className="fw-bold">{file.name}</span>
-                              </div>
-                            </td>
-                            <td><Badge bg="light" text="dark" className="border">{file.ext}</Badge></td>
-                            <td className="text-muted">{file.date}</td>
-                            <td>
-                              <Button variant="outline-primary" size="sm">
-                                <ExternalLink size={12} className="me-1" /> View Asset
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
+                  <Card.Body className="p-0">
+                    <AccessLibrary />
                   </Card.Body>
-                  <Card.Footer className="bg-white border-top-0 text-center py-3">
-                    <Button variant="link" href="/cms/media" className="text-decoration-none small fw-bold p-0">Configure Library in Media Center &rarr;</Button>
+                  <Card.Footer className="bg-white border-top-0 text-center py-4">
+                    <p className="text-muted small mb-0">Synchronized with <span className="fw-bold">AWS S3 BUCKET</span> and <span className="fw-bold text-primary">Imagekit Cloud Optimization</span> servers.</p>
                   </Card.Footer>
                 </Card>
               </Tab.Pane>

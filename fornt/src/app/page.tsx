@@ -169,7 +169,7 @@ const Index = () => {
               <div className="grid grid-cols-4 md:grid-cols-8 gap-8 md:gap-12 items-center justify-items-center">
                 {partners.map((partner, i) => (
                   <motion.div key={partner.name} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.05 }} className="flex flex-col items-center gap-3 group">
-                    <img src={partner.src.src} alt={partner.name} className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
+                    <img src={partner.src.src} alt={`Partner Logo: ${partner.name}`} loading="lazy" decoding="async" className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
                     <span className="font-mono-label text-[10px] text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors duration-200">{partner.name}</span>
                   </motion.div>
                 ))}
@@ -248,7 +248,7 @@ const Index = () => {
               <div className="grid grid-cols-4 md:grid-cols-8 gap-8 md:gap-12 items-center justify-items-center">
                 {technologies.map((tech, i) => (
                   <motion.div key={tech.name} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ ...transition, delay: i * 0.05 }} className="flex flex-col items-center gap-3 group">
-                    <img src={tech.src.src} alt={tech.name} className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
+                    <img src={tech.src.src} alt={`Technology Logo: ${tech.name}`} loading="lazy" decoding="async" className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-110 transition-transform duration-200" />
                     <span className="font-mono-label text-[10px] text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors duration-200">{tech.name}</span>
                   </motion.div>
                 ))}
@@ -259,7 +259,7 @@ const Index = () => {
       )}
 
       {/* ── Founder ── */}
-      {isVisible('hero') && settings.site_founder_name && (
+      {/* {isVisible('hero') && settings.site_founder_name && (
         <section className="border-b border-border bg-muted/30">
           <div className="container py-24 md:py-32">
             <div className="max-w-4xl mx-auto text-center">
@@ -278,7 +278,7 @@ const Index = () => {
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
       {/* ── CTA ── */}
       {isVisible('cta') && (

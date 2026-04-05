@@ -41,7 +41,6 @@ async function fetchRewrites(): Promise<{ source: string; destination: string }[
 const nextConfig: NextConfig = {
   // Use a relative path if building locally for XAMPP, otherwise use root
   basePath: process.env.LOCAL_BUILD === 'true' ? '/update-codeaxewebsite/fornt/out' : '',
-  output: "export",
   trailingSlash: true,
   images: {
     unoptimized: true,
@@ -53,5 +52,14 @@ const nextConfig: NextConfig = {
     ],
   },
 };
+
+// Only apply static export if explicitly requested via environment variable.
+// Next.js strictly disables native rewrites() if output: 'export' is used.
+if (process.env.STATIC_EXPORT === 'true') {
+  nextConfig.output = "export";
+} else {
+  // Apply our dynamic rewrites fetched from the backend API
+  nextConfig.rewrites = async () => await fetchRewrites();
+}
 
 export default nextConfig;

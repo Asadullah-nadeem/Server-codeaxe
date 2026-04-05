@@ -24,9 +24,17 @@ const Work = () => {
         "X-API-KEY": process.env.NEXT_PUBLIC_APP_KEY || "",
       },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.warn("Work API returned non-JSON response.");
+          return { success: false, data: null };
+        }
+      })
       .then((res) => {
-        if (res.success && res.data) {
+        if (res?.success && res?.data) {
           if (res.data.header) setHeader(res.data.header);
           if (res.data.categories?.length > 0) setCategories(res.data.categories);
         }

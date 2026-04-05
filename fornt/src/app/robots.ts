@@ -1,16 +1,12 @@
-import { MetadataRoute } from 'next'
-
-export const dynamic = 'force-static';
+import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://codeaxe.co.in';
-
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/dashboard/', '/profile/', '/reset-password/'],
+      disallow: ['/admin/', '/cms/'],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
-  }
+    sitemap: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://codeaxe.co.in'}/sitemap.xml`,
+  };
 }
