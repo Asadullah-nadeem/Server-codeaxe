@@ -19,8 +19,9 @@ const ForgetPassword = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleRestore = (e) => {
+  const handleRestore = async (e) => {
     e.preventDefault();
     if (!email || email.trim() === "") {
         setError("Registered Dispatch Email is required.");
@@ -35,13 +36,33 @@ const ForgetPassword = () => {
 
     setLoading(true);
     setError("");
+    setSuccess("");
 
-    // Simulate contacting the protocol network
-    setTimeout(() => {
+    // Contacting the newly integrated backend High-Level Security database
+    try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/forget-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-API-KEY': process.env.NEXT_PUBLIC_APP_KEY || ''
+            },
+            body: JSON.stringify({ email: email.trim() })
+        });
+        
+        let data;
+        try { data = await response.json(); } catch(e) { throw new Error("Handshake Error"); }
+
+        if (response.ok && data.success) {
+            setSuccess(data.message);
+        } else {
+            setError(data.message || "Request rejected by security protocols.");
+        }
+    } catch (err) {
+        setError("Network routing failure. Core system unavailable.");
+    } finally {
         setLoading(false);
-        // Enterprise Security enforcement: Administrator accounts cannot self-recover via web
-        setError("POLICY VIOLATION: Phase 1 enterprise architecture explicitly prohibits self-directed identity restorations. Contact Super Administration directly for cryptographic key replacement.");
-    }, 1200);
+    }
   };
 
   useEffect(() => {
@@ -245,6 +266,12 @@ const ForgetPassword = () => {
                      {error && (
                         <Alert variant="danger" className="py-3 px-4 mb-4 small fw-medium" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
                            {error}
+                        </Alert>
+                     )}
+
+                     {success && (
+                        <Alert variant="success" className="py-3 px-4 mb-4 small fw-medium" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '12px' }}>
+                           {success}
                         </Alert>
                      )}
 

@@ -81,8 +81,9 @@ Route::middleware([DmsApiKeyMiddleware::class . ':upload'])->group(function () {
 
 
 // ─── Admin Panel API ────────────────────────────────────────────────────────
-// Public Admin Login
+// Public Admin Login & Recovery
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::post('/admin/forget-password', [AdminAuthController::class, 'forgetPassword']);
 
 // General Admin Protected Routes (Basic Admin session)
 Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {

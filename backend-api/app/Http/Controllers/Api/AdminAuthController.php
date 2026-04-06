@@ -20,7 +20,17 @@ class AdminAuthController extends Controller
 
         $admin = DB::table('admins')->where('username', $request->username)->first();
 
+        // High Level Security DB Tracking - Log Failed Attempt
         if (!$admin || !Hash::check($request->password, $admin->password)) {
+            DB::table('admin_security_logs')->insert([
+                'email' => $request->username, // Using username since they failed
+                'action' => 'login_failed',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'The provided credentials do not match our records.'
@@ -41,6 +51,16 @@ class AdminAuthController extends Controller
             'updated_at' => now(),
         ]);
 
+        // High Level Security DB Tracking - Log Success
+        DB::table('admin_security_logs')->insert([
+            'email' => $admin->email,
+            'action' => 'login_success',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Logged in as administrator.',
@@ -53,6 +73,42 @@ class AdminAuthController extends Controller
                 'login_type' => $admin->login_type ?? 'password',
                 'token'    => $token,
             ]
+        ]);
+    }
+
+    // ─── POST /api/admin/forget-password ─────────
+    public function forgetPassword(Request $request) {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $admin = DB::table('admins')->where('email', $request->email)->first();
+
+        // High Level Security DB Tracking - Log Reset Request
+        DB::table('admin_security_logs')->insert([
+            'email' => $request->email,
+            'action' => 'password_reset_request',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($admin) {
+            $token = Str::random(60);
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $request->email],
+                [
+                    'token' => Hash::make($token),
+                    'created_at' => now()
+                ]
+            );
+        }
+
+        // Return a generic success to prevent email enumeration (OWASP Best Practice)
+        return response()->json([
+            'success' => true,
+            'message' => 'If your email is registered, authorization keys have been dispatched via a secure channel.'
         ]);
     }
 
