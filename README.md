@@ -1,2 +1,3 @@
-# Codeaxe UI/UX + Admin + API
-## Asadullah Nadeem 
+# UI/UX <- front
+# Admin <- backend  
+# API   <- backend-api
