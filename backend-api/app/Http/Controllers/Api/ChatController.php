@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -40,10 +41,10 @@ class ChatController extends Controller
             ->where('sender_type', 'admin')
             ->update(['is_read' => 1]);
 
-        $isAdminTyping = \Illuminate\Support\Facades\Cache::has("typing_{$requestId}_admin");
+        $isAdminTyping = Cache::has("typing_{$requestId}_admin");
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'data' => $messages,
             'other_typing' => $isAdminTyping
         ]);
@@ -76,9 +77,9 @@ class ChatController extends Controller
         try {
             $adminEmail = env('MAIL_FROM_ADDRESS') ?: 'admin@codeaxe.co.in';
             Mail::to($adminEmail)->send(new NewChatMessageMailable(
-                $request->message, 
-                $user->username, 
-                $clientRequest->title, 
+                $request->message,
+                $user->username,
+                $clientRequest->title,
                 true
             ));
         } catch (\Exception $e) {
@@ -86,7 +87,7 @@ class ChatController extends Controller
         }
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'data' => DB::table('client_messages')->where('id', $id)->first()
         ]);
     }
@@ -97,9 +98,9 @@ class ChatController extends Controller
         $isTyping = $request->input('is_typing', false);
         $key = "typing_{$requestId}_user";
         if ($isTyping) {
-            \Illuminate\Support\Facades\Cache::put($key, true, now()->addSeconds(6));
+            Cache::put($key, true, now()->addSeconds(6));
         } else {
-            \Illuminate\Support\Facades\Cache::forget($key);
+            Cache::forget($key);
         }
         return response()->json(['success' => true]);
     }
@@ -124,7 +125,7 @@ class ChatController extends Controller
         $isUserTyping = \Illuminate\Support\Facades\Cache::has("typing_{$requestId}_user");
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'data' => $messages,
             'other_typing' => $isUserTyping
         ]);
@@ -158,9 +159,9 @@ class ChatController extends Controller
         // Send Email Notification to User
         try {
             Mail::to($clientRequest->email)->send(new NewChatMessageMailable(
-                $request->message, 
-                "Admin (" . $admin->username . ")", 
-                $clientRequest->title, 
+                $request->message,
+                "Admin (" . $admin->username . ")",
+                $clientRequest->title,
                 false
             ));
         } catch (\Exception $e) {
@@ -199,9 +200,9 @@ class ChatController extends Controller
                 ->where('request_id', $chat->id)
                 ->orderBy('created_at', 'desc')
                 ->first();
-            
+
             $chat->latest_message = $latest;
-            
+
             $chat->unread_count = DB::table('client_messages')
                 ->where('request_id', $chat->id)
                 ->where('sender_type', 'user')
@@ -228,7 +229,7 @@ class ChatController extends Controller
     public function updateRequestStatus(Request $request, $requestId)
     {
         $request->validate(['status' => 'required|string']);
-        
+
         DB::table('client_requests')
             ->where('id', $requestId)
             ->update(['status' => $request->status, 'updated_at' => now()]);

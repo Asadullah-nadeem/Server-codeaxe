@@ -9,7 +9,9 @@ const AboutMe = () => {
     useEffect(() => {
         const loadProfile = async () => {
             try {
-                const res = await fetchApi('/admin/profile');
+                const searchParams = new URLSearchParams(window.location.search);
+                const usernameParam = searchParams.get('username') ? `?username=${searchParams.get('username')}` : '';
+                const res = await fetchApi(`/admin/profile${usernameParam}`);
                 if (res.success) setProfile(res.data);
             } catch (error) {
                 console.error("Failed to load profile", error);
@@ -36,10 +38,14 @@ const AboutMe = () => {
     return (
         <Card className="border-0 shadow-sm mb-6">
             <Card.Body>
-                <Card.Title as="h4" className="mb-4 fw-bold">About Me</Card.Title>
+                <Card.Title as="h4" className="mb-4 fw-bold">About {profile?.is_readonly ? profile?.name : 'Me'}</Card.Title>
                 <div className="mb-4">
                     <span className="text-uppercase fw-bold text-muted fs-6 ls-1">Profile Info</span>
-                    <p className="mt-2 text-dark fs-5">You are currently logged in as <span className="fw-bold text-primary">{adminRole}</span>. Your account has full access to the management dashboard.</p>
+                    {profile?.is_readonly ? (
+                        <p className="mt-2 text-dark fs-5">You are viewing the profile of <span className="fw-bold text-primary">@{profile?.username}</span>. This account operates as <span className="fw-bold text-uppercase">{adminRole}</span>.</p>
+                    ) : (
+                        <p className="mt-2 text-dark fs-5">You are currently logged in as <span className="fw-bold text-primary text-uppercase">{adminRole}</span>. Your account has full access to the management dashboard.</p>
+                    )}
                 </div>
                 <Row className="g-4">
                     <Col xs={12} md={6}>

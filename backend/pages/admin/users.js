@@ -94,6 +94,8 @@ const UsersCMS = () => {
                                                 <div className="ms-3 lh-1">
                                                     <h5 className="mb-1">{a.name}</h5>
                                                     <Badge bg={a.is_active == 1 ? 'success' : 'danger'} className="x-small">{a.is_active == 1 ? 'ACTIVE' : 'LOCKED'}</Badge>
+                                                    {a.is_online ? <Badge bg="primary" className="x-small ms-1">ONLINE</Badge> : <Badge bg="secondary" className="x-small ms-1">OFFLINE</Badge>}
+                                                    {a.has_forgot_password && <Badge bg="warning" text="dark" className="x-small ms-1">RECOVERY REQ</Badge>}
                                                 </div>
                                             </div>
                                         </td>
@@ -147,12 +149,15 @@ const UsersCMS = () => {
                             <div className="col-6">
                                 <h6 className="text-muted small text-uppercase fw-bold ls-1 mb-1">Status</h6>
                                 <p className={`mb-0 fw-bold ${selectedAdmin?.is_active == 1 ? 'text-success' : 'text-danger'}`}>
-                                    {selectedAdmin?.is_active == 1 ? 'ONLINE / ACTIVE' : 'LOCKED / DISABLED'}
+                                    {selectedAdmin?.is_active == 1 ? 'ACTIVE' : 'LOCKED / DISABLED'} 
+                                    <span className={`ms-2 fs-6 mb-1 d-inline-block rounded-circle ${selectedAdmin?.is_online ? 'bg-primary' : 'bg-secondary'}`} style={{width: 10, height: 10}} title={selectedAdmin?.is_online ? "Online Right Now" : "Offline"}></span>
                                 </p>
+                                {selectedAdmin?.has_forgot_password && <div className="mt-2"><Badge bg="warning" text="dark">Requested Identity Reset</Badge></div>}
                             </div>
                         </div>
                     </div>
                     <div className="bg-light p-3 text-center border-top">
+                        <Button variant="outline-primary" size="sm" className="px-4 rounded-pill me-2 fw-bold" onClick={() => window.location.href=`/pages/profile?username=${selectedAdmin?.username}`}>Full Profile</Button>
                         <Button variant="secondary" size="sm" className="px-5 rounded-pill" onClick={() => setShowProfileModal(false)}>Close View</Button>
                     </div>
                 </Modal.Body>

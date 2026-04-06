@@ -16,7 +16,9 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
 
   const loadProfile = async () => {
     try {
-      const res = await fetchApi('/admin/profile');
+      const searchParams = new URLSearchParams(window.location.search);
+      const usernameParam = searchParams.get('username') ? `?username=${searchParams.get('username')}` : '';
+      const res = await fetchApi(`/admin/profile${usernameParam}`);
       if (res.success) setProfile(res.data);
     } catch (error) {
       console.error("Failed to load profile", error);
@@ -87,6 +89,7 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
                 </div>
                 
                 {/* Camera Trigger */}
+                {!profile?.is_readonly && (
                 <div className="position-absolute bottom-0 end-0 mb-2 me-2" style={{ zIndex: 10 }}>
                    <div 
                     className="p-0 cursor-pointer bg-white text-primary rounded-circle shadow-sm hover-scale transition-all d-flex align-items-center justify-content-center border border-2 border-primary" 
@@ -97,6 +100,7 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
                      <Camera size={16} />
                    </div>
                 </div>
+                )}
 
                 {/* Status Indicator */}
                 <div className="position-absolute top-0 start-0 mt-3 ms-3">
@@ -135,6 +139,7 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
                 </div>
               </div>
             </div>
+            {!profile?.is_readonly && (
             <div>
               <Link
                 href="/admin/superadmin"
@@ -143,6 +148,7 @@ const ProfileHeader = ({ activeKey, onSelect }) => {
                 Account Settings
               </Link>
             </div>
+            )}
           </div>
           {/* nav */}
           {/* nav */}

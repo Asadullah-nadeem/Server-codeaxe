@@ -114,7 +114,7 @@ const AccessLibrary = () => {
                                     <Dropdown.Toggle as="a" className="btn btn-ghost btn-icon btn-sm rounded-circle p-0" variant="light" id={`media-dropdown-${file.id}`} style={{cursor: 'pointer'}}>
                                         <MoreVertical size={16} className="text-muted" />
                                     </Dropdown.Toggle>
-                                    <Dropdown.Menu>
+                                    <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
                                         <Dropdown.Item href={file.path} target="_blank">
                                             <ExternalLink size={14} className="me-2 text-primary" /> View Original
                                         </Dropdown.Item>

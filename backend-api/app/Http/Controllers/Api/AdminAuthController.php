@@ -117,6 +117,18 @@ class AdminAuthController extends Controller
     {
         // $request->admin was attached by AdminAuthMiddleware
         $admin = $request->admin;
+
+        // Optionally allow superadmins (or anyone on this dashboard) to fetch another's display profile
+        if ($request->has('username') && $request->username !== $admin->username) {
+            $target = DB::table('admins')->where('username', $request->username)->first();
+            if ($target) {
+                unset($target->password); // Protect hash
+                unset($target->api_token); // Protect token
+                $target->is_readonly = true;
+                return response()->json(['success' => true, 'data' => $target]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data'    => $admin
@@ -126,12 +138,12 @@ class AdminAuthController extends Controller
     // ─── PUT/POST /api/admin/profile/update ───────
     public function updateProfile(Request $request) {
         $admin = $request->admin;
-        
+
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'username' => 'sometimes|string|max:255|unique:admins,username,' . $admin->id,
             'email' => 'sometimes|email|unique:admins,email,' . $admin->id,
-            'password' => 'sometimes|string|min:8|confirmed',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $updateData = [];
@@ -139,8 +151,8 @@ class AdminAuthController extends Controller
         if($request->has('username')) $updateData['username'] = $request->username;
         if($request->has('email')) $updateData['email'] = $request->email;
         if($request->has('photo')) $updateData['photo'] = $request->photo;
-        if($request->has('password')) $updateData['password'] = Hash::make($request->password);
-        
+        if($request->filled('password')) $updateData['password'] = Hash::make($request->password);
+
         if(empty($updateData)) {
             return response()->json([
                 'success' => true,
@@ -196,7 +208,15 @@ class AdminAuthController extends Controller
     // ─── Admin Management (Super Admin only check via role middleware) ─────
     public function listAdmins()
     {
-        $admins = DB::table('admins')->select('id', 'name', 'username', 'email', 'photo', 'role', 'is_active', 'created_at')->get();
+        $admins = DB::table('admins')->select('id', 'name', 'username', 'email', 'photo', 'role', 'is_active', 'created_at', 'api_token')->get();
+        $resetRequests = DB::table('password_reset_tokens')->pluck('email')->toArray();
+
+        foreach($admins as $admin) {
+            $admin->is_online = !empty($admin->api_token);
+            unset($admin->api_token);
+            $admin->has_forgot_password = in_array($admin->email, $resetRequests);
+        }
+
         return response()->json(['success' => true, 'data' => $admins]);
     }
 
@@ -231,7 +251,7 @@ class AdminAuthController extends Controller
             'name'     => 'sometimes|string|max:255',
             'username' => 'sometimes|string|max:255|unique:admins,username,' . $id,
             'email'    => 'sometimes|email|unique:admins,email,' . $id,
-            'password' => 'sometimes|string|min:8',
+            'password' => 'nullable|string|min:8',
             'role'     => 'sometimes|in:superadmin,admin,demo',
             'is_active'=> 'sometimes|integer|in:0,1'
         ]);
@@ -255,9 +275,9 @@ class AdminAuthController extends Controller
         if ($request->has('username'))  $update['username'] = $request->username;
         if ($request->has('email'))     $update['email']    = $request->email;
         if ($request->has('photo'))     $update['photo']    = $request->photo;
-        if ($request->has('password'))  $update['password'] = Hash::make($request->password);
+        if ($request->filled('password'))  $update['password'] = Hash::make($request->password);
         if ($request->has('role'))      $update['role']     = $request->role;
-        if ($request->has('is_active')) $update['is_active']= $request->is_active;
+        if ($request->has('is_active')) $update['is_active']= $request->boolean('is_active') ? 1 : 0;
 
         DB::table('admins')->where('id', $id)->update($update);
 
@@ -354,7 +374,7 @@ class AdminAuthController extends Controller
         $id = DB::table('users')->insertGetId([
             'username' => $request->username,
             'email' => $request->email,
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'login_type' => 'password',
             'email_verified_at' => now(), // Pre-verify so they don't need email verification
             'is_banned' => 0,
