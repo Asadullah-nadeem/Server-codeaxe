@@ -16,6 +16,34 @@ const ForgetPassword = () => {
   const [loadProgress, setLoadProgress] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
 
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleRestore = (e) => {
+    e.preventDefault();
+    if (!email || email.trim() === "") {
+        setError("Registered Dispatch Email is required.");
+        return;
+    }
+    
+    // Simple basic regex check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError("Syntax Error: Invalid email format detected.");
+        return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    // Simulate contacting the protocol network
+    setTimeout(() => {
+        setLoading(false);
+        // Enterprise Security enforcement: Administrator accounts cannot self-recover via web
+        setError("POLICY VIOLATION: Phase 1 enterprise architecture explicitly prohibits self-directed identity restorations. Contact Super Administration directly for cryptographic key replacement.");
+    }, 1200);
+  };
+
   useEffect(() => {
     let interval = setInterval(() => {
       setLoadProgress((prev) => (prev >= 100 ? 100 : prev + 25));
@@ -161,6 +189,16 @@ const ForgetPassword = () => {
       `}</style>
 
       <div style={{ minHeight: '100vh', width: '100vw', backgroundColor: '#0a0f1c', backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 50%)', position: 'fixed', top: 0, left: 0, zIndex: 9999, overflowY: 'auto' }}>
+      
+      {/* Network Establishing Overlay */}
+      {loading && (
+         <div className="d-flex flex-column align-items-center justify-content-center" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 10005, background: 'rgba(10, 15, 28, 0.85)', backdropFilter: 'blur(12px)' }}>
+            <Spinner animation="border" style={{ width: '4.5rem', height: '4.5rem', color: '#818cf8', borderWidth: '0.3rem' }} />
+            <h4 className="font-manrope text-white mt-4 fw-bold text-uppercase" style={{ letterSpacing: '0.15em', fontSize: '1.25rem' }}>Authorizing Request</h4>
+            <span style={{ color: '#38bdf8', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }} className="mt-2">Dispatching Keys...</span>
+         </div>
+      )}
+
       <div className="progress-line-Luxe">
          <div className="progress-inner-Luxe" style={{ width: `${loadProgress}%` }} />
       </div>
@@ -204,7 +242,13 @@ const ForgetPassword = () => {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Authorization keys will be dispatched to your registered handle.</p>
                      </div>
 
-                     <form>
+                     {error && (
+                        <Alert variant="danger" className="py-3 px-4 mb-4 small fw-medium" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
+                           {error}
+                        </Alert>
+                     )}
+
+                     <form onSubmit={handleRestore}>
                         <div className="mb-5">
                            <label className="d-block">Registered Dispatch Email</label>
                            <div className="position-relative">
@@ -212,15 +256,21 @@ const ForgetPassword = () => {
                                  type="email"
                                  placeholder="ADMIN@CODEAXE.SYSTEMS"
                                  className="axe-input w-100 pe-5"
+                                 value={email}
+                                 onChange={(e) => setEmail(e.target.value)}
                               />
                                <span className="material-symbols-outlined position-absolute end-0 top-50 translate-middle-y me-3 d-flex align-items-center" style={{ color: 'var(--text-muted)' }}>mail</span>
                            </div>
                         </div>
 
                         <div className="pt-2 d-grid gap-4">
-                           <button type="button" className="w-100 btn-liquid-metal d-flex align-items-center justify-content-center gap-2">
-                              <span>Authorize Restore</span>
-                              <span className="material-symbols-outlined fs-5">lock_reset</span>
+                           <button type="submit" disabled={loading} className="w-100 btn-liquid-metal d-flex align-items-center justify-content-center gap-2">
+                              {loading ? <span>Processing...</span> : (
+                                  <>
+                                     <span>Authorize Restore</span>
+                                     <span className="material-symbols-outlined fs-5">lock_reset</span>
+                                  </>
+                              )}
                            </button>
                            
                            <Link href="/v1/auth/sign-in" className="text-center text-decoration-none mt-2">

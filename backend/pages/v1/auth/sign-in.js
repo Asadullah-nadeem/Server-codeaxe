@@ -16,7 +16,8 @@ import AuthLayout from "layouts/AuthLayout";
 
 const isTokenValid = (token) => {
   if (!token || typeof token !== "string") return false;
-  if (token.length < 10) return false;
+  if (token.length < 40) return false; // Enterprise tokens are 80-char hashes
+  if (/[<>"'`\s]/.test(token)) return false; // Prevent injection payloads
   return true;
 };
 
@@ -43,6 +44,19 @@ const SignIn = () => {
   const [lockedUntil, setLockedUntil] = useState(null);
   const [lockCountdown, setLockCountdown] = useState(0);
   const countdownRef = useRef(null);
+
+  // Enterprise Security: Persist lockout state across reloads via session storage
+  useEffect(() => {
+    const storedLock = sessionStorage.getItem("codeaxe_sec_lockout");
+    if (storedLock) {
+      const parsedTime = parseInt(storedLock, 10);
+      if (parsedTime > Date.now()) {
+        setLockedUntil(parsedTime);
+      } else {
+        sessionStorage.removeItem("codeaxe_sec_lockout");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let interval = setInterval(() => {
@@ -146,8 +160,10 @@ const SignIn = () => {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         if (newAttempts >= MAX_ATTEMPTS) {
-          setLockedUntil(Date.now() + LOCKOUT_MS);
-          setError(`Excessive attempts. Lockout engaged.`);
+          const lockTime = Date.now() + LOCKOUT_MS;
+          setLockedUntil(lockTime);
+          sessionStorage.setItem("codeaxe_sec_lockout", lockTime.toString());
+          setError(`Security trigger: Maximum attempts reached. Platform lockout engaged.`);
         } else {
           setError(data.message || "Authorization failed.");
         }
@@ -297,6 +313,16 @@ const SignIn = () => {
       `}</style>
 
       <div style={{ minHeight: '100vh', width: '100vw', backgroundColor: '#0a0f1c', backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 50%)', position: 'fixed', top: 0, left: 0, zIndex: 9999, overflowY: 'auto' }}>
+      
+      {/* Network Establishing Overlay */}
+      {loading && (
+         <div className="d-flex flex-column align-items-center justify-content-center" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 10005, background: 'rgba(10, 15, 28, 0.85)', backdropFilter: 'blur(12px)' }}>
+            <Spinner animation="border" style={{ width: '4.5rem', height: '4.5rem', color: '#818cf8', borderWidth: '0.3rem' }} />
+            <h4 className="font-manrope text-white mt-4 fw-bold text-uppercase" style={{ letterSpacing: '0.15em', fontSize: '1.25rem' }}>Establishing Connection</h4>
+            <span style={{ color: '#38bdf8', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }} className="mt-2">Negotiating Security Handshake...</span>
+         </div>
+      )}
+
       <div className="progress-line-Luxe">
          <div className="progress-inner-Luxe" style={{ width: `${loadProgress}%` }} />
       </div>
@@ -402,7 +428,7 @@ const SignIn = () => {
                            disabled={loading || !!lockedUntil}
                            className="w-100 btn-liquid-metal d-flex align-items-center justify-content-center gap-2"
                         >
-                           {loading ? <Spinner animation="border" size="sm" /> : (
+                           {loading ? <span>Connecting...</span> : (
                               <>
                                  <span>Establish Connection</span>
                                  <span className="material-symbols-outlined fs-5">bolt</span>
