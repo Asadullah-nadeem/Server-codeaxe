@@ -1,3 +1,3 @@
-# UI/UX <- front
-# Admin <- backend  
-# API   <- backend-api
+UI/UX <- front
+Admin <- backend  
+API   <- backend-api
