@@ -2,54 +2,59 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Alert, Button, Card, Col, Form, Row, Spinner, InputGroup } from "react-bootstrap";
-import { Eye, EyeOff, Shield, Lock } from "react-feather";
+import { Alert, Button, Col, Form, Row, Spinner, InputGroup, Container, ProgressBar } from "react-bootstrap";
+import Head from "next/head";
 
 // import authlayout to override default layout
 import AuthLayout from "layouts/AuthLayout";
 
-// ── Security helpers ──────────────────────────────────────────────────────────
+/** 
+ * CODEAXE IDENTITY - THE SYNTHETIC HORIZON 
+ * Strict implementation of Phase 1 Design Strategy.
+ * Prioritizes Depth, Luminescence, and Editorial-Grade Typography.
+ */
 
-/** Basic session token checks (expiry, structure) */
 const isTokenValid = (token) => {
   if (!token || typeof token !== "string") return false;
-  // Tokens are usually 3-part JWTs or opaque strings; just validate non-empty and min-length
   if (token.length < 10) return false;
   return true;
 };
 
-/** Sanitize input to prevent XSS via payload */
 const sanitize = (str) =>
   typeof str === "string" ? str.replace(/[<>"'`]/g, "") : "";
 
-// ── Rate-limit state (client-side, resets on refresh – server should enforce too) ──
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 60 * 1000; // 1 minute
-
-// ─────────────────────────────────────────────────────────────────────────────
+const LOCKOUT_MS = 60 * 1000;
 
 const SignIn = () => {
   const router = useRouter();
 
-  // ── Form state ──────────────────────────────────────────────────────────────
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
 
-  // ── UX state ────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
-  const [ssoProcessing, setSsoProcessing] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const didInit = useRef(false); // guard: run splash check only once
+  const [pageLoading, setPageLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const didInit = useRef(false);
 
-  // ── Rate limiting ────────────────────────────────────────────────────────────
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
   const [lockCountdown, setLockCountdown] = useState(0);
   const countdownRef = useRef(null);
 
-  // ── Redirect if already logged in (runs ONCE on mount only) ────────────────
+  useEffect(() => {
+    let interval = setInterval(() => {
+      setLoadProgress((prev) => (prev >= 100 ? 100 : prev + 12));
+    }, 100);
+    setTimeout(() => {
+       clearInterval(interval);
+       setPageLoading(false);
+    }, 900);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
@@ -57,19 +62,11 @@ const SignIn = () => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("admin_token");
       if (isTokenValid(token)) {
-        // Only show splash if we're actually waiting for navigation
-        setPageLoading(true);
-        router.replace("/").catch(() => setPageLoading(false));
-      } else {
-        // No token, skip the splash
-        setPageLoading(false);
+        router.replace("/");
       }
-    } else {
-      setPageLoading(false);
     }
   }, [router]);
 
-  // ── Countdown timer for lockout ───────────────────────────────────────────────
   useEffect(() => {
     if (lockedUntil) {
       countdownRef.current = setInterval(() => {
@@ -87,47 +84,6 @@ const SignIn = () => {
     return () => clearInterval(countdownRef.current);
   }, [lockedUntil]);
 
-  // ── SSO token handling ────────────────────────────────────────────────────────
-  const handleSsoLogin = useCallback(
-    async (token) => {
-      setSsoProcessing(true);
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/auth/check?admin_token=${encodeURIComponent(token)}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "X-API-KEY": process.env.NEXT_PUBLIC_APP_KEY || "",
-            },
-          }
-        );
-        if (!response.ok) throw new Error("SSO check failed");
-        const data = await response.json();
-        if (data.success) {
-          _storeSession(data.data);
-          router.replace("/");
-        } else {
-          setError("SSO session is invalid or expired. Please log in manually.");
-          setSsoProcessing(false);
-        }
-      } catch (err) {
-        console.error("SSO Failed", err);
-        setError("SSO authentication failed. Please log in manually.");
-        setSsoProcessing(false);
-      }
-    },
-    [router]
-  );
-
-  useEffect(() => {
-    if (!router.isReady) return;
-    const ssoToken = router.query.token;
-    if (ssoToken && typeof ssoToken === "string") {
-      handleSsoLogin(ssoToken);
-    }
-  }, [router.isReady, router.query.token, handleSsoLogin]);
-
-  // ── Store session securely ─────────────────────────────────────────────────────
   const _storeSession = (data) => {
     if (typeof window === "undefined") return;
     localStorage.setItem("admin_token", data.token);
@@ -136,26 +92,23 @@ const SignIn = () => {
     localStorage.setItem("admin_email", data.email);
     localStorage.setItem("admin_username", data.username);
     localStorage.setItem("admin_login_type", data.login_type || "password");
-    // store session timestamp for expiry detection on client
     localStorage.setItem("admin_session_at", Date.now().toString());
   };
 
-  // ── Main login handler ────────────────────────────────────────────────────────
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Client-side lockout check
     if (lockedUntil && Date.now() < lockedUntil) {
-      setError(`Too many failed attempts. Please wait ${lockCountdown}s before trying again.`);
+      setError(`Platform Lockout. Re-attempt in ${lockCountdown}s.`);
       return;
     }
 
     const cleanUsername = sanitize(username.trim());
-    const cleanPassword = password; // don't sanitize password (may contain special chars intentionally)
+    const cleanPassword = password;
 
     if (!cleanUsername || !cleanPassword) {
-      setError("Username and password are required.");
+      setError("Identification required.");
       return;
     }
 
@@ -179,13 +132,12 @@ const SignIn = () => {
       try {
         data = await response.json();
       } catch {
-        throw new Error("The server returned an unexpected response. Please try again.");
+        throw new Error("Protocol handshake failure.");
       }
 
       if (response.ok && data.success) {
-        // Validate the returned token before storing
         if (!isTokenValid(data.data?.token)) {
-          throw new Error("Received an invalid session token from the server.");
+          throw new Error("Identity Mismatch. Protocol rejected.");
         }
         _storeSession(data.data);
         setAttempts(0);
@@ -194,164 +146,277 @@ const SignIn = () => {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         if (newAttempts >= MAX_ATTEMPTS) {
-          const lockUntil = Date.now() + LOCKOUT_MS;
-          setLockedUntil(lockUntil);
-          setError(`Account temporarily locked after ${MAX_ATTEMPTS} failed attempts. Please wait 60 seconds.`);
+          setLockedUntil(Date.now() + LOCKOUT_MS);
+          setError(`Excessive attempts. Lockout engaged.`);
         } else {
-          const remaining = MAX_ATTEMPTS - newAttempts;
-          setError(
-            (data.message || "Invalid credentials.") +
-              ` (${remaining} attempt${remaining !== 1 ? "s" : ""} remaining)`
-          );
+          setError(data.message || "Authorization failed.");
         }
       }
     } catch (err) {
-      setError(err.message || "Connection error. Please check your network and try again.");
+      setError(err.message || "Connection interrupted.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Main Page Content ────────────────────────────────────────────────────────
   return (
-    <Row
-      className="align-items-center justify-content-center g-0 min-vh-100"
-      style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)" }}
-    >
-      <Col xxl={4} lg={5} md={7} xs={12} className="py-6 py-xl-0">
-        {/* SSO inline overlay */}
-        {ssoProcessing && (
-          <div className="text-center py-5 text-white">
-            <Spinner animation="grow" variant="light" size="sm" className="me-2" />
-            <span className="fw-bold">Validating Secure Session...</span>
-          </div>
-        )}
+    <>
+      <Head>
+        <title>Login | Codeaxe Technology</title>
+        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+      </Head>
 
-        {!ssoProcessing && (
-          <Card
-            className="border-0"
-            style={{
-              borderRadius: 16,
-              boxShadow: "0 25px 60px rgba(0,0,0,0.5)",
-              background: "rgba(255,255,255,0.97)",
-            }}
-          >
-            <Card.Body className="p-5">
-              {/* Header */}
-              <div className="mb-4 text-center">
-                <div
-                  className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                  style={{
-                    width: 56,
-                    height: 56,
-                    background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-                  }}
-                >
-                  <Lock size={24} className="text-white" />
-                </div>
-                <h4 className="fw-bold mb-1" style={{ color: "#0f172a" }}>
-                  Admin Portal
-                </h4>
-                <p className="text-muted small mb-0">
-                  Sign in with your admin credentials
-                </p>
-              </div>
+      <style jsx global>{`
+        :root {
+          /* Color Architecture */
+          --surface-lowest: #0a0f1c;
+          --surface: #0f172a;
+          --surface-container-low: #1e293b;
+          --surface-container-high: #334155;
+          
+          /* Modern Gradient Colors */
+          --primary: #818cf8;
+          --secondary: #38bdf8;
+          
+          --text-primary: #f8fafc;
+          --text-secondary: #94a3b8;
+          --text-muted: #64748b;
+          --border-color: rgba(255, 255, 255, 0.1);
+        }
 
-              {/* Error alert */}
-              {error && (
-                <Alert
-                  variant={lockedUntil ? "warning" : "danger"}
-                  className="py-2 small d-flex align-items-start gap-2"
-                  style={{ borderRadius: 10 }}
-                >
-                  <Shield size={14} className="mt-1 flex-shrink-0" />
-                  <span>{error}</span>
-                </Alert>
-              )}
+        body { 
+          margin: 0 !important; 
+          padding: 0 !important; 
+          background-color: var(--surface-lowest) !important;
+          background-image: 
+            radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 40%), 
+            radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.12) 0%, transparent 40%);
+          font-family: 'Inter', sans-serif !important;
+          color: var(--text-secondary) !important;
+          min-height: 100vh;
+          overflow-x: hidden !important;
+        }
 
-              {/* Login form */}
-              <Form onSubmit={handleLogin} autoComplete="off" noValidate>
-                <Form.Group className="mb-3" controlId="username">
-                  <Form.Label className="small fw-semibold" style={{ color: "#374151" }}>
-                    Username
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="username"
-                    placeholder="Enter your username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    autoComplete="username"
-                    disabled={!!lockedUntil || loading}
-                    className="py-2"
-                    style={{ borderRadius: 10, background: "#f8fafc", borderColor: "#e2e8f0" }}
-                    maxLength={64}
-                  />
-                </Form.Group>
+        /* Typography System */
+        .font-manrope { font-family: 'Manrope', sans-serif; }
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-                <Form.Group className="mb-4" controlId="password">
-                  <Form.Label className="small fw-semibold" style={{ color: "#374151" }}>
-                    Password
-                  </Form.Label>
-                  <InputGroup>
-                    <Form.Control
-                      type={showPass ? "text" : "password"}
-                      name="password"
-                      placeholder="••••••••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      autoComplete="current-password"
-                      disabled={!!lockedUntil || loading}
-                      className="py-2 border-end-0"
-                      style={{ borderRadius: "10px 0 0 10px", background: "#f8fafc", borderColor: "#e2e8f0" }}
-                      maxLength={128}
-                    />
-                    <InputGroup.Text
-                      onClick={() => setShowPass((p) => !p)}
-                      style={{
-                        cursor: "pointer",
-                        background: "#f8fafc",
-                        borderColor: "#e2e8f0",
-                        borderRadius: "0 10px 10px 0",
-                      }}
-                    >
-                      {showPass ? <EyeOff size={16} className="text-muted" /> : <Eye size={16} className="text-muted" />}
-                    </InputGroup.Text>
-                  </InputGroup>
-                </Form.Group>
+        /* Elevation & Layering */
+        .glass-portal {
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border-radius: 24px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.05) inset !important;
+        }
 
-                <div className="d-grid">
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    disabled={loading || !!lockedUntil}
-                    className="fw-bold py-2 d-flex align-items-center justify-content-center gap-2"
-                    style={{ borderRadius: 10, fontSize: "0.95rem" }}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner animation="border" size="sm" variant="light" />
-                        <span>Authenticating...</span>
-                      </>
-                    ) : lockedUntil ? (
-                      `Locked – wait ${lockCountdown}s`
-                    ) : (
-                      <>
-                        <Shield size={15} />
-                        <span>Sign In Securely</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </Form>
+        /* Ambient Shadows */
+        .ambient-glow {
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.08);
+        }
 
-            </Card.Body>
-          </Card>
-        )}
-      </Col>
-    </Row>
+        /* Inputs */
+        .axe-input {
+           background: rgba(30, 41, 59, 0.5) !important;
+           border: 1px solid var(--border-color) !important;
+           color: var(--text-primary) !important;
+           padding: 1rem 1.25rem !important;
+           border-radius: 12px !important;
+           font-size: 0.95rem;
+           transition: all 0.3s ease;
+        }
+        .axe-input:focus {
+           background: rgba(30, 41, 59, 0.8) !important;
+           border-color: var(--primary) !important;
+           box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+           outline: none;
+        }
+        .axe-input::placeholder {
+           color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn-liquid-metal {
+           background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
+           border: none !important;
+           color: #ffffff !important;
+           font-weight: 600 !important;
+           padding: 1rem 1.5rem !important;
+           border-radius: 12px !important; 
+           font-family: 'Inter', sans-serif;
+           letter-spacing: 0.5px;
+           font-size: 1rem;
+           transition: all 0.3s ease;
+           box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
+        }
+        .btn-liquid-metal:hover:not(:disabled) {
+           transform: translateY(-2px);
+           box-shadow: 0 15px 25px -10px rgba(99, 102, 241, 0.6);
+           filter: brightness(1.1);
+        }
+
+        .axe-slash-logo {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 16px;
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.4);
+            color: #fff;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .progress-line-Luxe {
+           position: fixed;
+           top: 0; left: 0; width: 100%; height: 3px;
+           z-index: 10000;
+           background: rgba(255,255,255,0.02);
+        }
+        .progress-inner-Luxe {
+           height: 100%;
+           background: linear-gradient(90deg, var(--primary), var(--secondary));
+           box-shadow: 0 0 15px var(--primary);
+           transition: width 0.4s ease;
+        }
+      `}</style>
+
+      <div style={{ minHeight: '100vh', width: '100vw', backgroundColor: '#0a0f1c', backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15) 0%, transparent 50%)', position: 'fixed', top: 0, left: 0, zIndex: 9999, overflowY: 'auto' }}>
+      <div className="progress-line-Luxe">
+         <div className="progress-inner-Luxe" style={{ width: `${loadProgress}%` }} />
+      </div>
+
+      <Container fluid className="min-vh-100 d-flex align-items-center justify-content-center py-5 px-xl-5">
+         {pageLoading ? (
+            <Spinner animation="border" variant="primary" />
+         ) : (
+            <Row className="w-100 align-items-center justify-content-center" style={{ maxWidth: '1200px', gap: '4rem' }}>
+               
+               {/* Editorial Identity Side (Asymmetrical Flex) */}
+               <Col lg={6} className="d-none d-lg-flex flex-column pe-lg-5">
+                  <div className="d-flex align-items-center gap-3 mb-5 pb-2">
+                     <div className="axe-slash-logo d-flex align-items-center justify-content-center" style={{ width: 56, height: 56 }}>
+                        <span className="material-symbols-outlined fs-2">terminal</span>
+                     </div>
+                     <span className="font-manrope fw-bold text-white" style={{ fontSize: '1.75rem', letterSpacing: '-0.02em' }}>Codeaxe</span>
+                  </div>
+                  
+                  <div className="mb-5">
+                     <h1 className="font-manrope text-white mb-4" style={{ fontSize: '3.5rem', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
+                        Architecting the <br /> <span className="text-gradient">Synthetic Horizon</span>.
+                     </h1>
+                     <p style={{ fontSize: '1.125rem', lineHeight: 1.6, maxWidth: '32rem', color: 'var(--text-secondary)' }}>
+                        Access your premium technology suite. Manage infrastructure, deploy solutions, and scale your digital atmosphere with architectural precision.
+                     </p>
+                  </div>
+
+                  <Row className="pt-4 g-4" style={{ maxWidth: '32rem' }}>
+                     <Col xs={6}>
+                        <div className="p-4" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                           <span className="d-block mb-1 text-uppercase" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Network Uptime</span>
+                           <h3 className="font-manrope fw-bold text-white fs-3 mb-0">99.99%</h3>
+                        </div>
+                     </Col>
+                     <Col xs={6}>
+                        <div className="p-4" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                           <span className="d-block mb-1 text-uppercase" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Infrastructure</span>
+                           <h3 className="font-manrope fw-bold text-white fs-3 mb-0">Tier 4</h3>
+                        </div>
+                     </Col>
+                  </Row>
+               </Col>
+
+               {/* Interaction Plane */}
+               <Col lg={5} md={8} sm={10} className="d-flex justify-content-center p-0">
+                  <div className="w-100 glass-portal p-5 ambient-glow">
+                     
+                     {/* Mobile Branding */}
+                     <div className="d-flex d-lg-none align-items-center justify-content-center mb-4 gap-3">
+                        <div className="axe-slash-logo d-flex align-items-center justify-content-center rounded-3" style={{ width: 44, height: 44 }}>
+                           <span className="material-symbols-outlined fs-4 text-white">terminal</span>
+                        </div>
+                        <span className="font-manrope fw-bolder text-white fs-4">Codeaxe</span>
+                     </div>
+
+                     <div className="mb-4">
+                        <h2 className="font-manrope fw-bold text-white mb-2" style={{ fontSize: '2rem', letterSpacing: '-0.02em' }}>Welcome Back</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Enter administrative credentials to proceed.</p>
+                     </div>
+
+                     {error && (
+                        <Alert variant="danger" className="py-3 px-4 mb-4 small fw-medium" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
+                           {error}
+                        </Alert>
+                     )}
+
+                     <form onSubmit={handleLogin}>
+                        <div className="mb-4">
+                           <label className="d-block">User Identifier</label>
+                           <Form.Control
+                              type="text"
+                              placeholder="admin@codeaxe.com"
+                              value={username}
+                              onChange={(e) => setUsername(e.target.value)}
+                              className="axe-input w-100"
+                           />
+                        </div>
+
+                        <div className="mb-5">
+                           <div className="d-flex justify-content-between align-items-center mb-2">
+                              <label className="mb-0">Secret Access Key</label>
+                              <Link href="/v1/auth/forget-password">
+                                 <span className="text-decoration-none fw-semibold" style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: '0.85rem' }}>Lost Key?</span>
+                              </Link>
+                           </div>
+                           <div className="position-relative">
+                              <Form.Control
+                                 type={showPass ? "text" : "password"}
+                                 placeholder="••••••••"
+                                 value={password}
+                                 onChange={(e) => setPassword(e.target.value)}
+                                 className="axe-input w-100 pe-5"
+                              />
+                              <button onClick={() => setShowPass(!showPass)} type="button" className="btn border-0 p-0 position-absolute end-0 top-50 translate-middle-y me-3 text-muted d-flex align-items-center">
+                                 <span className="material-symbols-outlined fs-5" style={{ color: 'var(--text-secondary)' }}>{showPass ? 'visibility_off' : 'visibility'}</span>
+                              </button>
+                           </div>
+                        </div>
+
+                        <button 
+                           type="submit" 
+                           disabled={loading || !!lockedUntil}
+                           className="w-100 btn-liquid-metal d-flex align-items-center justify-content-center gap-2"
+                        >
+                           {loading ? <Spinner animation="border" size="sm" /> : (
+                              <>
+                                 <span>Establish Connection</span>
+                                 <span className="material-symbols-outlined fs-5">bolt</span>
+                              </>
+                           )}
+                        </button>
+                     </form>
+                  </div>
+               </Col>
+            </Row>
+         )}
+      </Container>
+      </div>
+    </>
   );
 };
 
