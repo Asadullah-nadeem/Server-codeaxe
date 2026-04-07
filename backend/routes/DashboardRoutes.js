@@ -16,55 +16,64 @@ export const DashboardMenu = [
 		id: uuid(),
 		title: 'Navigation',
 		icon: 'menu',
-		link: '/cms/navigation'
+		link: '/cms/navigation',
+		permKey: 'navigation'
 	},
 	{
 		id: uuid(),
 		title: 'Email Templates',
 		icon: 'mail',
-		link: '/cms/emails'
+		link: '/cms/emails',
+		permKey: 'emails'
 	},
 	{
 		id: uuid(),
 		title: 'SMTP Settings',
 		icon: 'settings',
-		link: '/cms/smtp'
+		link: '/cms/smtp',
+		permKey: 'smtp'
 	},
 	{
 		id: uuid(),
 		title: 'Home Settings',
 		icon: 'layout',
-		link: '/cms/home'
+		link: '/cms/home',
+		permKey: 'home'
 	},
 	{
 		id: uuid(),
 		title: 'Section Visibility',
 		icon: 'toggle-left',
-		link: '/cms/sections'
+		link: '/cms/sections',
+		permKey: 'sections'
 	},
 	{
 		id: uuid(),
 		title: 'Services',
 		icon: 'briefcase',
-		link: '/cms/services'
+		link: '/cms/services',
+		permKey: 'services'
 	},
 	{
 		id: uuid(),
 		title: 'Portfolio',
 		icon: 'image',
-		link: '/cms/portfolio'
+		link: '/cms/portfolio',
+		permKey: 'portfolio'
 	},
 	{
 		id: uuid(),
 		title: 'Work',
 		icon: 'layers',
-		link: '/cms/work'
+		link: '/cms/work',
+		permKey: 'portfolio'
 	},
 	{
 		id: uuid(),
 		title: 'Footer',
 		icon: 'corner-left-down',
-		link: '/cms/footer'
+		link: '/cms/footer',
+		permKey: 'footer'
 	},
 	{
 		id: uuid(),
@@ -75,7 +84,8 @@ export const DashboardMenu = [
 		id: uuid(),
 		title: 'About Us',
 		icon: 'info',
-		link: '/cms/about'
+		link: '/cms/about',
+		permKey: 'about'
 	},
 	{
 		id: uuid(),
@@ -86,19 +96,22 @@ export const DashboardMenu = [
 			{ id: uuid(), title: 'Terms of Service', link: '/cms/legal?tab=terms' },
 			{ id: uuid(), title: 'Refund & Cancellation', link: '/cms/legal?tab=refund-cancellation' },
 			{ id: uuid(), title: 'Refund Policy', link: '/cms/legal?tab=refund-policy' }
-		]
+		],
+		permKey: 'legal'
 	},
 	{
 		id: uuid(),
 		title: 'Contact Submissions',
 		icon: 'mail',
-		link: '/cms/contact'
+		link: '/cms/contact',
+		permKey: 'contact'
 	},
 	{
 		id: uuid(),
 		title: 'SEO & Rewrites',
 		icon: 'link',
-		link: '/cms/rewrites'
+		link: '/cms/rewrites',
+		permKey: 'rewrites'
 	},
 	{
 		id: uuid(),
@@ -109,7 +122,8 @@ export const DashboardMenu = [
 		id: uuid(),
 		title: 'Media Manager',
 		icon: 'folder',
-		link: '/cms/media'
+		link: '/cms/media',
+		permKey: 'media'
 	},
 	{
 		id: uuid(),
@@ -122,19 +136,22 @@ export const DashboardMenu = [
 		icon: 'shield',
 		badge: 'SA',
 		badgecolor: 'danger',
-		link: '/admin/superadmin'
+		link: '/admin/superadmin',
+		permKey: 'superadmin'
 	},
 	{
 		id: uuid(),
 		title: 'System Activity',
 		icon: 'activity',
-		link: '/cms/activity'
+		link: '/cms/activity',
+		permKey: 'superadmin'
 	},
 	{
 		id: uuid(),
 		title: 'Admin Accounts',
 		icon: 'users',
-		link: '/admin/users'
+		link: '/admin/users',
+		permKey: 'admin_accounts'
 	},
 	{
 		id: uuid(),
@@ -145,25 +162,29 @@ export const DashboardMenu = [
 		id: uuid(),
 		title: 'Client Messaging',
 		icon: 'message-square',
-		link: '/admin/active-chats'
+		link: '/admin/active-chats',
+		permKey: 'chat'
 	},
 	{
 		id: uuid(),
 		title: 'Registered End-Users',
 		icon: 'users',
-		link: '/admin/registered-users'
+		link: '/admin/registered-users',
+		permKey: 'registered_users'
 	},
 	{
 		id: uuid(),
 		title: 'DMS Settings',
 		icon: 'database',
-		link: '/admin/dms-settings'
+		link: '/admin/dms-settings',
+		permKey: 'dms'
 	},
 	{
 		id: uuid(),
 		title: 'System Connections',
 		icon: 'cpu',
-		link: '/cms/connections'
+		link: '/cms/connections',
+		permKey: 'dms'
 	}
 ];
 

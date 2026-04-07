@@ -107,6 +107,7 @@ const SignIn = () => {
     localStorage.setItem("admin_username", data.username);
     localStorage.setItem("admin_login_type", data.login_type || "password");
     localStorage.setItem("admin_session_at", Date.now().toString());
+    localStorage.setItem("admin_permissions", JSON.stringify(data.permissions || {}));
   };
 
   const handleLogin = async (e) => {

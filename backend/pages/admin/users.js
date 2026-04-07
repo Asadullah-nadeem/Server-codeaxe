@@ -6,17 +6,26 @@ import { Eye, PencilSquare, Trash, PersonCircle } from 'react-bootstrap-icons';
 
 const UsersCMS = () => {
     const [admins, setAdmins] = useState([]);
+    const [roles, setRoles] = useState([
+        { name: 'admin', label: 'Admin (All CMS)' },
+        { name: 'superadmin', label: 'Super Admin' },
+        { name: 'demo', label: 'Demo Mode' }
+    ]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [selectedAdmin, setSelectedAdmin] = useState(null);
     const [form, setForm] = useState({ id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 });
 
-    const fetchAdmins = async () => {
+    const fetchEverything = async () => {
         try {
             setLoading(true);
-            const res = await fetchApi('/admin/list');
-            if (res?.success) setAdmins(res.data);
+            const [adminRes, roleRes] = await Promise.all([
+                fetchApi('/admin/list'),
+                fetchApi('/admin/permissions').catch(() => null)
+            ]);
+            if (adminRes?.success) setAdmins(adminRes.data);
+            if (roleRes?.success && roleRes.roles) setRoles(roleRes.roles);
         } catch (error) {
             console.error(error);
             alert('Access Denied: You must be a Super Admin to manage accounts.');
@@ -25,7 +34,7 @@ const UsersCMS = () => {
         }
     };
 
-    useEffect(() => { fetchAdmins(); }, []);
+    useEffect(() => { fetchEverything(); }, []);
 
     const handleShow = (item = null) => {
         setForm(item ? {...item, password: ''} : { id: null, name: '', username: '', email: '', password: '', role: 'admin', is_active: 1 });
@@ -46,7 +55,7 @@ const UsersCMS = () => {
                 await fetchApi('/admin/create', { method: 'POST', body: JSON.stringify(form) });
             }
             setShowModal(false);
-            fetchAdmins();
+            fetchEverything();
         } catch (error) { alert("Failed to save admin user."); }
     };
 
@@ -54,7 +63,7 @@ const UsersCMS = () => {
         if (!confirm('Are you sure you want to delete this admin?')) return;
         try {
             await fetchApi(`/admin/delete/${id}`, { method: 'DELETE' });
-            fetchAdmins();
+            fetchEverything();
         } catch (error) { alert("Failed to remove admin."); }
     };
 
@@ -101,8 +110,8 @@ const UsersCMS = () => {
                                         </td>
                                         <td><code className="text-primary fw-bold">@{a.username}</code></td>
                                         <td>
-                                            <Badge bg="light-info" className="text-info text-uppercase px-2">{a.role}</Badge>
-                                            <div className="x-small text-muted mt-1">Full access granted</div>
+                                            <Badge bg={roles.find(r=>r.name===a.role)?.color || 'info'} className="text-uppercase px-2">{roles.find(r=>r.name===a.role)?.label || a.role}</Badge>
+                                            <div className="x-small text-muted mt-1">{roles.find(r=>r.name===a.role)?.description || 'Custom role'}</div>
                                         </td>
                                         <td>
                                             <div className="small text-dark fw-medium">{a.email}</div>
@@ -138,7 +147,7 @@ const UsersCMS = () => {
                         <div className="text-center mb-4">
                             <h3 className="mb-0 fw-bold">{selectedAdmin?.name}</h3>
                             <p className="text-muted small">@{selectedAdmin?.username}</p>
-                            <Badge bg="primary" className="text-uppercase px-3 py-1 rounded-pill">{selectedAdmin?.role}</Badge>
+                            <Badge bg={roles.find(r=>r.name===selectedAdmin?.role)?.color || 'primary'} className="text-uppercase px-3 py-1 rounded-pill">{roles.find(r=>r.name===selectedAdmin?.role)?.label || selectedAdmin?.role}</Badge>
                         </div>
                         <hr className="my-4 opacity-10" />
                         <div className="row g-4 text-center">
@@ -183,9 +192,11 @@ const UsersCMS = () => {
                                 <Form.Group className="mb-3">
                                     <Form.Label>User Role</Form.Label>
                                     <Form.Select value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
-                                        <option value="admin">Admin (All CMS)</option>
-                                        <option value="superadmin">Super Admin (Can manage users)</option>
-                                        <option value="demo">Demo Mode (Read-only)</option>
+                                        {roles.map(r => (
+                                            <option key={r.name} value={r.name}>
+                                                {r.label}
+                                            </option>
+                                        ))}
                                     </Form.Select>
                                 </Form.Group>
                             </Col>

@@ -87,7 +87,7 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::post('/admin/forget-password', [AdminAuthController::class, 'forgetPassword']);
 
 // General Admin Protected Routes (Basic Admin session)
-Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->group(function () {
+Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class, 'admin.permission'])->group(function () {
     Route::get('/admin/profile', [AdminAuthController::class, 'profile']);
     Route::post('/admin/profile/update', [AdminAuthController::class, 'updateProfile']);
     Route::get('/admin/auth/check', [AdminAuthController::class, 'checkAuth']);

@@ -10,6 +10,21 @@ use Illuminate\Support\Str;
 
 class AdminAuthController extends Controller
 {
+    private function getRolePermissions($roleName)
+    {
+        $perms = DB::table('role_permissions')->where('role', $roleName)->get();
+        $formatted = [];
+        foreach ($perms as $p) {
+            $formatted[$p->section_key] = [
+                'view' => (bool)$p->can_view,
+                'create' => (bool)$p->can_create,
+                'edit' => (bool)$p->can_edit,
+                'delete' => (bool)$p->can_delete,
+            ];
+        }
+        return $formatted;
+    }
+
     // ─── POST /api/admin/login ───────────────────
     public function login(Request $request)
     {
@@ -72,6 +87,7 @@ class AdminAuthController extends Controller
                 'role'     => $admin->role,
                 'login_type' => $admin->login_type ?? 'password',
                 'token'    => $token,
+                'permissions' => $this->getRolePermissions($admin->role),
             ]
         ]);
     }
@@ -128,6 +144,8 @@ class AdminAuthController extends Controller
                 return response()->json(['success' => true, 'data' => $target]);
             }
         }
+
+        $admin->permissions = $this->getRolePermissions($admin->role);
 
         return response()->json([
             'success' => true,
@@ -186,7 +204,8 @@ class AdminAuthController extends Controller
                 'email' => $admin->email,
                 'role' => $admin->role,
                 'login_type' => $admin->login_type ?? 'password',
-                'token' => $admin->api_token
+                'token' => $admin->api_token,
+                'permissions' => $this->getRolePermissions($admin->role)
             ]
         ]);
     }
@@ -227,7 +246,7 @@ class AdminAuthController extends Controller
             'username' => 'required|string|unique:admins,username',
             'email'    => 'required|email|unique:admins,email',
             'password' => 'required|string|min:8',
-            'role'     => 'required|in:superadmin,admin,demo',
+            'role'     => 'required|exists:admin_roles,name',
             'is_active' => 'sometimes|integer|in:0,1',
         ]);
 
@@ -252,7 +271,7 @@ class AdminAuthController extends Controller
             'username' => 'sometimes|string|max:255|unique:admins,username,' . $id,
             'email'    => 'sometimes|email|unique:admins,email,' . $id,
             'password' => 'nullable|string|min:8',
-            'role'     => 'sometimes|in:superadmin,admin,demo',
+            'role'     => 'sometimes|exists:admin_roles,name',
             'is_active'=> 'sometimes|integer|in:0,1'
         ]);
 

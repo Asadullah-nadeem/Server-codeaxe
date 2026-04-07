@@ -28,10 +28,14 @@ const NavbarVertical = (props) => {
     site_name_accent: 'Axe'
   });
 
+  const [permissions, setPermissions] = useState(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
   useEffect(() => {
+    setHasMounted(true);
     const loadSettings = async () => {
       try {
-        const res = await fetchApi('/admin/nav');
+        const res = await fetchApi('/nav');
         if (res?.success && res.data.settings) {
           setSettings(res.data.settings);
         }
@@ -40,7 +44,20 @@ const NavbarVertical = (props) => {
       }
     };
     loadSettings();
+
+    try {
+      const storedPerms = localStorage.getItem('admin_permissions');
+      if (storedPerms) setPermissions(JSON.parse(storedPerms));
+    } catch(e) { console.error('Failed to parse admin_permissions'); }
   }, []);
+
+  const hasAccess = (item) => {
+    if (!item.permKey) return true;
+    if (!hasMounted) return false; // Prevent Hydration Mismatch
+    if (typeof window !== "undefined" && localStorage.getItem("admin_role") === "superadmin") return true;
+    if (!permissions) return false;
+    return permissions[item.permKey]?.view === true;
+  };
 
   const CustomToggle = ({ children, eventKey, icon }) => {
     const { activeEventKey } = useContext(AccordionContext);
@@ -137,6 +154,17 @@ const NavbarVertical = (props) => {
         >
           {DashboardMenu.map(function (menu, index) {
             if (menu.grouptitle) {
+              // Look ahead to see if any upcoming items before the next grouptitle are visible
+              let hasVisibleChildren = false;
+              for (let i = index + 1; i < DashboardMenu.length; i++) {
+                 if (DashboardMenu[i].grouptitle) break;
+                 if (hasAccess(DashboardMenu[i])) {
+                     hasVisibleChildren = true;
+                     break;
+                 }
+              }
+              if (!hasVisibleChildren) return null;
+
               return (
                 <li className="nav-item" key={index}>
                   {/* group title item */}
@@ -145,6 +173,7 @@ const NavbarVertical = (props) => {
                 </li>
               );
             } else {
+              if (!hasAccess(menu)) return null;
               if (menu.children) {
                 return (
                   <Fragment key={index}>
@@ -172,7 +201,7 @@ const NavbarVertical = (props) => {
                         bsPrefix=""
                         className="nav flex-column"
                       >
-                        {menu.children.map(function (
+                        {menu.children.filter(hasAccess).map(function (
                           menuLevel1Item,
                           menuLevel1Index
                         ) {
@@ -215,7 +244,7 @@ const NavbarVertical = (props) => {
                                       className="nav flex-column"
                                     >
                                       {/* second level menu started  */}
-                                      {menuLevel1Item.children.map(function (
+                                      {menuLevel1Item.children.filter(hasAccess).map(function (
                                         menuLevel2Item,
                                         menuLevel2Index
                                       ) {
@@ -260,7 +289,7 @@ const NavbarVertical = (props) => {
                                                     className="nav flex-column"
                                                   >
                                                     {/* third level menu started  */}
-                                                    {menuLevel2Item.children.map(
+                                                    {menuLevel2Item.children.filter(hasAccess).map(
                                                       function (
                                                         menuLevel3Item,
                                                         menuLevel3Index

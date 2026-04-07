@@ -67,6 +67,7 @@ const QuickMenu = () => {
             localStorage.removeItem('admin_username');
             localStorage.removeItem('admin_login_type');
             localStorage.removeItem('admin_email');
+            localStorage.removeItem('admin_permissions');
           router.push('/v1/auth/sign-in');
         }
     };

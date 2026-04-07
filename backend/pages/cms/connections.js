@@ -23,6 +23,8 @@ const ConnectionsCMS = () => {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [showKey, setShowKey] = useState(false);
 
+    const [isAuthorized, setIsAuthorized] = useState(true);
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -30,6 +32,8 @@ const ConnectionsCMS = () => {
             if (res?.success) {
                 setData(res.data);
                 setStatus(res.status);
+            } else if (res?.status === 403) {
+                setIsAuthorized(false);
             }
         } catch (error) {
             console.error('Failed to fetch connections:', error);
@@ -40,6 +44,12 @@ const ConnectionsCMS = () => {
     };
 
     useEffect(() => {
+        const role = localStorage.getItem('admin_role');
+        if (role !== 'superadmin') {
+            setIsAuthorized(false);
+            setLoading(false);
+            return;
+        }
         fetchData();
     }, []);
 
@@ -68,6 +78,24 @@ const ConnectionsCMS = () => {
     };
 
     if (loading) return <LoadingSpinner text="Checking system connectivity..." />;
+
+    if (!isAuthorized) {
+        return (
+            <Container fluid className="px-6 py-4">
+                <Alert variant="danger" className="shadow-sm border-0" style={{ borderRadius: '15px' }}>
+                    <div className="d-flex align-items-center gap-3 p-2">
+                        <div className="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style={{ width: '50px', height: '50px' }}>
+                            <i className="fe fe-shield fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 className="alert-heading mb-1 fw-bold">Restricted Infrastructure Access</h4>
+                            <p className="mb-0">You do not have the required <b>Super Admin</b> privileges to view or modify core system connections. These settings are highly sensitive and restricted to developers only.</p>
+                        </div>
+                    </div>
+                </Alert>
+            </Container>
+        );
+    }
 
     return (
         <Container fluid className="px-6 py-4">
