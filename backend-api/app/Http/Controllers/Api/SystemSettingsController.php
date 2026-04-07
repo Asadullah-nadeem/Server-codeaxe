@@ -28,15 +28,16 @@ class SystemSettingsController extends Controller
             ->pluck('setting_value', 'setting_key');
 
         // Add defaults if missing
+        $currentHost = request()->getSchemeAndHttpHost();
         $defaults = [
-            'api_url' => env('APP_URL', 'http://localhost:8000') . '/api',
+            'api_url' => env('APP_URL', $currentHost) . '/api',
             'app_key' => env('APP_KEY'),
-            'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
-            'admin_url' => env('ADMIN_URL', 'http://localhost:3001'),
+            'frontend_url' => env('FRONTEND_URL', $currentHost . ':3000'),
+            'admin_url' => env('ADMIN_URL', $currentHost . ':3001'),
             'image_proxy_enabled' => '1',
-            'image_base_url' => env('APP_URL', 'http://localhost:8000') . '/api/dms/media',
-            'db_host' => env('DB_HOST', '127.0.0.1'),
-            'db_database' => env('DB_DATABASE', 'u_codeaxe_me'),
+            'image_base_url' => env('APP_URL', $currentHost) . '/api/dms/media',
+            'db_host' => env('DB_HOST', 'localhost'),
+            'db_database' => env('DB_DATABASE', config('database.connections.' . config('database.default') . '.database')),
         ];
 
         $data = array_merge($defaults, $settings->toArray());

@@ -51,7 +51,7 @@ const QuickMenu = () => {
         try {
             const token = localStorage.getItem('admin_token');
             if (token) {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/logout`, {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/logout`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -237,10 +237,10 @@ const QuickMenu = () => {
             // For contact submissions, we can actually hit an API
             const contactSubIds = notifications.filter(n => n.type === 'form').map(n => n.id.replace('sub_', ''));
             if (contactSubIds.length > 0) {
-                 await Promise.allSettled(contactSubIds.map(id => 
-                    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/admin/contact/submissions/${id}/status`, {
+                 await Promise.allSettled(contactSubIds.map(id =>
+                    fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/contact/submissions/${id}/status`, {
                         method: 'PUT',
-                        headers: { 
+                        headers: {
                             'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
                             'Content-Type': 'application/json'
                         },
@@ -325,7 +325,7 @@ const QuickMenu = () => {
                     className="rounded-circle"
                     id="dropdownUser" style={{ cursor: 'pointer' }}>
                     <div className="avatar avatar-md avatar-indicators avatar-online rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm"
-                         style={{ 
+                         style={{
                              background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : '#624bff',
                              backgroundSize: 'cover',
                              width: '40px',
@@ -362,11 +362,11 @@ const QuickMenu = () => {
                     bsPrefix=' '
                     className="rounded-circle"
                     id="dropdownUserMobile" style={{ cursor: 'pointer' }}>
-                    <div className="avatar avatar-sm avatar-indicators avatar-online rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" 
+                    <div className="avatar avatar-sm avatar-indicators avatar-online rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm"
                          style={{
                              background: profile?.photo ? `url(${profile.photo}) no-repeat center center` : '#624bff',
                              backgroundSize: 'cover',
-                             width:'36px', 
+                             width:'36px',
                              height:'36px'
                          }}>
                         {!profile?.photo && getInitials(adminName)}

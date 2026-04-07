@@ -122,7 +122,7 @@ class ChatController extends Controller
             ->where('sender_type', 'user')
             ->update(['is_read' => 1]);
 
-        $isUserTyping = \Illuminate\Support\Facades\Cache::has("typing_{$requestId}_user");
+        $isUserTyping = Cache::has("typing_{$requestId}_user");
 
         return response()->json([
             'success' => true,
@@ -180,9 +180,9 @@ class ChatController extends Controller
         $isTyping = $request->input('is_typing', false);
         $key = "typing_{$requestId}_admin";
         if ($isTyping) {
-            \Illuminate\Support\Facades\Cache::put($key, true, now()->addSeconds(6));
+            Cache::put($key, true, now()->addSeconds(6));
         } else {
-            \Illuminate\Support\Facades\Cache::forget($key);
+            Cache::forget($key);
         }
         return response()->json(['success' => true]);
     }

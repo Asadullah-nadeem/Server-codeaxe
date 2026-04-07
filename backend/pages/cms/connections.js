@@ -257,7 +257,7 @@ const ConnectionsCMS = () => {
                                         {data.image_proxy_enabled === '1' ? 'ACTIVE & PROTECTED' : 'DISABLED'}
                                     </Badge>
                                 </div>
-                                <Form.Check 
+                                <Form.Check
                                     type="switch"
                                     id="proxy-switch"
                                     label={<span className="small text-muted fw-bold">Enable Media Proxy Pipeline</span>}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ThankYouMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -125,7 +126,7 @@ class EmailTemplateController extends Controller
         ];
 
         // Use the existing ThankYouMail logic for rendering
-        $mail = new \App\Mail\ThankYouMail($dummy, $template);
+        $mail = new ThankYouMail($dummy, $template);
         $html = view('emails.thank_you', [
             'submission' => $dummy,
             'template'   => $template,

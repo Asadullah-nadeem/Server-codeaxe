@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\SmtpController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\SystemSettingsController;
+use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Middleware\VerifyAppKeyMiddleware;
 use App\Http\Middleware\AuthUserMiddleware;
 use App\Http\Middleware\DmsApiKeyMiddleware;
@@ -201,6 +202,11 @@ Route::middleware([AdminAuthMiddleware::class, DemoModeMiddleware::class])->grou
     Route::get('/admin/dms/providers',                   [DmsController::class, 'listProviders']);
     Route::post('/admin/dms/providers',                  [DmsController::class, 'upsertProvider']);
     Route::delete('/admin/dms/providers/{id}',           [DmsController::class, 'deleteProvider']);
+
+    // ─── Developer API Keys Management ───
+    Route::get('/admin/developer-keys', [ApiKeyController::class, 'index']);
+    Route::post('/admin/developer-keys', [ApiKeyController::class, 'store']);
+    Route::delete('/admin/developer-keys/{id}', [ApiKeyController::class, 'destroy']);
 
 // ─── External Uploads (Requires dms_ key)
 Route::post('/dms/uploads', [DmsController::class, 'store'])->middleware(VerifyDmsKeyMiddleware::class);

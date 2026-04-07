@@ -27,7 +27,8 @@ import {
   Trash2,
   User,
   UserPlus,
-  XCircle
+  XCircle,
+  Key, Server, Terminal, Copy, Plus, Code
 } from 'react-feather';
 import { fetchApi } from '../../utils/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -408,6 +409,111 @@ const AdminDetailPanel = ({ admin, roles, onClose, onEdit, onDelete }) => {
     );
 };
 
+// ─── Developer API Keys Management ───────────────────────────────────────────
+const DeveloperApiKeysPanel = () => {
+    const [keys, setKeys] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showKeySecret, setShowKeySecret] = useState({});
+    const [copied, setCopied] = useState(null);
+
+    const loadKeys = async () => {
+        try {
+            setLoading(true);
+            const res = await fetchApi('/admin/developer-keys');
+            if (res?.success) setKeys(res.data);
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
+    };
+
+    useEffect(() => { loadKeys(); }, []);
+
+    const toggleSecret = (id) => setShowKeySecret({ ...showKeySecret, [id]: !showKeySecret[id] });
+
+    const handleCopy = (text, id) => {
+        navigator.clipboard.writeText(text);
+        setCopied(id);
+        setTimeout(() => setCopied(null), 2000);
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Are you sure you want to revoke this API key globally?')) return;
+        try {
+            await fetchApi(`/admin/developer-keys/${id}`, { method: 'DELETE' });
+            setKeys(keys.filter(k => k.id !== id));
+        } catch (e) { alert(e.message); }
+    };
+
+    if (loading) return <div className="py-2"><Spinner animation="border" size="sm" /></div>;
+
+    return (
+        <Card className="border-0 shadow-sm mt-4" style={{ borderRadius: 14 }}>
+            <Card.Header className="bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center gap-2">
+                    <Key size={16} className="text-primary" />
+                    <div className="fw-bold small mb-0">Global API Access Tokens</div>
+                </div>
+                <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                    Manage endpoints & creation in <a href="/admin/dms-settings" className="text-primary fw-bold text-decoration-none">DMS Settings</a>
+                </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+                <Table hover responsive className="mb-0 text-nowrap">
+                    <thead style={{ background: '#f8f9fa' }}>
+                        <tr>
+                            <th className="small ps-4">Application / Device</th>
+                            <th className="small">Secret Token</th>
+                            <th className="small">Scopes</th>
+                            <th className="small text-center">Requests</th>
+                            <th className="small text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {keys.length === 0 && <tr><td colSpan="5" className="text-center py-4 text-muted small">No API Keys registered across the platform.</td></tr>}
+                        {keys.map(k => (
+                            <tr key={k.id} className="align-middle">
+                                <td className="ps-4">
+                                    <div className="fw-bold small">{k.name}</div>
+                                    <div className="text-muted" style={{fontSize: '0.65rem'}}>Created: {new Date(k.created_at).toLocaleDateString()}</div>
+                                </td>
+                                <td>
+                                    <div className="d-flex align-items-center bg-light rounded px-2 py-1" style={{ width: 'fit-content' }}>
+                                        <code className="text-dark me-2 border-0 bg-transparent p-0">
+                                            {showKeySecret[k.id] ? k.token : 'dms_live_••••••••••'}
+                                        </code>
+                                        <div className="d-flex gap-1">
+                                            <Button variant="link" size="sm" className="p-0 text-muted" onClick={() => toggleSecret(k.id)}>
+                                                {showKeySecret[k.id] ? <EyeOff size={14}/> : <Eye size={14}/>}
+                                            </Button>
+                                            <Button variant="link" size="sm" className="p-0 text-primary ms-1" onClick={() => handleCopy(k.token, k.id)}>
+                                                {copied === k.id ? <CheckCircle size={14} className="text-success"/> : <Copy size={14}/>}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div className="d-flex gap-1">
+                                        {(k.permissions || []).map(p => (
+                                            <Badge key={p} bg={p === 'GET' ? 'success' : (p === 'POST' ? 'primary' : 'danger')} style={{fontSize: '0.65rem'}} className="rounded-1">{p}</Badge>
+                                        ))}
+                                    </div>
+                                </td>
+                                <td className="text-center">
+                                    <Badge bg="secondary" pill className="px-2 py-1 bg-opacity-10 text-dark border">{k.clicks?.toLocaleString() || 0}</Badge>
+                                </td>
+                                <td className="text-end pe-4">
+                                    <Button variant="outline-danger" size="sm" className="border-0 p-1" onClick={() => handleDelete(k.id)}>
+                                        <Trash2 size={13} />
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </Card.Body>
+        </Card>
+    );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const SuperAdminPage = () => {
     const [roles, setRoles]                 = useState([]);
@@ -708,6 +814,10 @@ const SuperAdminPage = () => {
 
             <div className="mb-4">
                 <PermissionsPanel roles={roles} setRoles={setRoles} />
+            </div>
+
+            <div className="mb-4">
+                <DeveloperApiKeysPanel />
             </div>
 
             {/* Main Table Card */}

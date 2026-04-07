@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Request;
 
 class RewriteController extends Controller
 {
@@ -46,7 +47,7 @@ class RewriteController extends Controller
         }
     }
 
-    public function store(\Illuminate\Http\Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'source' => 'required|string',
@@ -62,7 +63,7 @@ class RewriteController extends Controller
         return response()->json(['success' => true, 'id' => $id], 201);
     }
 
-    public function update(\Illuminate\Http\Request $request, $id)
+    public function update(Request $request, $id)
     {
         DB::table('route_rewrites')->where('id', $id)->update(
             $request->only('source', 'destination', 'is_active', 'sort_order', 'description')
